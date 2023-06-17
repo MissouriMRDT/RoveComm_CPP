@@ -6,8 +6,7 @@
    Author:           Eli Byrd and Clayton Cowen
    Description:
 */
-
-#include "../../../src/Autonomy_Globals.h"
+#include <string>
 
 #ifndef NETWORKADDRESS_H
 #	define NETWORKADDRESS_H
@@ -23,13 +22,6 @@ enum NetworkAddressIntegers
 
 class NetworkAddress
 {
-	private:
-		int m_iOctet1;
-		int m_iOctet2;
-		int m_iOctet3;
-		int m_iOctet4;
-		int m_iPort;
-
 	public:
 		NetworkAddress();
 		NetworkAddress(std::string szIPAddress, int iPort);
@@ -37,6 +29,13 @@ class NetworkAddress
 
 		int GetIData(NetworkAddressIntegers eKey);
 		std::string GetSZData();
+
+	private:
+		int m_iOctet1;
+		int m_iOctet2;
+		int m_iOctet3;
+		int m_iOctet4;
+		int m_iPort;
 };
 
 #endif	  // NETWORKADDRESS_H

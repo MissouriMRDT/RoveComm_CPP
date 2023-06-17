@@ -6,9 +6,6 @@
    Author:           Eli Byrd and Clayton Cowen
    Description:
 */
-
-#include "../../../src/Autonomy_Globals.h"
-
 #include <array>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -40,29 +37,29 @@ enum RoveCommManifestStrings
 
 struct RoveCommBoardCommand
 {
-	std::string szName;
-	int iDataId;
-	std::string szDataType;
-	int iDataCount;
+		std::string szName;
+		int iDataId;
+		std::string szDataType;
+		int iDataCount;
 };
 
 struct RoveCommBoard
 {
-	std::string szIPAddress;
-	std::vector<RoveCommBoardCommand> vCommands;
-	std::vector<RoveCommBoardCommand> vTelemetry;
+		std::string szIPAddress;
+		std::vector<RoveCommBoardCommand> vCommands;
+		std::vector<RoveCommBoardCommand> vTelemetry;
 };
 
 class RoveCommManifestHandler
 {
-  private:
-	RoveCommBoard pCoreBoard;
-	RoveCommBoard pNavBoard;
+	public:
+		void SetupBoard(RoveCommManifestIdentifiers eValue);
 
-  public:
-	void SetupBoard(RoveCommManifestIdentifiers eValue);
+		std::string GetIPAddress(RoveCommManifestIdentifiers eIdentifier) const;
 
-	std::string GetIPAddress(RoveCommManifestIdentifiers eIdentifier) const;
+	private:
+		RoveCommBoard pCoreBoard;
+		RoveCommBoard pNavBoard;
 };
 
 #endif	  // ROVECOMMMANIFESTHANDLER_H

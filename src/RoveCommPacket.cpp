@@ -6,8 +6,10 @@
    Author:           Eli Byrd and Clayton Cowen
    Description:
 */
+#include "RoveCommPacket.h"
 
-template<typename T> RoveCommPacket<T>::RoveCommPacket()
+template<typename T>
+RoveCommPacket<T>::RoveCommPacket()
 {
 	this->m_iDataId	   = 22000;
 	this->m_eDataType  = DOUBLE_T;
@@ -16,21 +18,28 @@ template<typename T> RoveCommPacket<T>::RoveCommPacket()
 	this->m_sIPAddress = {192, 168, 218, 1, 194};
 }
 
-template<typename T> void RoveCommPacket<T>::SetIPAddress(const std::string& szIPAddress, int iPort)
+template<typename T>
+void RoveCommPacket<T>::SetIPAddress(const std::string& szIPAddress, int iPort)
 {
 	// this->m_sIPAddress.m_szIPAddress = szIPAddress;
 	this->m_sIPAddress.m_iPort = iPort;
 }
 
-template<typename T> std::string RoveCommPacket<T>::GetIPAddress() { return m_sIPAddress.GetSZData(); }
+template<typename T>
+std::string RoveCommPacket<T>::GetIPAddress()
+{
+	return m_sIPAddress.GetSZData();
+}
 
-template<typename T> short unsigned int RoveCommPacket<T>::GetPort()
+template<typename T>
+short unsigned int RoveCommPacket<T>::GetPort()
 {
 
 	return m_sIPAddress.GetIData(NetworkAddressIntegers::NAI_PORT);
 }
 
-template<typename T> char RoveCommPacket<T>::GetCData(DataTypes eType)
+template<typename T>
+char RoveCommPacket<T>::GetCData(DataTypes eType)
 {
 
 	char cValue;
@@ -52,7 +61,8 @@ template<typename T> char RoveCommPacket<T>::GetCData(DataTypes eType)
 	return cValue;
 }
 
-template<typename T> void RoveCommPacket<T>::Print()
+template<typename T>
+void RoveCommPacket<T>::Print()
 {
 	std::printf("----------\n");
 	std::printf("ID:    %d\n", m_iDataId);

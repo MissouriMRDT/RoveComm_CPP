@@ -6,7 +6,6 @@
    Author:           Eli Byrd and Clayton Cowen
    Description:
 */
-
 #include "NetworkAddress.h"
 
 NetworkAddress::NetworkAddress()

@@ -8,7 +8,6 @@
 */
 
 // #include "RoveCommEthernetTCP.h"
-#include "../../../src/Autonomy_Globals.h"
 #include "RoveCommEthernetUDP.h"
 #include "RoveCommManifestHandler.h"
 #include "RoveCommPacket.h"
@@ -20,11 +19,11 @@
 
 class RoveComm
 {
-	private:
-		RoveCommManifestHandler pManifestHandler;
-
 	public:
 		RoveComm();
+
+	private:
+		RoveCommManifestHandler pManifestHandler;
 };
 
 #endif	  // ROVECOMM_H

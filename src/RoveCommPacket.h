@@ -27,29 +27,31 @@ enum DataTypes
 	CHAR
 };
 
-template<typename T> class RoveCommPacket
+template<typename T>
+class RoveCommPacket
 {
-  private:
-	int m_iDataId {};
-	DataTypes m_eDataType;
-	T m_tData;
-	int m_iDataCount {};
-	NetworkAddress m_sIPAddress;
+	public:
+		RoveCommPacket();
+		T GetDataPacket();
 
-  public:
-	RoveCommPacket();
+		void SetIPAddress(const std::string& szIPAddress, int iPort);
+		std::string GetIPAddress();
+		short unsigned int GetPort();
+		char GetCData(DataTypes eType);
+		void Print();
 
-	T GetDataPacket();
-
-	void SetIPAddress(const std::string& szIPAddress, int iPort);
-	std::string GetIPAddress();
-	short unsigned int GetPort();
-	char GetCData(DataTypes eType);
-	void Print();
+	private:
+		int m_iDataId {};
+		DataTypes m_eDataType;
+		T m_tData;
+		int m_iDataCount {};
+		NetworkAddress m_sIPAddress;
 };
 
-template<typename T> T RoveCommPacket<T>::GetDataPacket() { return m_tData; }
-
-#	include "RoveCommPacket.hpp"
+template<typename T>
+T RoveCommPacket<T>::GetDataPacket()
+{
+	return m_tData;
+}
 
 #endif	  // ROVECOMMPACKET_H
