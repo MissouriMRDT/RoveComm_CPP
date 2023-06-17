@@ -2,8 +2,8 @@
    RoveCommManifestHandler.cpp
    Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
 
-   Date:             5/29/2023
-   Author:           Eli Byrd and Clayton Cowen
+   Date:			 5/29/2023
+   Author:		   Eli Byrd and Clayton Cowen
    Description:
 */
 
@@ -59,11 +59,10 @@ void RoveCommManifestHandler::SetupBoard(RoveCommManifestIdentifiers eValue)
 			// Save Nav Board Telemetry
 			for (auto &szNavTelemetryName : szNavTelemetryNames)
 			{
-				pNavBoard.vTelemetry.push_back(
-					{szNavTelemetryName,
-					 pNavTelemetry.get_child(szNavTelemetryName).get<int>("dataId"),
-					 pNavTelemetry.get_child(szNavTelemetryName).get<std::string>("dataType"),
-					 pNavTelemetry.get_child(szNavTelemetryName).get<int>("dataCount")});
+				pNavBoard.vTelemetry.push_back({szNavTelemetryName,
+												pNavTelemetry.get_child(szNavTelemetryName).get<int>("dataId"),
+												pNavTelemetry.get_child(szNavTelemetryName).get<std::string>("dataType"),
+												pNavTelemetry.get_child(szNavTelemetryName).get<int>("dataCount")});
 			}
 
 			break;

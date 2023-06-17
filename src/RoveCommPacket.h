@@ -2,8 +2,8 @@
    RoveCommPacket.h
    Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
 
-   Date:             5/23/2023
-   Author:           Eli Byrd and Clayton Cowen
+   Date:			 5/23/2023
+   Author:		   Eli Byrd and Clayton Cowen
    Description:
 */
 

@@ -2,8 +2,8 @@
    NetworkAddress.cpp
    Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
 
-   Date:             5/23/2023
-   Author:           Eli Byrd and Clayton Cowen
+   Date:			 5/23/2023
+   Author:		   Eli Byrd and Clayton Cowen
    Description:
 */
 #include "NetworkAddress.h"
@@ -105,6 +105,5 @@ int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
 
 std::string NetworkAddress::GetSZData()
 {
-	return std::to_string(m_iOctet1) + "." + std::to_string(m_iOctet2) + "." + std::to_string(m_iOctet3) + "."
-		   + std::to_string(m_iOctet4);
+	return std::to_string(m_iOctet1) + "." + std::to_string(m_iOctet2) + "." + std::to_string(m_iOctet3) + "." + std::to_string(m_iOctet4);
 }

@@ -2,8 +2,8 @@
    RoveCommPacket.hpp
    Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
 
-   Date:             5/23/2023
-   Author:           Eli Byrd and Clayton Cowen
+   Date:			 5/23/2023
+   Author:		   Eli Byrd and Clayton Cowen
    Description:
 */
 #include "RoveCommPacket.h"
@@ -65,10 +65,10 @@ template<typename T>
 void RoveCommPacket<T>::Print()
 {
 	std::printf("----------\n");
-	std::printf("ID:    %d\n", m_iDataId);
+	std::printf("ID:	%d\n", m_iDataId);
 	std::printf("Type:  %c\n", GetCData(m_eDataType));
 	std::printf("Count: %d\n", m_iDataCount);
-	std::printf("IP:    %s\n", GetIPAddress().c_str());
+	std::printf("IP:	%s\n", GetIPAddress().c_str());
 
 	switch (m_eDataType)
 	{

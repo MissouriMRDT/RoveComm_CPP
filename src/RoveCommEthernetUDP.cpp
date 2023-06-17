@@ -2,8 +2,8 @@
    RoveCommEthernetUDP.hpp
    Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
 
-   Date:             5/23/2023
-   Author:           Eli Byrd and Clayton Cowen
+   Date:			 5/23/2023
+   Author:		   Eli Byrd and Clayton Cowen
    Description:
 */
 #include "RoveCommEthernetUDP.h"
@@ -78,9 +78,8 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<double_t> pPacket)
 		boost::asio::ip::udp::socket socket {io_context};
 		socket.open(boost::asio::ip::udp::v4());
 
-		socket.send_to(
-			boost::asio::buffer(boost::lexical_cast<std::string>(pPacket.GetDataPacket())),
-			boost::asio::ip::udp::endpoint {boost::asio::ip::make_address(pPacket.GetIPAddress()), pPacket.GetPort()});
+		socket.send_to(boost::asio::buffer(boost::lexical_cast<std::string>(pPacket.GetDataPacket())),
+					   boost::asio::ip::udp::endpoint {boost::asio::ip::make_address(pPacket.GetIPAddress()), pPacket.GetPort()});
 
 		printf("SEND PACKET!\n");
 	}
