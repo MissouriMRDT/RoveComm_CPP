@@ -1,11 +1,12 @@
-/*
-   RoveCommEthernetUDP.h
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/23/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Defines the RoveCommEthernetUDP class.
+ *
+ * @file RoveCommEthernetUDP.h
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 
 #include "NetworkAddress.h"
 #include "RoveCommPacket.h"
@@ -22,6 +23,7 @@ class RoveCommEthernetUDP
 {
 	public:
 		RoveCommEthernetUDP();
+		~RoveCommEthernetUDP();
 		RoveCommEthernetUDP(int iPort);
 
 		int Subscribe(NetworkAddress pSubscribeToIP);

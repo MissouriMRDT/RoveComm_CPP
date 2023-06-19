@@ -1,14 +1,22 @@
-/*
-   RoveComm.cpp
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/21/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Implements the RoveComm class.
+ *
+ * @file RoveComm.cpp
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 
 #include "RoveComm.h"
 
+/******************************************************************************
+ * @brief Construct a new Rove Comm:: Rove Comm object.
+ *
+ *
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ ******************************************************************************/
 RoveComm::RoveComm()
 {
 	pManifestHandler = RoveCommManifestHandler();
@@ -18,3 +26,12 @@ RoveComm::RoveComm()
 	std::cout << pManifestHandler.GetIPAddress(RoveCommManifestIdentifiers::RCMI_CORE) << "\n"
 			  << pManifestHandler.GetIPAddress(RoveCommManifestIdentifiers::RCMI_NAV) << std::endl;
 }
+
+/******************************************************************************
+ * @brief Destroy the Rove Comm:: Rove Comm object.
+ *
+ *
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ ******************************************************************************/
+RoveComm::~RoveComm() {}

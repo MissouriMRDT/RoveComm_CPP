@@ -1,13 +1,21 @@
-/*
-   NetworkAddress.cpp
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/23/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Implements the NetworkAddress class.
+ *
+ * @file NetworkAddress.cpp
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 #include "NetworkAddress.h"
 
+/******************************************************************************
+ * @brief Construct a new Network Address:: Network Address object.
+ *
+ *
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ ******************************************************************************/
 NetworkAddress::NetworkAddress()
 {
 	// IP Address
@@ -20,6 +28,24 @@ NetworkAddress::NetworkAddress()
 	this->m_iPort = 0;
 }
 
+/******************************************************************************
+ * @brief Destroy the Network Address:: Network Address object.
+ *
+ *
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ ******************************************************************************/
+NetworkAddress::~NetworkAddress() {}
+
+/******************************************************************************
+ * @brief Construct a new Network Address:: Network Address object.
+ *
+ * @param szIPAddress - String containing IP address
+ * @param iPort - Port of service associated with IP
+ *
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ ******************************************************************************/
 NetworkAddress::NetworkAddress(std::string szIPAddress, int iPort)
 {
 
@@ -74,6 +100,18 @@ NetworkAddress::NetworkAddress(std::string szIPAddress, int iPort)
 	delete pOctetOfIPAddress;
 }
 
+/******************************************************************************
+ * @brief Construct a new Network Address:: Network Address object.
+ *
+ * @param iOctet1 - First octet of IP address
+ * @param iOctet2 - Second octet of IP address
+ * @param iOctet3 - Third octet of IP address
+ * @param iOctet4 - Four octet of IP address
+ * @param iPort - Port of service associated with IP
+ *
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ ******************************************************************************/
 NetworkAddress::NetworkAddress(int iOctet1, int iOctet2, int iOctet3, int iOctet4, int iPort)
 {
 	// IP Address
@@ -86,6 +124,15 @@ NetworkAddress::NetworkAddress(int iOctet1, int iOctet2, int iOctet3, int iOctet
 	this->m_iPort = iPort;
 }
 
+/******************************************************************************
+ * @brief
+ *
+ * @param eKey -
+ * @return int -
+ *
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ ******************************************************************************/
 int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
 {
 	int iValue = 0;
@@ -103,6 +150,14 @@ int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
 	return iValue;
 }
 
+/******************************************************************************
+ * @brief Getter for IP address data.
+ *
+ * @return std::string - The assembled IP string.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com)
+ * @date 2023-0619
+ ******************************************************************************/
 std::string NetworkAddress::GetSZData()
 {
 	return std::to_string(m_iOctet1) + "." + std::to_string(m_iOctet2) + "." + std::to_string(m_iOctet3) + "." + std::to_string(m_iOctet4);

@@ -1,11 +1,12 @@
-/*
-   RoveComm.h
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/21/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Defines the RoveComm class.
+ *
+ * @file RoveComm.h
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 
 // #include "RoveCommEthernetTCP.h"
 #include "RoveCommEthernetUDP.h"
@@ -21,6 +22,7 @@ class RoveComm
 {
 	public:
 		RoveComm();
+		~RoveComm();
 
 	private:
 		RoveCommManifestHandler pManifestHandler;

@@ -1,11 +1,12 @@
-/*
-   NetworkAddress.h
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/23/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Defines the NetworkAddress class.
+ *
+ * @file NetworkAddress.h
+ * @author ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0619
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 #include <string>
 
 #ifndef NETWORKADDRESS_H
@@ -24,6 +25,7 @@ class NetworkAddress
 {
 	public:
 		NetworkAddress();
+		~NetworkAddress();
 		NetworkAddress(std::string szIPAddress, int iPort);
 		NetworkAddress(int iOctet1, int iOctet2, int iOctet3, int iOctet4, int iPort);
 
