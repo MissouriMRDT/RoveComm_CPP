@@ -1,11 +1,12 @@
-/*
-   RoveCommManifestHandler.h
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/29/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Defines the RoveCommManifestHandler class.
+ *
+ * @file RoveCommManifestHandler.h
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 #include <array>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -53,6 +54,9 @@ struct RoveCommBoard
 class RoveCommManifestHandler
 {
 	public:
+		RoveCommManifestHandler();
+		~RoveCommManifestHandler();
+
 		void SetupBoard(RoveCommManifestIdentifiers eValue);
 
 		std::string GetIPAddress(RoveCommManifestIdentifiers eIdentifier) const;

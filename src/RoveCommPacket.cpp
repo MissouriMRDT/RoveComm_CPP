@@ -1,13 +1,22 @@
-/*
-   RoveCommPacket.hpp
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/23/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Implements the RoveCommPacket class.
+ *
+ * @file RoveCommPacket.cpp
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 #include "RoveCommPacket.h"
 
+/******************************************************************************
+ * @brief Construct a new Rove Comm Packet< T>:: Rove Comm Packet object.
+ *
+ * @tparam T - Template argument for packet type.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
 template<typename T>
 RoveCommPacket<T>::RoveCommPacket()
 {
@@ -18,6 +27,29 @@ RoveCommPacket<T>::RoveCommPacket()
 	this->m_sIPAddress = {192, 168, 218, 1, 194};
 }
 
+/******************************************************************************
+ * @brief Destroy the Rove Comm Packet< T>:: Rove Comm Packet object.
+ *
+ * @tparam T - Template argument for packet type.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
+template<typename T>
+RoveCommPacket<T>::~RoveCommPacket()
+{
+}
+
+/******************************************************************************
+ * @brief Set the destination IP address for packet.
+ *
+ * @tparam T - Template argument for packet type.
+ * @param szIPAddress - String containing 4 octet IPV4 address.
+ * @param iPort - Port to send packet on.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
 template<typename T>
 void RoveCommPacket<T>::SetIPAddress(const std::string& szIPAddress, int iPort)
 {
@@ -25,12 +57,30 @@ void RoveCommPacket<T>::SetIPAddress(const std::string& szIPAddress, int iPort)
 	this->m_sIPAddress.m_iPort = iPort;
 }
 
+/******************************************************************************
+ * @brief Get IP address of packet.
+ *
+ * @tparam T - Template argument for packet type.
+ * @return std::string - String containing IPV4 address for packet.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
 template<typename T>
 std::string RoveCommPacket<T>::GetIPAddress()
 {
 	return m_sIPAddress.GetSZData();
 }
 
+/******************************************************************************
+ * @brief Get port for packet.
+ *
+ * @tparam T - Template argument for packet type.
+ * @return short unsigned int - Port of packet.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
 template<typename T>
 short unsigned int RoveCommPacket<T>::GetPort()
 {
@@ -38,6 +88,31 @@ short unsigned int RoveCommPacket<T>::GetPort()
 	return m_sIPAddress.GetIData(NetworkAddressIntegers::NAI_PORT);
 }
 
+/******************************************************************************
+ * @brief Get the data type of the packet.
+ *
+ * @tparam T - Template argument for packet type.
+ * @return T - Template argument for packet type.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
+template<typename T>
+T RoveCommPacket<T>::GetDataPacket()
+{
+	return m_tData;
+}
+
+/******************************************************************************
+ * @brief Returns a single character representing the given data type.
+ *
+ * @tparam T - Template argument for packet type.
+ * @param eType - Packet data type.
+ * @return char - Single char corresponding to that data type.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
 template<typename T>
 char RoveCommPacket<T>::GetCData(DataTypes eType)
 {
@@ -61,6 +136,14 @@ char RoveCommPacket<T>::GetCData(DataTypes eType)
 	return cValue;
 }
 
+/******************************************************************************
+ * @brief Print info about packet.
+ *
+ * @tparam T - Template argument for packet type.
+ *
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ ******************************************************************************/
 template<typename T>
 void RoveCommPacket<T>::Print()
 {

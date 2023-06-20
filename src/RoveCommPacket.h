@@ -1,11 +1,12 @@
-/*
-   RoveCommPacket.h
-   Copyright (c) 2023 Mars Rover Design Team. All rights reserved.
-
-   Date:			 5/23/2023
-   Author:		   Eli Byrd and Clayton Cowen
-   Description:
-*/
+/******************************************************************************
+ * @brief Defines RoveCommPacket class and associated data types.
+ *
+ * @file RoveCommPacket.h
+ * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @date 2023-0620
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
 
 #include "NetworkAddress.h"
 
@@ -32,11 +33,12 @@ class RoveCommPacket
 {
 	public:
 		RoveCommPacket();
-		T GetDataPacket();
+		~RoveCommPacket();
 
 		void SetIPAddress(const std::string& szIPAddress, int iPort);
 		std::string GetIPAddress();
 		short unsigned int GetPort();
+		T GetDataPacket();
 		char GetCData(DataTypes eType);
 		void Print();
 
@@ -47,11 +49,5 @@ class RoveCommPacket
 		int m_iDataCount {};
 		NetworkAddress m_sIPAddress;
 };
-
-template<typename T>
-T RoveCommPacket<T>::GetDataPacket()
-{
-	return m_tData;
-}
 
 #endif	  // ROVECOMMPACKET_H
