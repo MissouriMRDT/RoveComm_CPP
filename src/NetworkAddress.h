@@ -2,7 +2,7 @@
  * @brief Defines the NetworkAddress class.
  *
  * @file NetworkAddress.h
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved

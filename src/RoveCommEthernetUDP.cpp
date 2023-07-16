@@ -2,7 +2,7 @@
  * @brief Implements the RoveCommEthernetUDP class.
  *
  * @file RoveCommEthernetUDP.cpp
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
@@ -14,7 +14,7 @@
  *
  * @tparam T - Template argument for data type
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -28,7 +28,7 @@ RoveCommEthernetUDP<T>::RoveCommEthernetUDP()
  *
  * @tparam T -
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -42,7 +42,7 @@ RoveCommEthernetUDP<T>::~RoveCommEthernetUDP()
  * @tparam T - Template argument for data type
  * @param iPort - UDP port
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -58,7 +58,7 @@ RoveCommEthernetUDP<T>::RoveCommEthernetUDP(int iPort)
  * @param pSubscribeToIP - IP to subscribe to
  * @return int - Subscribe status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -74,7 +74,7 @@ int RoveCommEthernetUDP<T>::Subscribe(NetworkAddress pSubscribeToIP)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -90,7 +90,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<int8_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -106,7 +106,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<uint8_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -122,7 +122,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<int16_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -138,7 +138,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<uint16_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -154,7 +154,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<int32_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -170,7 +170,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<uint32_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -186,7 +186,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<float_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -220,7 +220,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<double_t> pPacket)
  * @param pPacket - RoveComm packet containing data to write
  * @return int - Write status
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -235,7 +235,7 @@ int RoveCommEthernetUDP<T>::Write(RoveCommPacket<char> pPacket)
  * @tparam T - Template argument for data type
  * @return RoveCommPacket<T> - Packet with data of template type
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>
@@ -249,7 +249,7 @@ RoveCommPacket<T> RoveCommEthernetUDP<T>::ReadPacket()
  *
  * @tparam T - Template argument for data type
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 template<typename T>

@@ -2,7 +2,7 @@
  * @brief Implements the NetworkAddress class.
  *
  * @file NetworkAddress.cpp
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
@@ -13,7 +13,7 @@
  * @brief Construct a new Network Address:: Network Address object.
  *
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 NetworkAddress::NetworkAddress()
@@ -32,7 +32,7 @@ NetworkAddress::NetworkAddress()
  * @brief Destroy the Network Address:: Network Address object.
  *
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 NetworkAddress::~NetworkAddress() {}
@@ -43,7 +43,7 @@ NetworkAddress::~NetworkAddress() {}
  * @param szIPAddress - String containing IP address
  * @param iPort - Port of service associated with IP
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 NetworkAddress::NetworkAddress(std::string szIPAddress, int iPort)
@@ -109,7 +109,7 @@ NetworkAddress::NetworkAddress(std::string szIPAddress, int iPort)
  * @param iOctet4 - Four octet of IP address
  * @param iPort - Port of service associated with IP
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 NetworkAddress::NetworkAddress(int iOctet1, int iOctet2, int iOctet3, int iOctet4, int iPort)
@@ -130,7 +130,7 @@ NetworkAddress::NetworkAddress(int iOctet1, int iOctet2, int iOctet3, int iOctet
  * @param eKey -
  * @return int -
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0619
  ******************************************************************************/
 int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
@@ -155,7 +155,7 @@ int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
  *
  * @return std::string - The assembled IP string.
  *
- * @author Byrdman32 (eli@byrdneststudios.com)
+ * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-0619
  ******************************************************************************/
 std::string NetworkAddress::GetSZData()
