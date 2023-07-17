@@ -2,7 +2,7 @@
  * @brief Implements the RoveCommManifestHandler class.
  *
  * @file RoveCommManifestHandler.cpp
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
@@ -14,7 +14,7 @@
  * @brief Construct a new Rove Comm Manifest Handler:: Rove Comm Manifest Handler object.
  *
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 RoveCommManifestHandler::RoveCommManifestHandler() {}
@@ -23,7 +23,7 @@ RoveCommManifestHandler::RoveCommManifestHandler() {}
  * @brief Destroy the Rove Comm Manifest Handler:: Rove Comm Manifest Handler object.
  *
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 RoveCommManifestHandler::~RoveCommManifestHandler() {}
@@ -34,7 +34,7 @@ RoveCommManifestHandler::~RoveCommManifestHandler() {}
  * @param eValue - Enumerator specifying the type of board. Enum defined in
  * 					RoveCommManifestHandler.h file.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 void RoveCommManifestHandler::SetupBoard(RoveCommManifestIdentifiers eValue)
@@ -109,7 +109,7 @@ void RoveCommManifestHandler::SetupBoard(RoveCommManifestIdentifiers eValue)
  * @param eIdentifier - Enumerator identifying what board to get IP of.
  * @return std::string - String containing 4 octet IPV4 address of board.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 std::string RoveCommManifestHandler::GetIPAddress(RoveCommManifestIdentifiers eIdentifier) const

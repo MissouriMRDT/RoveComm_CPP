@@ -2,7 +2,7 @@
  * @brief Implements the RoveCommPacket class.
  *
  * @file RoveCommPacket.cpp
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
@@ -14,7 +14,7 @@
  *
  * @tparam T - Template argument for packet type.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
@@ -32,7 +32,7 @@ RoveCommPacket<T>::RoveCommPacket()
  *
  * @tparam T - Template argument for packet type.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
@@ -47,7 +47,7 @@ RoveCommPacket<T>::~RoveCommPacket()
  * @param szIPAddress - String containing 4 octet IPV4 address.
  * @param iPort - Port to send packet on.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
@@ -63,7 +63,7 @@ void RoveCommPacket<T>::SetIPAddress(const std::string& szIPAddress, int iPort)
  * @tparam T - Template argument for packet type.
  * @return std::string - String containing IPV4 address for packet.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
@@ -78,7 +78,7 @@ std::string RoveCommPacket<T>::GetIPAddress()
  * @tparam T - Template argument for packet type.
  * @return short unsigned int - Port of packet.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
@@ -94,7 +94,7 @@ short unsigned int RoveCommPacket<T>::GetPort()
  * @tparam T - Template argument for packet type.
  * @return T - Template argument for packet type.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
@@ -110,7 +110,7 @@ T RoveCommPacket<T>::GetDataPacket()
  * @param eType - Packet data type.
  * @return char - Single char corresponding to that data type.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
@@ -141,7 +141,7 @@ char RoveCommPacket<T>::GetCData(DataTypes eType)
  *
  * @tparam T - Template argument for packet type.
  *
- * @author Byrdman32 (eli@byrdneststudios.com), ClayJay3 (claytonraycowen@gmail.com)
+ * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
  * @date 2023-0620
  ******************************************************************************/
 template<typename T>
