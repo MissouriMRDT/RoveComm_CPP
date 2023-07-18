@@ -3,7 +3,7 @@
  *
  * @file NetworkAddress.cpp
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
@@ -14,7 +14,7 @@
  *
  *
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 NetworkAddress::NetworkAddress()
 {
@@ -33,7 +33,7 @@ NetworkAddress::NetworkAddress()
  *
  *
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 NetworkAddress::~NetworkAddress() {}
 
@@ -44,7 +44,7 @@ NetworkAddress::~NetworkAddress() {}
  * @param iPort - Port of service associated with IP
  *
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 NetworkAddress::NetworkAddress(std::string szIPAddress, int iPort)
 {
@@ -108,7 +108,7 @@ NetworkAddress::NetworkAddress(std::string szIPAddress, int iPort)
  * @param iPort - Port of service associated with IP
  *
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 NetworkAddress::NetworkAddress(int iOctet1, int iOctet2, int iOctet3, int iOctet4, int iPort)
 {
@@ -129,7 +129,7 @@ NetworkAddress::NetworkAddress(int iOctet1, int iOctet2, int iOctet3, int iOctet
  * @return int -
  *
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
 {
@@ -154,7 +154,7 @@ int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
  * @return std::string - The assembled IP string.
  *
  * @author Eli Byrd (edbgkk@mst.edu)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 std::string NetworkAddress::GetSZData()
 {

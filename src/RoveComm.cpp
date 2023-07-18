@@ -3,7 +3,7 @@
  *
  * @file RoveComm.cpp
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
@@ -15,7 +15,7 @@
  *
  *
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 RoveComm::RoveComm()
 {
@@ -32,6 +32,6 @@ RoveComm::RoveComm()
  *
  *
  * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 06-19-2023
+ * @date 2023-06-19
  ******************************************************************************/
 RoveComm::~RoveComm() {}
