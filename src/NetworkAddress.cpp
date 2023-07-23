@@ -80,7 +80,7 @@ NetworkAddress::NetworkAddress(std::string szIPAddress, int iPort)
             case 1: this->m_iOctet2 = std::stoi(szOctet); break;
             case 2: this->m_iOctet3 = std::stoi(szOctet); break;
             case 3: this->m_iOctet4 = std::stoi(szOctet); break;
-            default: PLOG_FATAL_(AL_ConsoleLogger) << "Reached Out of Bounds Index"; break;
+            default: break;
         }
 
         // Retrieve the next octet of the IP Address
@@ -142,7 +142,7 @@ int NetworkAddress::GetIData(NetworkAddressIntegers eKey)
         case NAI_OCTET_THREE: iValue = m_iOctet3; break;
         case NAI_OCTET_FOUR: iValue = m_iOctet4; break;
         case NAI_PORT: iValue = m_iPort; break;
-        default: PLOG_FATAL_(AL_ConsoleLogger) << "Reached invalid Index!"; break;
+        default: break;
     }
 
     return iValue;
