@@ -96,6 +96,7 @@ void RoveCommManifestHandler::SetupBoard(RoveCommManifestIdentifiers eValue)
         }
         default:
         {
+            LOG_CRITICAL(g_qSharedLogger, "Reached invalid RoveComm Board!");
             break;
         }
     }
@@ -118,7 +119,7 @@ std::string RoveCommManifestHandler::GetIPAddress(RoveCommManifestIdentifiers eI
     {
         case RCMI_CORE: szIPAddress = pCoreBoard.szIPAddress; break;
         case RCMI_NAV: szIPAddress = pNavBoard.szIPAddress; break;
-        default: break;
+        default: LOG_CRITICAL(g_qSharedLogger, "Requested an invalid board IP Address!"); break;
     }
 
     return szIPAddress;

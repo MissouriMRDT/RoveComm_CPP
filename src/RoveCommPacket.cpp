@@ -127,7 +127,7 @@ char RoveCommPacket<T>::GetCData(DataTypes eType)
         case FLOAT_T: cValue = 'f'; break;
         case DOUBLE_T: cValue = 'd'; break;
         case CHAR: cValue = 'c'; break;
-        default: break;
+        default: LOG_CRITICAL(g_qSharedLogger, "Reached invalid DataType!"); break;
     }
 
     return cValue;
@@ -161,7 +161,7 @@ void RoveCommPacket<T>::Print()
         case FLOAT_T: std::printf("Data:  %f\n", float_t(m_tData)); break;
         case DOUBLE_T: std::printf("Data:  %f\n", double_t(m_tData)); break;
         case CHAR: std::printf("Data:  %c\n", char(m_tData)); break;
-        default: break;
+        default: LOG_CRITICAL(g_qSharedLogger, "Reached invalid DataType!"); break;
     }
 
     std::printf("----------\n");

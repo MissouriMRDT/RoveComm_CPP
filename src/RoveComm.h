@@ -16,7 +16,7 @@
 #include <string>
 
 #ifndef ROVECOMM_H
-#	define ROVECOMM_H
+#define ROVECOMM_H
 
 class RoveComm
 {
