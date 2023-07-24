@@ -17,8 +17,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(RoveComm_CPP VERSION 24.00.00)
 
 ## Include Required CMake Packages
-include(CPack)
-include(CTest)
+if(CPack_CMake_INCLUDED)
+    include(CPack)
+endif()
+if(CTest_CMake_INCLUDED)
+    include(CTest)
+endif()
 
 ## Define Project Name and Version Number for CPack
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
