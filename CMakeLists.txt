@@ -44,7 +44,7 @@ target_link_libraries(GTest::GTest INTERFACE gtest_main)
 enable_testing()
 
 ## Declare the library target.
-add_library(${PROJECT_NAME} STATIC
+add_library(${PROJECT_NAME} SHARED
     src/convert.cpp
     src/convert.h
 )
