@@ -45,12 +45,12 @@ enable_testing()
 
 ## Declare the library target.
 add_library(${PROJECT_NAME} SHARED
-    src/convert.cpp
-    src/convert.h
+    src/RoveComm/convert.cpp
+    src/RoveComm/convert.h
 )
 
 ## Configure the directories to search for header files.
-target_include_directories(${PROJECT_NAME} PRIVATE src)
+target_include_directories(${PROJECT_NAME} PRIVATE src/RoveComm)
 
 ## Set the version property.
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
@@ -59,7 +59,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
 ## Set the public header property to the one with the actual API.
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER src/convert.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER src/RoveComm/convert.h)
 
 ## For access to standard installation directory variables (CMAKE_INSTALL_xDIR).
 include(GNUInstallDirs)
@@ -71,7 +71,7 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 ## Create the pkg-config file from the template.
-configure_file(src/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
+configure_file(src/RoveComm/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
 
 ## Set pkg-config file to install.
 install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc
