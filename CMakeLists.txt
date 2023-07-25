@@ -43,11 +43,12 @@ target_link_libraries(GTest::GTest INTERFACE gtest_main)
 ## Enable to CTest and Google Test Frameworks
 enable_testing()
 
+## Search Project Directories for Header and Source Files
+file(GLOB RoveComm_INCLUDE  CONFIGURE_DEPENDS  "src/RoveComm/*.h")
+file(GLOB RoveComm_SRC      CONFIGURE_DEPENDS  "src/RoveComm/*.cpp")
+
 ## Declare the library target.
-add_library(${PROJECT_NAME} STATIC
-    src/RoveComm/convert.cpp
-    src/RoveComm/convert.h
-)
+add_library(${PROJECT_NAME} STATIC ${RoveComm_INCLUDE} ${RoveComm_SRC})
 
 ## Configure the directories to search for header files.
 target_include_directories(${PROJECT_NAME} PRIVATE src/RoveComm)
@@ -59,7 +60,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
 ## Set the public header property to the one with the actual API.
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER src/RoveComm/convert.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER ${RoveComm_INCLUDE})
 
 ## For access to standard installation directory variables (CMAKE_INSTALL_xDIR).
 include(GNUInstallDirs)
