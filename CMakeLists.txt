@@ -44,7 +44,7 @@ target_link_libraries(GTest::GTest INTERFACE gtest_main)
 enable_testing()
 
 ## Declare the library target.
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} STATIC
     src/RoveComm/convert.cpp
     src/RoveComm/convert.h
 )
