@@ -14,7 +14,7 @@ concurrency:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    container: ghcr.io/missourimrdt/autonomy-ubuntu:2023-07-23-rev2
+    container: ghcr.io/missourimrdt/rovecomm-ubuntu:2023-07-24
 
     steps:
       - name: Extract branch name
@@ -24,7 +24,7 @@ jobs:
 
       - name: Update Branch
         run: |
-          cd /opt/Autonomy_Software/
+          cd /opt/RoveComm_CPP/
           git fetch --force
           branch=${{ steps.extract_branch.outputs.branch }}
           echo $branch
@@ -33,7 +33,7 @@ jobs:
 
       - name: Build Tests
         run: |
-          cd /opt/Autonomy_Software/
+          cd /opt/RoveComm_CPP/
           mkdir build
           cd build
           cmake ..
@@ -42,12 +42,12 @@ jobs:
       - name: Run Unit Tests
         id: run-unit
         run: |
-          cd /opt/Autonomy_Software/build
-          if test -f "Autonomy_Software_UnitTests"; then ./Autonomy_Software_UnitTests ; else echo "No Unit Tests Exist" ; fi
+          cd /opt/RoveComm_CPP/build
+          if test -f "RoveComm_CPP_UnitTests"; then ./RoveComm_CPP_UnitTests ; else echo "No Unit Tests Exist" ; fi
 
       - name: Run Integration Tests
         id: run-integration
         if: success() || (failure() && steps.run-unit.outcome == 'failure')
         run: |
-          cd /opt/Autonomy_Software/build
-          if test -f "Autonomy_Software_IntegrationTests"; then ./Autonomy_Software_IntegrationTests ; else echo "No Integration Tests Exist" ; fi
+          cd /opt/RoveComm_CPP/build
+          if test -f "RoveComm_CPP_IntegrationTests"; then ./RoveComm_CPP_IntegrationTests ; else echo "No Integration Tests Exist" ; fi

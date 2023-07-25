@@ -1,5 +1,5 @@
 # Base Image
-FROM ubuntu:20.04
+FROM stereolabs/zed:4.0-gl-devel-cuda11.4-ubuntu20.04
 LABEL authors="Missouri S&T Mars Rover Design Team"
 LABEL maintainer="Mars Rover Design Team <marsrover@mst.edu>"
 LABEL org.opencontainers.image.source=https://github.com/missourimrdt/rovecomm_cpp
@@ -23,7 +23,7 @@ ARG INSTALL_CMAKE_VERSION_FROM_SOURCE="3.24.3"
 COPY install-cmake.sh /tmp/
 
 RUN if [ "${INSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
-        chmod +x /tmp/install-cmake.sh && /tmp/install-cmake.sh ${INSTALL_CMAKE_VERSION_FROM_SOURCE}; \
+    chmod +x /tmp/install-cmake.sh && /tmp/install-cmake.sh ${INSTALL_CMAKE_VERSION_FROM_SOURCE}; \
     fi && \
     rm -f /tmp/install-cmake.sh
 

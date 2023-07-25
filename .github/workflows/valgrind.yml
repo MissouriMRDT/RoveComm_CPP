@@ -14,7 +14,7 @@ concurrency:
 jobs:
   run-valgrind:
     runs-on: ubuntu-latest
-    container: ghcr.io/missourimrdt/autonomy-ubuntu:2023-07-23-rev2
+    container: ghcr.io/missourimrdt/rovecomm-ubuntu:2023-07-24
 
     steps:
       - name: Extract branch name
@@ -24,7 +24,7 @@ jobs:
 
       - name: Update Branch
         run: |
-          cd /opt/Autonomy_Software/
+          cd /opt/RoveComm_CPP/
           git fetch --force
           branch=${{ steps.extract_branch.outputs.branch }}
           echo $branch
@@ -33,7 +33,7 @@ jobs:
 
       - name: Build Executable
         run: |
-          cd /opt/Autonomy_Software/
+          cd /opt/RoveComm_CPP/
           mkdir build
           cd build
           cmake ..
@@ -41,27 +41,27 @@ jobs:
 
       - name: Run Valgrind
         run: |
-          chmod 777 /opt/Autonomy_Software/tools/valgrind/run_valgrind.sh
-          /opt/Autonomy_Software/tools/valgrind/run_valgrind.sh "GitHub-Action"
+          chmod 777 /opt/RoveComm_CPP/tools/valgrind/run_valgrind.sh
+          /opt/RoveComm_CPP/tools/valgrind/run_valgrind.sh "GitHub-Action"
 
       - name: Analyse Valgrind - Definitely Lost
         if: success() || failure()
         run: |
-          cd /opt/Autonomy_Software/tools/valgrind
+          cd /opt/RoveComm_CPP/tools/valgrind
           if ! grep 'definitely lost' valgrind.rpt; then exit 0; fi
           if grep 'definitely lost: 0' valgrind.rpt; then exit 0; else exit 1; fi
 
       - name: Analyse Valgrind - Indirectly Lost
         if: success() || failure()
         run: |
-          cd /opt/Autonomy_Software/tools/valgrind
+          cd /opt/RoveComm_CPP/tools/valgrind
           if ! grep 'indirectly lost' valgrind.rpt; then exit 0; fi
           if grep 'indirectly lost: 0' valgrind.rpt; then exit 0; else exit 1; fi
 
       - name: Analyse Valgrind - Possibly Lost
         if: success() || failure()
         run: |
-          cd /opt/Autonomy_Software/tools/valgrind
+          cd /opt/RoveComm_CPP/tools/valgrind
           if ! grep 'possibly lost' valgrind.rpt; then exit 0; fi
           if grep 'possibly lost: 0' valgrind.rpt; then exit 0; else exit 1; fi
 
@@ -70,5 +70,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: valgrind.rpt
-          path: /opt/Autonomy_Software/tools/valgrind/valgrind.rpt
+          path: /opt/RoveComm_CPP/tools/valgrind/valgrind.rpt
           retention-days: 1
