@@ -37,13 +37,16 @@ if(PROJECT_IS_TOP_LEVEL)
     add_library(GTest::GTest INTERFACE IMPORTED)
     target_link_libraries(GTest::GTest INTERFACE gtest_main)
 
+    ## Find Eigen3.
+    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
     ## Enable to CTest and Google Test Frameworks
     enable_testing()
 else()
     message(STATUS "RoveComm_CPP -- LIBRARY MODE")
 
     ## Set 'Library Mode' Flag
-    add_compile_definitions(__LIBRARY_MODE__)
+    add_compile_definitions(__ROVECOMM_LIB_MODE__)
 endif()
 
 ## Define Project Name and Version Number for CPack
@@ -92,7 +95,15 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc
 if(PROJECT_IS_TOP_LEVEL)
     ## Create Executable
     add_executable(${PROJECT_NAME}_App "src/main.cpp")
-    target_link_libraries(${PROJECT_NAME}_App quill::quill RoveComm_CPP)
+
+    ## Set Compile Options for Autonomy Software.
+    if(MSVC) # True when compiler is Microsoft Visual C++/simulation of Visual C++ CL.
+        target_compile_options(${PROJECT_NAME}_App PRIVATE /W4 /WX)
+    else()
+        target_compile_options(${PROJECT_NAME}_App PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+
+    target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill RoveComm_CPP)
 
     ## Find all test source files
     file(GLOB UnitTests_SRC             CONFIGURE_DEPENDS  "tests/Unit/**/*.cc")
@@ -119,5 +130,5 @@ else()
     message(STATUS "RoveComm_CPP -- LIBRARY MODE")
 
     ## Set 'Library Mode' Flag
-    add_compile_definitions(__LIBRARY_MODE__)
+    add_compile_definitions(__ROVECOMM_LIB_MODE__)
 endif()
