@@ -8,7 +8,8 @@
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
 
-#include "../../../../../src/AutonomyGlobals.h"
+#include "RoveCommGlobals.h"
+
 #include <string>
 
 #ifndef NETWORKADDRESS_H

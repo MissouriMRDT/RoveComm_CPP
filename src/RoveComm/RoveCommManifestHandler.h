@@ -8,7 +8,8 @@
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
 
-#include "../../../../../src/AutonomyGlobals.h"
+#include "RoveCommGlobals.h"
+
 #include <array>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
