@@ -8,8 +8,13 @@
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
 
+#ifdef __ROVECOMM_LIB_MODE__
+#include "../../../../../src/AutonomyGlobals.h"
+#else    // __ROVECOMM_LIB_MODE__
+#include "../RoveSommGlobals.h"
+#endif    // __ROVECOMM_LIB_MODE__
+
 #include "NetworkAddress.h"
-#include "RoveCommGlobals.h"
 
 #include <string>
 

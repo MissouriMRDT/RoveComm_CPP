@@ -8,7 +8,11 @@
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
 
-#include "RoveCommGlobals.h"
+#ifdef __ROVECOMM_LIB_MODE__
+#include "../../../../../src/AutonomyGlobals.h"
+#else    // __ROVECOMM_LIB_MODE__
+#include "../RoveSommGlobals.h"
+#endif    // __ROVECOMM_LIB_MODE__
 
 #include <array>
 #include <boost/property_tree/json_parser.hpp>
