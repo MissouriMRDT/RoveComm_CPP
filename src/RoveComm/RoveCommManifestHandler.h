@@ -8,10 +8,19 @@
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
 
+//
+// 07/26/2023 - Eli Byrd (edbgkk@mst.edu) Note:
+// Since this project is setup as a library and depends on some packages and setup
+// that are defined in the global header files in the repositories that make use
+// of this library. When the library is compiled in CMakeLists.txt, we define a
+// macro that can be used as a lookup to determine if we are in library mode or if
+// we are running the source only. We can then use this macro to determine which
+// globals header to include.
+//
 #ifdef __ROVECOMM_LIB_MODE__
 #include "../../../../../src/AutonomyGlobals.h"
 #else    // __ROVECOMM_LIB_MODE__
-#include "../RoveSommGlobals.h"
+#include "../RoveCommGlobals.h"
 #endif    // __ROVECOMM_LIB_MODE__
 
 #include <array>
