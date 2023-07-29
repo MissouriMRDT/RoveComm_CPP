@@ -26,9 +26,10 @@ jobs:
       - name: Generate Manifest and Commit
         run: |
           git branch
-          date > generated.txt
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "generated"
+          cd tools/RoveComm
+          python parser.py
+          git config user.name MissouriMRDT
+          git config user.email marsrover.mst.edu
+          git add -f ../../src/RoveComm/Manifest.h
+          git commit -m "** Update Manifest **"
           git push
