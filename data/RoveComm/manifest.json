@@ -1,5 +1,5 @@
 {
-    "ManifestSpecVersion": 3,
+    "ManifestSpecVersion": 3.1,
     "DataTypes": {
         "INT8_T": 0,
         "UINT8_T": 1,
