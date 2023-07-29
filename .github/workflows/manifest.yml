@@ -1,7 +1,10 @@
 name: Update Manifest Header
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches: ["development"]
+    paths:
+      - data/RoveComm/manifest.json
 
 concurrency:
   group: "manifest-generator"
@@ -21,6 +24,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          token: ${{ github.token }}
           ref: ${{ steps.extract_branch.outputs.branch }}
 
       - name: Generate Manifest and Commit
@@ -28,7 +32,7 @@ jobs:
           git branch
           cd tools/RoveComm
           python parser.py
-          git config user.name "Missouri S&T Mars Rover Design Team"
+          git config user.name "MissouriMRDT"
           git config user.email "marsrover.mst.edu"
           git add -f ../../src/RoveComm/Manifest.h
           git commit -m "** Automated - Update Manifest **"
