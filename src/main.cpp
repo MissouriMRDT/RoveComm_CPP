@@ -10,6 +10,11 @@
 
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+
 #include "RoveCommGlobals.h"
 
 /******************************************************************************
@@ -22,7 +27,23 @@
  ******************************************************************************/
 int main()
 {
+    // Print Software Header
+    std::ifstream fHeaderText("../data/ASCII/v3.txt");
+    std::string szHeaderText;
+    if (fHeaderText)
+    {
+        std::ostringstream pHeaderText;
+        pHeaderText << fHeaderText.rdbuf();
+        szHeaderText = pHeaderText.str();
+    }
+
+    std::cout << szHeaderText << std::endl;
+    std::cout << "Copyright \u00A9 2023 - Mars Rover Design Team\n" << std::endl;
+
+    // Initialize Loggers
     InitializeLoggers();
+
+    // TODO: Initialize RoveComm
 
     return 0;
 }

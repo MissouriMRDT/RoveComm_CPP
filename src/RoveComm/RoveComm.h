@@ -1,31 +1,14 @@
 /******************************************************************************
- * @brief Defines the RoveComm class.
+ * @brief Main Header for RoveComm C++
  *
  * @file RoveComm.h
- * @author Eli Byrd (edbgkk@mst.edu), ClayJay3 (claytonraycowen@gmail.com)
- * @date 2023-06-19
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2023-07-29
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
 
-// #include "RoveCommEthernetTCP.h"
-#include "RoveCommEthernetUDP.h"
-#include "RoveCommManifestHandler.h"
-#include "RoveCommPacket.h"
-
-#include <string>
-
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
-
-class RoveComm
-{
-    public:
-        RoveComm();
-        ~RoveComm();
-
-    private:
-        RoveCommManifestHandler pManifestHandler;
-};
 
 #endif    // ROVECOMM_H

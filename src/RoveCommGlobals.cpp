@@ -1,5 +1,10 @@
 /******************************************************************************
- * @brief
+ * @brief Defines functions and objects used at the global scope for when
+ *        testing the functionality of RoveComm C++.
+ *
+ *        Note: This is not compiled or packaged into the library that is
+ *              distributed into other projects.
+ *
  *
  * @file RoveCommGlobals.cpp
  * @author Eli Byrd (edbgkk@mst.edu)
@@ -7,6 +12,9 @@
  *
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
+
+// Only worry about compiling if we are not in 'Library-Only Mode'.
+#ifndef __ROVECOMM_LIBRARY_MODE__
 
 #include "RoveCommGlobals.h"
 
@@ -77,3 +85,5 @@ void InitializeLoggers()
     g_qConsoleLogger->init_backtrace(2, quill::LogLevel::Critical);
     g_qSharedLogger->init_backtrace(2, quill::LogLevel::Critical);
 }
+
+#endif    // __ROVECOMM_LIBRARY_MODE__

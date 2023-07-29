@@ -93,8 +93,11 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc
 )
 
 if(PROJECT_IS_TOP_LEVEL)
+    ## Find all main source files
+    file(GLOB Main_SRC  CONFIGURE_DEPENDS  "src/*.cpp")
+    
     ## Create Executable
-    add_executable(${PROJECT_NAME}_App "src/main.cpp")
+    add_executable(${PROJECT_NAME}_App ${Main_SRC})
 
     ## Set Compile Options for Autonomy Software.
     if(MSVC) # True when compiler is Microsoft Visual C++/simulation of Visual C++ CL.
@@ -103,6 +106,7 @@ if(PROJECT_IS_TOP_LEVEL)
         target_compile_options(${PROJECT_NAME}_App PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
+    ## Attach libraries to Executable
     target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill RoveComm_CPP)
 
     ## Find all test source files

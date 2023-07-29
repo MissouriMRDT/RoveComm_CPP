@@ -4,6 +4,11 @@
 .vscode/
 valgrind.rpt
 
+### RoveComm ###\
+# Note: To limit local edits that get pushed and then overridden, we include this in the .gitignore.
+# However, the GitHub Action will be allowed to push by bypassing the .gitignore.
+Manifest.h
+
 # Documentation. This is a special rule that uses ! negations.
 docs/*
 !docs/*.md
