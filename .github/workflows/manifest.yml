@@ -1,7 +1,8 @@
 name: Update Manifest Header
 
 on:
-  workflow_dispatch:
+  issue_comment:
+    types: [created, edited, deleted]
 
 concurrency:
   group: "manifest-generator"
@@ -9,8 +10,8 @@ concurrency:
 
 jobs:
   update-manifest:
+    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/update-manifest') }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Extract branch name
         shell: bash
