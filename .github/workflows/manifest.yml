@@ -28,8 +28,8 @@ jobs:
           git branch
           cd tools/RoveComm
           python parser.py
-          git config user.name MissouriMRDT
-          git config user.email marsrover.mst.edu
+          git config user.name "Missouri S&T Mars Rover Design Team"
+          git config user.email "marsrover.mst.edu"
           git add -f ../../src/RoveComm/Manifest.h
-          git commit -m "** Update Manifest **"
+          git commit -m "** Automated - Update Manifest **"
           git push
