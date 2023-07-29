@@ -28,8 +28,6 @@ header = [
     "\n",
 ]
 
-# Testing that this doesn't re-run action
-
 # Maps types from json to c types
 type_to_ctype = {
     "INT8_T"    : "int8_t",
