@@ -31,7 +31,7 @@ jobs:
           cd tools/RoveComm
           python parser.py
           git config user.name "MissouriMRDT"
-          git config user.email "marsrover.mst.edu"
+          git config user.email "marsrover@mst.edu"
           git add -f ../../src/RoveComm/Manifest.h
           git commit -m "** Automated - Manifest Update **"
           git push
