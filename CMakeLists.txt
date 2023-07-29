@@ -1,6 +1,6 @@
 ####################################################################################################################
 ##											    RoveComm C++												   	  ##
-##											v24.00.00 Build 000												 	  ##
+##											 v3.00.00 Build 000												 	  ##
 ##										  Mars Rover Design Team												  ##
 ##								   Copyright 2023 - All Rights Reserved										 	  ##
 ####################################################################################################################
@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ## Project Name and Software Version Number
-project(RoveComm_CPP VERSION 24.00.00)
+project(RoveComm_CPP VERSION 3.00.00)
 
 ## Include Required CMake Packages
 if(CPack_CMake_INCLUDED)
@@ -46,7 +46,7 @@ else()
     message(STATUS "RoveComm_CPP -- LIBRARY MODE")
 
     ## Set 'Library Mode' Flag
-    add_compile_definitions(__ROVECOMM_LIB_MODE__)
+    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__)
 endif()
 
 ## Define Project Name and Version Number for CPack
@@ -130,5 +130,5 @@ else()
     message(STATUS "RoveComm_CPP -- LIBRARY MODE")
 
     ## Set 'Library Mode' Flag
-    add_compile_definitions(__ROVECOMM_LIB_MODE__)
+    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__)
 endif()

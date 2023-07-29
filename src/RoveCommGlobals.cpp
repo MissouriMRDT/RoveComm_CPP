@@ -1,3 +1,15 @@
+/******************************************************************************
+ * @brief
+ *
+ * @file RoveCommGlobals.cpp
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2023-07-29
+ *
+ * @copyright Copyright MRDT 2023 - All Rights Reserved
+ ******************************************************************************/
+
+#include "RoveCommGlobals.h"
+
 // Forward Declarations
 quill::Logger* g_qFileLogger;
 quill::Logger* g_qConsoleLogger;

@@ -8,7 +8,7 @@
  * @copyright Copyright MRDT 2023 - All Rights Reserved
  ******************************************************************************/
 
-#ifndef __ROVECOMM_LIB_MODE__
+#ifndef __ROVECOMM_LIBRARY_MODE__
 
 #include "RoveCommGlobals.h"
 
@@ -27,4 +27,4 @@ int main()
     return 0;
 }
 
-#endif    // __ROVECOMM_LIB_MODE__
+#endif    // __ROVECOMM_LIBRARY_MODE__
