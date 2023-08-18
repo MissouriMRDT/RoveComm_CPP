@@ -38,7 +38,8 @@ RUN echo "America/Chicago" > /etc/localtime
 RUN echo "CUDA Version ${CUDA_MAJOR}.${CUDA_MINOR}.0" > /usr/local/cuda/version.txt
 
 # Install Required Ubuntu Packages
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN rm /etc/apt/sources.list.d/cuda.list && apt-get update && \
+    apt-get install --no-install-recommends -y \
     build-essential gdb wget less udev zstd sudo libgomp1 libswscale-dev \
     cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev \
     libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev tzdata curl \
