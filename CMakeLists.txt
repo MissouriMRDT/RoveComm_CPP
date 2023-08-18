@@ -17,10 +17,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(RoveComm_CPP VERSION 3.00.00)
 
 ## Include Required CMake Packages
-if(CPack_CMake_INCLUDED)
+if(NOT CPack_CMake_INCLUDED)
     include(CPack)
 endif()
-if(CTest_CMake_INCLUDED)
+if(NOT CTest_CMake_INCLUDED)
     include(CTest)
 endif()
 
@@ -54,7 +54,9 @@ set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 set(CPACK_PACKAGE_VENDOR "Mars Rover Design Team")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_GENERATOR "SH")
+set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/data/CPACK/logo.ico")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
+set(CPACK_GENERATOR "STGZ")
 
 ## Search Project Directories for Header and Source Files
 file(GLOB RoveComm_INCLUDE  CONFIGURE_DEPENDS  "src/RoveComm/*.h")
