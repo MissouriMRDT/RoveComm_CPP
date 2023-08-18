@@ -6,14 +6,16 @@
         // "--gpus all", // add all available GPUs
         // "--runtime nvidia", // Use the NVIDIA container runtime.
         "--privileged", // grants permission to the container to access USBs
-        "-e DISPLAY", // Makes DISPLAY environment variable available in the container.
+        "-e DISPLAY" // Makes DISPLAY environment variable available in the container.
         // "-v /tmp/.X11-unix:/tmp/.X11-unix" // Required for container to access display.
     ],
-    "image": "ghcr.io/missourimrdt/rovecomm-ubuntu:2023-07-24",
-    // "image": "ghcr.io/missourimrdt/rovecomm-jetpack:2023-07-24
+    // "image": "ghcr.io/missourimrdt/rovecomm-jammy:latest",
+    "image": "ghcr.io/missourimrdt/rovecomm-focal:latest",
+    // "image": "ghcr.io/missourimrdt/rovecomm-jetpack:latest",
     // "build": {
-    // "dockerfile": "Dockerfile_Ubuntu"
-    // "dockerfile": "Dockerfile_JetPack"
+    //     "dockerfile": "Dockerfile_Jammy"
+    //     "dockerfile": "Dockerfile_Focal"
+    //     "dockerfile": "Dockerfile_JetPack"
     // },
     // Features to add to the dev container. More info: https://containers.dev/features.
     // "features": {},
@@ -81,7 +83,7 @@
                     "data",
                     "docs",
                     ".devcontainer",
-                    "README.md",
+                    "README.md"
                 ],
                 // Doxygen Document Generator extension settings.
                 "doxdocgen.c.firstLine": "/******************************************************************************",
@@ -130,7 +132,7 @@
                 "doxdocgen.generic.useGitUserName": true
             }
         }
-    },
+    }
     // Connect as root instead. More info: https://aka.ms/dev-containers-non-root.
     //"remoteUser": "root"
 }
