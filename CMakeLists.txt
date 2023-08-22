@@ -71,6 +71,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE src/RoveComm)
 ## Set the version property.
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
+## Set the language property.
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+
 ## Set the shared object version property to the project's major version.
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
