@@ -17,7 +17,7 @@ header = [
     " * @author Missouri S&T - Mars Rover Design Team\n",
     " * @date <date>\n",
     " *\n",
-    " * @copyright Copyright MRDT 2023 - All Rights Reserved\n",
+    " * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved\n",
     " ******************************************************************************/\n",
     "\n",
     "#ifndef MANIFEST_H\n",

@@ -10,7 +10,7 @@
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-07-29
  *
- * @copyright Copyright MRDT 2023 - All Rights Reserved
+ * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved
  ******************************************************************************/
 
 // Only worry about compiling if we are not in 'Library-Only Mode'.
@@ -46,7 +46,7 @@ void InitializeLoggers()
     szFilenameWithExtension += ".log";
 
     // Create Handlers
-    std::shared_ptr<quill::Handler> qFileHandler    = quill::rotating_file_handler(szFilenameWithExtension, "w", quill::FilenameAppend::None, 1024, 5);
+    std::shared_ptr<quill::Handler> qFileHandler    = quill::rotating_file_handler(szFilenameWithExtension);
     std::shared_ptr<quill::Handler> qConsoleHandler = quill::stdout_handler();
 
     // Configure Patterns
