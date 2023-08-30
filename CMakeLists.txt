@@ -59,8 +59,8 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CP
 set(CPACK_GENERATOR "STGZ")
 
 ## Search Project Directories for Header and Source Files
-file(GLOB RoveComm_INCLUDE  CONFIGURE_DEPENDS  "src/RoveComm/*.h")
-file(GLOB RoveComm_SRC      CONFIGURE_DEPENDS  "src/RoveComm/*.cpp")
+file(GLOB_RECURSE  RoveComm_INCLUDE  CONFIGURE_DEPENDS  "src/RoveComm/*.h")
+file(GLOB_RECURSE  RoveComm_SRC      CONFIGURE_DEPENDS  "src/RoveComm/*.cpp")
 
 ## Declare the library target.
 add_library(${PROJECT_NAME} STATIC ${RoveComm_INCLUDE} ${RoveComm_SRC})
@@ -78,7 +78,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
 ## Set the public header property to the one with the actual API.
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "src/RoveComm/RoveCommGlobals.h")
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "src/RoveComm/RoveComm.h")
 
 ## For access to standard installation directory variables (CMAKE_INSTALL_xDIR).
 include(GNUInstallDirs)
@@ -100,19 +100,24 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc
 if(PROJECT_IS_TOP_LEVEL)
     ## Find all main source files
     file(GLOB Main_SRC  CONFIGURE_DEPENDS  "src/*.cpp")
+    file(GLOB Main_SRC  CONFIGURE_DEPENDS  "src/*.cpp")
     
     ## Create Executable
-    add_executable(${PROJECT_NAME}_App ${Main_SRC})
+    add_executable(${PROJECT_NAME}_Client_App src/RoveCommGlobals.cpp src/main-client.cpp)
+    add_executable(${PROJECT_NAME}_Server_App src/RoveCommGlobals.cpp src/main-server.cpp)
 
     ## Set Compile Options for Autonomy Software.
     if(MSVC) # True when compiler is Microsoft Visual C++/simulation of Visual C++ CL.
-        target_compile_options(${PROJECT_NAME}_App PRIVATE /W4 /WX)
+        target_compile_options(${PROJECT_NAME}_Client_App PRIVATE /W4 /WX)
+        target_compile_options(${PROJECT_NAME}_Server_App PRIVATE /W4 /WX)
     else()
-        target_compile_options(${PROJECT_NAME}_App PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(${PROJECT_NAME}_Client_App PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(${PROJECT_NAME}_Server_App PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     ## Attach libraries to Executable
-    target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill RoveComm_CPP)
+    target_link_libraries(${PROJECT_NAME}_Client_App PRIVATE quill::quill RoveComm_CPP)
+    target_link_libraries(${PROJECT_NAME}_Server_App PRIVATE quill::quill RoveComm_CPP)
 
     ## Find all test source files
     file(GLOB UnitTests_SRC             CONFIGURE_DEPENDS  "tests/Unit/**/*.cc")

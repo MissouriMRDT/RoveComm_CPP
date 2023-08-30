@@ -12,11 +12,19 @@
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <sstream>
 #include <string>
 
 #include "RoveCommGlobals.h"
+
+#include "RoveComm/RoveComm.h"
+
+void StartClient()
+{
+    TCPClient().Connect(AddressEntry(172, 17, 0, 2));
+}
 
 /******************************************************************************
  * @brief RoveComm C++ main function.
@@ -45,6 +53,9 @@ int main()
     InitializeLoggers();
 
     // TODO: Initialize RoveComm
+    std::thread th1(StartClient);
+
+    th1.join();
 
     return 0;
 }
