@@ -74,6 +74,9 @@ def insert_packets(board, type):
         this.header_file.write("\n")
 
 def insert_enums(board):
+    """
+    This inserts all Enums for a given type
+    """
     if ("Enums" in this.manifest[board]):
         enums = this.manifest[board]["Enums"]
         this.header_file.write(f"{generate_indent(2)}// Enums\n")
@@ -95,21 +98,85 @@ def insert_enums(board):
             this.header_file.write(f"{output + generate_indent(2) + '};'} \n\n")
 
 def insert_includes():
-    return "\n#ifndef MANIFEST_H\n#define MANIFEST_H\n\n#include <stdint.h>\n\nnamespace manifest\n{\n"
+    """
+    This inserts the guard block, all includes, and opens the manifest namespace
+    """
+    out = "\n"
+    out += "#ifndef MANIFEST_H\n"
+    out += "#define MANIFEST_H\n"
+    out += "\n"
+    out += "#include <stdint.h>\n"
+    out += "\n"
+    out += "namespace manifest\n"
+    out += "{\n"
+
+    return out
 
 def insert_footer():
-    return "}    // namespace manifest\n\n#endif    // MANIFEST_H\n"
+    """
+    This inserts the closing bracket of the manifest namespace, and closes the guard block
+    """
+    out = "}    // namespace manifest\n"
+    out += "\n"
+    out += "#endif    // MANIFEST_H\n"
+
+    return out
 
 def insert_datatypes_enum():
-    return "    enum DataTypes\n    {\n        INT8_T,\n        UINT8_T,\n        INT16_T,\n        UINT16_T,\n        INT32_T,\n        UINT32_T,\n        FLOAT_T,\n        DOUBLE_T,\n        CHAR\n    };\n\n"
+    """
+    This inserts the DataTypes enumeration
+    """
+    out = generate_indent(1) + "enum DataTypes\n"
+    out += generate_indent(1) + "{\n"
+    out += generate_indent(2) + "INT8_T,\n"
+    out += generate_indent(2) + "UINT8_T,\n"
+    out += generate_indent(2) + "INT16_T,\n"
+    out += generate_indent(2) + "UINT16_T,\n"
+    out += generate_indent(2) + "INT32_T,\n"
+    out += generate_indent(2) + "UINT32_T,\n"
+    out += generate_indent(2) + "FLOAT_T,\n"
+    out += generate_indent(2) + "DOUBLE_T,\n"
+    out += generate_indent(2) + "CHAR\n"
+    out += generate_indent(1) + "};\n"
+    out += "\n"
+
+    return out
 
 def insert_address_struct():
-    return "    struct AddressEntry\n    {\n        public:\n            int FIRST_OCTET;\n            int SECOND_OCTET;\n            int THIRD_OCTET;\n            int FOURTH_OCTET;\n    };\n\n"
+    """
+    This inserts the AddressEntry struct
+    """
+    out = generate_indent(1) + "struct AddressEntry\n"
+    out += generate_indent(1) + "{\n"
+    out += generate_indent(2) + "public:\n"
+    out += generate_indent(3) + "int FIRST_OCTET;\n"
+    out += generate_indent(3) + "int SECOND_OCTET;\n"
+    out += generate_indent(3) + "int THIRD_OCTET;\n"
+    out += generate_indent(3) + "int FOURTH_OCTET;\n"
+    out += generate_indent(1) + "};\n"
+    out += "\n"
+
+    return out
 
 def insert_manifest_struct():
-    return "    struct ManifestEntry\n    {\n        public:\n            int DATA_ID;\n            int DATA_COUNT;\n            DataTypes DATA_TYPE;\n    };\n\n"
+    """
+    This inserts the ManifestEntry struct
+    """
+    out = generate_indent(1) + "struct ManifestEntry\n"
+    out += generate_indent(1) + "{\n"
+    out += generate_indent(2) + "public:\n"
+    out += generate_indent(3) + "int DATA_ID;\n"
+    out += generate_indent(3) + "int DATA_COUNT;\n"
+    out += generate_indent(3) + "DataTypes DATA_TYPE;\n"
+    out += generate_indent(1) + "};\n"
+    out += "\n"
+
+    return out
 
 def insert_general():
+    """
+    This inserts the General Information that needs to be included in RoveComm
+    """
     this.update_rate = this.manifest_file["updateRate"]
     this.header_file.write(f"{generate_indent(2)}const int UPDATE_RATE            = {this.update_rate};\n")
 
@@ -129,6 +196,9 @@ def insert_general():
     this.header_file.write(f"{generate_indent(2)}const int SUBNET_MAC_SECOND_BYTE = {this.subnet_mac[1]};\n")
 
 def insert_system():
+    """
+    This inserts the System Information that needs to be included in RoveComm
+    """
     max_len = 0
     this.system_packets = this.manifest_file["SystemPackets"]
 
@@ -146,11 +216,17 @@ def insert_system():
         this.header_file.write(f"{generate_indent(2)}{temp} = {this.system_packets[packet]};\n")
 
 def sanity_check(manifest):
+    """
+    This checks that we are trying to parse the correct version of RoveComm
+    """
     if manifest["ManifestSpecVersion"] != rovecomm_version:
-        ### print("Expected Manifest Spec v" + str(rovecomm_version) + ", Aborting")
+        print("Expected Manifest Spec v" + str(rovecomm_version) + ", Aborting")
         exit()
 
 def generate_file_header():
+    """
+    This adds a doxygen file header to the top of the manifest header
+    """
     output = []
 
     # Append Start Line
@@ -190,6 +266,9 @@ def generate_file_header():
     return output
 
 def generate_doxygen_block(brief):
+    """
+    This adds a doxygen comment block with custom brief
+    """
     output = "/******************************************************************************\n"
 
     # Append Brief
@@ -228,6 +307,9 @@ def generate_doxygen_block(brief):
     return output
 
 def generate_indent(num = 1):
+    """
+    Indents by adding spaces
+    """
     output = ""
     
     for i in range(num):
@@ -236,6 +318,9 @@ def generate_indent(num = 1):
     return output
 
 def generate_spaces(num = 1):
+    """
+    Adds the appropriate number of spaces
+    """
     output = ""
     
     for i in range(num):

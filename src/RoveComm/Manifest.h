@@ -68,7 +68,7 @@ namespace manifest
     };
 
     /******************************************************************************
-     * @brief Drive Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Drive Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -81,7 +81,7 @@ namespace manifest
     }    // namespace Drive
 
     /******************************************************************************
-     * @brief BMS Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief BMS Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -109,7 +109,7 @@ namespace manifest
     }    // namespace BMS
 
     /******************************************************************************
-     * @brief Power Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Power Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -143,7 +143,7 @@ namespace manifest
     }    // namespace Power
 
     /******************************************************************************
-     * @brief Blackbox Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Blackbox Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -159,7 +159,7 @@ namespace manifest
     }    // namespace Blackbox
 
     /******************************************************************************
-     * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -183,7 +183,7 @@ namespace manifest
     }    // namespace Nav
 
     /******************************************************************************
-     * @brief Gimbal Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Gimbal Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -196,7 +196,7 @@ namespace manifest
     }    // namespace Gimbal
 
     /******************************************************************************
-     * @brief Multimedia Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Multimedia Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -210,7 +210,7 @@ namespace manifest
     }    // namespace Multimedia
 
     /******************************************************************************
-     * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -247,7 +247,7 @@ namespace manifest
     }    // namespace Arm
 
     /******************************************************************************
-     * @brief ScienceActuation Board IP Address, Commands, Telemetry, and Error
+     * @brief ScienceActuation Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -280,7 +280,7 @@ namespace manifest
     }    // namespace ScienceActuation
 
     /******************************************************************************
-     * @brief ScienceSensors Board IP Address, Commands, Telemetry, and Error
+     * @brief ScienceSensors Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -300,7 +300,7 @@ namespace manifest
     }    // namespace ScienceSensors
 
     /******************************************************************************
-     * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -335,12 +335,12 @@ namespace manifest
             AVOIDANCE,
             REVERSING,
             STUCK
-        };
+        }; 
 
     }    // namespace Autonomy
 
     /******************************************************************************
-     * @brief Camera1 Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Camera1 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -363,7 +363,7 @@ namespace manifest
     }    // namespace Camera1
 
     /******************************************************************************
-     * @brief Camera2 Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Camera2 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -376,7 +376,7 @@ namespace manifest
     }    // namespace Camera2
 
     /******************************************************************************
-     * @brief Heater Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Heater Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -400,7 +400,7 @@ namespace manifest
     }    // namespace Heater
 
     /******************************************************************************
-     * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -420,7 +420,7 @@ namespace manifest
     }    // namespace SignalStack
 
     /******************************************************************************
-     * @brief Core Board IP Address, Commands, Telemetry, and Error Packet
+     * @brief Core Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-08-30
@@ -455,7 +455,7 @@ namespace manifest
             TELEOP,
             AUTONOMY,
             REACHED_GOAL
-        };
+        }; 
 
         enum PATTERNS
         {
@@ -466,7 +466,7 @@ namespace manifest
             DOTA,
             MCD,
             WINDOWS
-        };
+        }; 
 
     }    // namespace Core
 
