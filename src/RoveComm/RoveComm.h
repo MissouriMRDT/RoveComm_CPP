@@ -11,6 +11,9 @@
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
 
+#include "Consts.h"
+#include "Manifest.h"
+
 /******************************************************************************
  * @brief Since this project is setup as a library sometimes we need to access
  *        our logger and globals from the host application and othertimes, in
