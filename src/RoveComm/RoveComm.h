@@ -11,9 +11,6 @@
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
 
-#include "Consts.h"
-#include "Manifest.h"
-
 /******************************************************************************
  * @brief Since this project is setup as a library sometimes we need to access
  *        our logger and globals from the host application and othertimes, in
@@ -35,5 +32,41 @@
 #else
 #include "../RoveCommGlobals.h"
 #endif
+
+/******************************************************************************
+ * @brief
+ *
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2023-08-30
+ ******************************************************************************/
+#include "Consts.h"
+
+/******************************************************************************
+ * @brief
+ *
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2023-08-30
+ ******************************************************************************/
+#include "Manifest.h"
+
+/******************************************************************************
+ * @brief
+ *
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2023-08-30
+ ******************************************************************************/
+#include "TCP.h"
+
+/******************************************************************************
+ * @brief
+ *
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2023-08-30
+ ******************************************************************************/
+#include "UDP.h"
 
 #endif    // ROVECOMM_H
