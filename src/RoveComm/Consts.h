@@ -17,6 +17,10 @@ namespace constants
     const int ROVECOMM_PACKET_MAX_DATA_COUNT        = 65535;
     const int ROVECOMM_PACKET_HEADER_SIZE           = 6;
     const int ROVECOMM_VERSION                      = 3;
+
+    const unsigned int UDP_PORT                     = 11000;
+    const unsigned int TCP_PORT                     = 12000;
+
 }    // namespace constants
 
 #endif    // CONSTS_H
