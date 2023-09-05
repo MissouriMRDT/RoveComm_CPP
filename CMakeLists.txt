@@ -93,9 +93,15 @@ install(TARGETS ${PROJECT_NAME}
 configure_file(src/RoveComm/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
 
 ## Set pkg-config file to install.
-install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
+if(PROJECT_IS_TOP_LEVEL)
+    install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    )
+else()
+    install(FILES ${CMAKE_BINARY_DIR}/build/_deps/rovecomm_cpp-src/${PROJECT_NAME}.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    )
+endif()
 
 if(PROJECT_IS_TOP_LEVEL)
     ## Find all main source files
