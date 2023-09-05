@@ -78,7 +78,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
 ## Set the public header property to the one with the actual API.
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "src/RoveComm/RoveCommGlobals.h")
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "src/RoveComm/RoveComm.h")
 
 ## For access to standard installation directory variables (CMAKE_INSTALL_xDIR).
 include(GNUInstallDirs)
