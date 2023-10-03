@@ -16,6 +16,43 @@
 #include <map>
 #include "string"
 
+std::map<int, char>types_int_to_byte = {
+    {0, 'b'},
+    {1, 'B'},
+    {2, 'h'},
+    {3, 'H'},
+    {4, 'l'},
+    {5, 'L'},
+    {6, 'f'},
+    {7, 'd'},
+    {8, 'c'}
+}; 
+
+std::map<char, int>types_byte_to_int = {
+    {'b', 0},
+    {'B', 1},
+    {'h', 2},
+    {'H', 3},
+    {'l', 4},
+    {'L', 5},
+    {'f', 6},
+    {'d', 7},
+    {'c', 8}
+}; 
+
+std::map<char, int>types_byte_to_size = {
+    {'b', 1},
+    {'B', 1},
+    {'h', 2},
+    {'H', 2},
+    {'l', 4},
+    {'L', 4},
+    {'f', 4},
+    {'q', 8},
+    {'d', 8},
+    {'c', 1}
+};
+
 /*
         self.data_id = data_id
         self.data_type = data_type
