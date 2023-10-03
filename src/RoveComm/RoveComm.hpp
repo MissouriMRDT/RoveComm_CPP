@@ -14,6 +14,21 @@
 #include "string"
 
 RoveCommPacket::RoveCommPacket(int data_id=0, char data_type='b', int data[], std::string ip="", int port=ROVECOMM_UDP_PORT){
+
+    this->data_id = data_id;
+    this->data_type = data_type;
+    int data_count = std::size(data);
+    this->data = data;
+    //IP should be the full IP address
+    // in case of empty IP default to unknown IP
+    if(ip != "")
+    {
+        ip_address = (ip, port);
+    }
+    else{
+        ip_address = ("0.0.0.0", 0);
+    }
+
     
     return;
     /*

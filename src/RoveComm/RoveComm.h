@@ -84,6 +84,10 @@ public:
 	RoveCommPacket(int data_id=0, char data_type='b', int data[], std::string ip="", int port=ROVECOMM_UDP_PORT);
     void setIp(std::string ip, int port=NULL);
     void print();
+    struct ip_address{
+        string ip;
+        int port;
+    };
 };
 
 class RoveComm
