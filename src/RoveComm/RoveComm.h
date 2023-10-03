@@ -54,6 +54,11 @@ class RoveCommPacket
 */
 {
 public:
+    int data_id;
+    char data_type;
+    int data_count;
+    int data[];
+
 	RoveCommPacket(int data_id=0, char data_type='b', int data[], std::string ip="", int port=ROVECOMM_UDP_PORT);
 
 };
