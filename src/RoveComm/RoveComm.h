@@ -15,6 +15,7 @@
 #include "Consts.h"
 #include <map>
 #include "string"
+#include "function"
 
 std::map<int, char>types_int_to_byte = {
     {0, 'b'},
@@ -53,22 +54,6 @@ std::map<char, int>types_byte_to_size = {
     {'c', 1}
 };
 
-/*
-        self.data_id = data_id
-        self.data_type = data_type
-        self.data_count = len(data)
-        self.data = data
-        # If the ip is less than 4 chars we know it's the 4th octet, otherwise it's the full IP
-        # in case of empty IP default to unknow IP
-        if ip_octet_4 != "" and len(ip_octet_4) < 4:
-            self.ip_address = ("192.168.1." + ip_octet_4, port)
-        elif ip_octet_4 != "" and len(ip_octet_4) >= 4:
-            self.ip_address = (ip_octet_4, port)
-        else:
-            self.ip_address = ("0.0.0.0", 0)
-        return
-*/
-
 class RoveCommPacket
 /*
     The RoveComm packet is the encapsulation of a message sent across the rover
@@ -97,8 +82,20 @@ public:
     int data[];
 
 	RoveCommPacket(int data_id=0, char data_type='b', int data[], std::string ip="", int port=ROVECOMM_UDP_PORT);
-
+    void setIp(std::string ip, int port=NULL);
+    void print();
 };
+
+class RoveComm
+{
+    RoveComm(int udp_port, int tcp_addr);
+    void listen();
+    void set_callback(int data_id, std::function func);
+    void clear_callback(int data_id);
+    void set_default_callback(std::function func);
+    void clear_default_callback
+
+}
 
 std::map<std::string, std::string> get_manifest(std::string path="");
 
