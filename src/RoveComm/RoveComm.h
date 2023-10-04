@@ -91,14 +91,80 @@ public:
 };
 
 class RoveComm
+/*
+    Creates a separate thread to read all RoveComm connections
+
+    Methods:
+    --------
+        write(packet, reliable):
+            Writes the given packet to its destination address
+        set_callback(data_id, func):
+            Sets the callback function for any incoming packets with the given data id
+        close_thread():
+            Shuts down the listener thread
+*/
 {
     RoveComm(int udp_port, int tcp_addr);
     void listen();
-    void set_callback(int data_id, std::function func);
+    void set_callback(int data_id, std::function& func);
     void clear_callback(int data_id);
-    void set_default_callback(std::function func);
-    void clear_default_callback
+    void set_default_callback(std::function& func);
+    void clear_default_callback();
+    int write(RoveCommPacket& packet, bool reliable=False);
+    void close_thread();
+}
 
+class RoveCommEthernetUdp
+/*
+    The UDP implementation for RoveComm. UDP is a fast connectionless transport
+    protocol that guarantees no data corruption but does not guarantee delivery,
+    and if it delivers does not guarantee it being in the same order it was
+    sent.
+
+    Methods:
+    --------
+        write(packet):
+            Transmits a packet to the destination IP and all active subscribers.
+        read():
+            Unpacks the UDP packet and packs it into a RoveComm Packet for easy
+            parsing in other code.
+        subscribe(ip_octet):
+            Subscribes to UDP packets from the given ip
+        close_socket():
+            Closes the UDP socket
+*/
+{
+    RoveCommEthernetUdp(int port=ROVECOMM_UDP_PORT);
+    int subscribe(std::string sub_to_ip);
+    int write(RoveCommPacket& packet);
+    RoveCommPacket& read();
+    void close_socket();
+}
+
+class RoveCommEthernetTcp
+/*
+    The TCP implementation for RoveComm.
+
+    Methods:
+    --------
+        write(packet):
+            Transmits a packet to the destination IP and all active subscribers.
+        read():
+            Receives all TCP packets from open sockets and packs data into RoveCommPacket instances
+        connect(ip_octet):
+            Opens a socket connection to the given address
+        close_sockets():
+            Closes the server socket and all open sockets
+        handle_incoming_connections():
+            Accepts socket connection requests
+*/
+{
+    RoveCommEthernetTcp(std::string HOST, int PORT=ROVECOM_TCP_PORT);
+    void close_sockets();
+    int write(RoveCommPacket& packet);
+    int connect(std::string address);
+    void handle_incoming_connection();
+    RoveCommPacket[]& read();
 }
 
 std::map<std::string, std::string> get_manifest(std::string path="");
