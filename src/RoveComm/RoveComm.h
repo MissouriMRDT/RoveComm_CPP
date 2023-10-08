@@ -13,11 +13,8 @@
 
 #include "Consts.h"
 #include "RoveComm.cpp"
-#include "function"
 #include "string"
 #include <map>
-// FIXME: What is `#include "function"` supposed to do? I have never seen it before
-//        and intellisense doesn't seem to like it.
 
 // FIXME: These maps should be moved to the constants namespace
 std::map<int, char> types_int_to_byte  = {{0, 'b'}, {1, 'B'}, {2, 'h'}, {3, 'H'}, {4, 'l'}, {5, 'L'}, {6, 'f'}, {7, 'd'}, {8, 'c'}};
@@ -92,11 +89,11 @@ class RoveComm
 
         // FIXME: Change function names and paramerter variable names to meet our style guide.
         void listen();
-        void set_callback(int data_id, std::function& func);
+        void set_callback(int data_id, std::string& func);    // Find way to pass function as input
         void clear_callback(int data_id);
-        void set_default_callback(std::function& func);
+        void set_default_callback(std::string& func);         // Find way to pass function as input
         void clear_default_callback();
-        int write(RoveCommPacket& packet, bool reliable = False);
+        int write(RoveCommPacket& packet, bool reliable = false);
         void close_thread();
 }
 
