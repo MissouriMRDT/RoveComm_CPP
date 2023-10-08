@@ -11,49 +11,22 @@
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
 
-#include "RoveComm.hpp"
 #include "Consts.h"
-#include <map>
-#include "string"
+#include "RoveComm.cpp"
 #include "function"
+#include "string"
+#include <map>
+// FIXME: What is `#include "function"` supposed to do? I have never seen it before
+//        and intellisense doesn't seem to like it.
 
-std::map<int, char>types_int_to_byte = {
-    {0, 'b'},
-    {1, 'B'},
-    {2, 'h'},
-    {3, 'H'},
-    {4, 'l'},
-    {5, 'L'},
-    {6, 'f'},
-    {7, 'd'},
-    {8, 'c'}
-}; 
+// FIXME: These maps should be moved to the constants namespace
+std::map<int, char> types_int_to_byte  = {{0, 'b'}, {1, 'B'}, {2, 'h'}, {3, 'H'}, {4, 'l'}, {5, 'L'}, {6, 'f'}, {7, 'd'}, {8, 'c'}};
 
-std::map<char, int>types_byte_to_int = {
-    {'b', 0},
-    {'B', 1},
-    {'h', 2},
-    {'H', 3},
-    {'l', 4},
-    {'L', 5},
-    {'f', 6},
-    {'d', 7},
-    {'c', 8}
-}; 
+std::map<char, int> types_byte_to_int  = {{'b', 0}, {'B', 1}, {'h', 2}, {'H', 3}, {'l', 4}, {'L', 5}, {'f', 6}, {'d', 7}, {'c', 8}};
 
-std::map<char, int>types_byte_to_size = {
-    {'b', 1},
-    {'B', 1},
-    {'h', 2},
-    {'H', 2},
-    {'l', 4},
-    {'L', 4},
-    {'f', 4},
-    {'q', 8},
-    {'d', 8},
-    {'c', 1}
-};
+std::map<char, int> types_byte_to_size = {{'b', 1}, {'B', 1}, {'h', 2}, {'H', 2}, {'l', 4}, {'L', 4}, {'f', 4}, {'q', 8}, {'d', 8}, {'c', 1}};
 
+// FIXME: Switch from using python style to using our doxygen formatter.
 class RoveCommPacket
 /*
     The RoveComm packet is the encapsulation of a message sent across the rover
@@ -75,21 +48,30 @@ class RoveCommPacket
             Prints the packet'c contents
 */
 {
-public:
-    int data_id;
-    char data_type;
-    int data_count;
-    int data[];
+    public:
+        int data_id;    // FIXME: Change member variable names to meet our style guide.
+        char data_type;
+        int data_count;
+        int data[];
 
-	RoveCommPacket(int data_id=0, char data_type='b', int data[], std::string ip="", int port=ROVECOMM_UDP_PORT);
-    void setIp(std::string ip, int port=NULL);
-    void print();
-    struct ip_address{
-        string ip;
-        int port;
-    };
+        // FIXME: Change parameter variables names to meet our style guide.
+        RoveCommPacket(int data_id = 0, char data_type = 'b', int data[], std::string ip = "", int port = ROVECOMM_UDP_PORT);
+
+        // FIXME: Change function names and paramerter variable names to meet our style guide.
+        void setIp(std::string ip, int port = NULL);
+        void print();
+
+        // FIXME: This struct shouldn't be a part of the class and should exist at the global scope.
+        //        Also, make sure to change variable names to meet our style guide. Note that you
+        //        don't need the `m_` for structs.
+        struct ip_address
+        {
+                string ip;
+                int port;
+        };
 };
 
+// FIXME: Switch from using python style to using our doxygen formatter.
 class RoveComm
 /*
     Creates a separate thread to read all RoveComm connections
@@ -104,14 +86,18 @@ class RoveComm
             Shuts down the listener thread
 */
 {
-    RoveComm(int udp_port, int tcp_addr);
-    void listen();
-    void set_callback(int data_id, std::function& func);
-    void clear_callback(int data_id);
-    void set_default_callback(std::function& func);
-    void clear_default_callback();
-    int write(RoveCommPacket& packet, bool reliable=False);
-    void close_thread();
+    public:
+        // FIXME: Change parameter variables names to meet our style guide.
+        RoveComm(int udp_port, int tcp_addr);
+
+        // FIXME: Change function names and paramerter variable names to meet our style guide.
+        void listen();
+        void set_callback(int data_id, std::function& func);
+        void clear_callback(int data_id);
+        void set_default_callback(std::function& func);
+        void clear_default_callback();
+        int write(RoveCommPacket& packet, bool reliable = False);
+        void close_thread();
 }
 
 class RoveCommEthernetUdp
@@ -134,11 +120,15 @@ class RoveCommEthernetUdp
             Closes the UDP socket
 */
 {
-    RoveCommEthernetUdp(int port=ROVECOMM_UDP_PORT);
-    int subscribe(std::string sub_to_ip);
-    int write(RoveCommPacket& packet);
-    RoveCommPacket& read();
-    void close_socket();
+    public:
+        // FIXME: Change parameter variables names to meet our style guide.
+        RoveCommEthernetUdp(int port = ROVECOMM_UDP_PORT);
+
+        // FIXME: Change function names and paramerter variable names to meet our style guide.
+        int subscribe(std::string sub_to_ip);
+        int write(RoveCommPacket& packet);
+        RoveCommPacket& read();
+        void close_socket();
 }
 
 class RoveCommEthernetTcp
@@ -159,14 +149,20 @@ class RoveCommEthernetTcp
             Accepts socket connection requests
 */
 {
-    RoveCommEthernetTcp(std::string HOST, int PORT=ROVECOM_TCP_PORT);
-    void close_sockets();
-    int write(RoveCommPacket& packet);
-    int connect(std::string address);
-    void handle_incoming_connection();
-    RoveCommPacket[]& read();
+    public:
+        // FIXME: Change parameter variables names to meet our style guide.
+        RoveCommEthernetTcp(std::string HOST, int PORT = ROVECOM_TCP_PORT);
+
+        // FIXME: Change function names and paramerter variable names to meet our style guide.
+        void close_sockets();
+        int write(RoveCommPacket& packet);
+        int connect(std::string address);
+        void handle_incoming_connection();
+        RoveCommPacket[] & read();
 }
 
-std::map<std::string, std::string> get_manifest(std::string path="");
+// FIXME: Change function names and paramerter variable names to meet our style guide.
+std::map<std::string, std::string>
+get_manifest(std::string path = "");
 
 #endif    // ROVECOMM_H
