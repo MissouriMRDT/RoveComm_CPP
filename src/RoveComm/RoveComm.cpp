@@ -10,26 +10,26 @@
 
 #include "RoveComm.h"
 #include "Consts.h"
-#include <map>
 #include "string"
+#include <map>
 
-RoveCommPacket::RoveCommPacket(int data_id=0, char data_type='b', int data[], std::string ip="", int port=ROVECOMM_UDP_PORT){
-
-    this->data_id = data_id;
+RoveCommPacket::RoveCommPacket(int data_id = 0, char data_type = 'b', int data[], std::string ip = "", int port = ROVECOMM_UDP_PORT)
+{
+    this->data_id   = data_id;
     this->data_type = data_type;
-    int data_count = std::size(data);
-    this->data = data;
-    //IP should be the full IP address
-    // in case of empty IP default to unknown IP
-    if(ip != "")
+    int data_count  = std::size(data);
+    this->data      = data;
+    // IP should be the full IP address
+    //  in case of empty IP default to unknown IP
+    if (ip != "")
     {
         ip_address = (ip, port);
     }
-    else{
+    else
+    {
         ip_address = ("0.0.0.0", 0);
     }
 
-    
     return;
     /*
         self.data_id = data_id
@@ -48,7 +48,8 @@ RoveCommPacket::RoveCommPacket(int data_id=0, char data_type='b', int data[], st
     */
 }
 
-std::map<std::string, std::string> get_manifest(std::string path=""){
+std::map<std::string, std::string> get_manifest(std::string path = "")
+{
     /*
     Grabs the json manifest file and returns it in map form
 
@@ -62,5 +63,5 @@ std::map<std::string, std::string> get_manifest(std::string path=""){
     */
     std::map<std::string, std::string> manifest;
 
-    return(manifest);
+    return (manifest);
 }

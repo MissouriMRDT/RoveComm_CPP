@@ -10,7 +10,38 @@
 
 #ifndef ROVECOMM_ETHERNET_TCP_H
 #define ROVECOMM_ETHERNET_TCP_H
+#include "Consts.h"
+#include "RoveCommPacket.h"
+#include "string"
 
-// FIXME: Move RoveCommEthernetTcp Class Header Implementation to here!
+class RoveCommEthernetTcp
+/*
+    The TCP implementation for RoveComm.
+
+    Methods:
+    --------
+        write(packet):
+            Transmits a packet to the destination IP and all active subscribers.
+        read():
+            Receives all TCP packets from open sockets and packs data into RoveCommPacket instances
+        connect(ip_octet):
+            Opens a socket connection to the given address
+        close_sockets():
+            Closes the server socket and all open sockets
+        handle_incoming_connections():
+            Accepts socket connection requests
+*/
+{
+    public:
+        // FIXME: Change parameter variables names to meet our style guide.
+        RoveCommEthernetTcp(std::string HOST, int PORT = ROVECOMM_TCP_PORT);
+
+        // FIXME: Change function names and paramerter variable names to meet our style guide.
+        void close_sockets();
+        int write(RoveCommPacket& packet);
+        int connect(std::string address);
+        void handle_incoming_connection();
+        RoveCommPacket[] & read();
+}
 
 #endif    // ROVECOMM_ETHERNET_TCP_H

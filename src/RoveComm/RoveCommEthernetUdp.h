@@ -10,7 +10,38 @@
 
 #ifndef ROVECOMM_ETHERNET_UDP_H
 #define ROVECOMM_ETHERNET_UDP_H
+#include "Consts.h"
+#include "RoveCommPacket.h"
 
-// FIXME: Move RoveCommEthernetUdp Class Header Implementation to here!
+class RoveCommEthernetUdp
+/*
+    The UDP implementation for RoveComm. UDP is a fast connectionless transport
+    protocol that guarantees no data corruption but does not guarantee delivery,
+    and if it delivers does not guarantee it being in the same order it was
+    sent.
+
+    Methods:
+    --------
+        write(packet):
+            Transmits a packet to the destination IP and all active subscribers.
+        read():
+            Unpacks the UDP packet and packs it into a RoveComm Packet for easy
+            parsing in other code.
+        subscribe(ip_octet):
+            Subscribes to UDP packets from the given ip
+        close_socket():
+            Closes the UDP socket
+*/
+{
+    public:
+        // FIXME: Change parameter variables names to meet our style guide.
+        RoveCommEthernetUdp(int port = ROVECOMM_UDP_PORT);
+
+        // FIXME: Change function names and paramerter variable names to meet our style guide.
+        int subscribe(std::string sub_to_ip);
+        int write(RoveCommPacket& packet);
+        RoveCommPacket& read();
+        void close_socket();
+}
 
 #endif    // ROVECOMM_ETHERNET_UDP_H
