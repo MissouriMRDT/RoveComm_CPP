@@ -12,6 +12,12 @@
 #define ROVECOMM_PACKET_H
 #include "string"
 
+struct ip_address
+{
+        std::string ip;
+        int port;
+};
+
 class RoveCommPacket
 /*
     The RoveComm packet is the encapsulation of a message sent across the rover
@@ -37,7 +43,7 @@ class RoveCommPacket
         int m_nDataId;
         char m_cDataType;
         int m_nDataCount;
-        int m_nData[];
+        int m_aData[];
 
         RoveCommPacket(int nDataId = 0, char cDataType = 'b', int aData[], std::string szIp = "", int nPort = ROVECOMM_UDP_PORT);
 
@@ -47,11 +53,6 @@ class RoveCommPacket
         // FIXME: This struct shouldn't be a part of the class and should exist at the global scope.
         //        Also, make sure to change variable names to meet our style guide. Note that you
         //        don't need the `m_` for structs.
-        struct ip_address
-        {
-                std::string ip;
-                int port;
-        };
 };
 
 #endif    // ROVECOMM_PACKET_H

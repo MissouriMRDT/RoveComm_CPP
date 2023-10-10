@@ -41,7 +41,6 @@ class RoveComm
 }
 
 // FIXME: Change function names and paramerter variable names to meet our style guide.
-// std::map<std::string, std::string>
-// get_manifest(std::string path = "");
+ std::map<std::string, std::string> get_manifest(std::string szPath = "");
 
 #endif    // ROVECOMM_H
