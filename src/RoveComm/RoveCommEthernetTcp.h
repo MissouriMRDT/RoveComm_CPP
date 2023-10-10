@@ -33,15 +33,13 @@ class RoveCommEthernetTcp
 */
 {
     public:
-        // FIXME: Change parameter variables names to meet our style guide.
-        RoveCommEthernetTcp(std::string HOST, int PORT = ROVECOMM_TCP_PORT);
+        RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOMM_TCP_PORT);
 
-        // FIXME: Change function names and paramerter variable names to meet our style guide.
-        void close_sockets();
-        int write(RoveCommPacket& packet);
-        int connect(std::string address);
-        void handle_incoming_connection();
-        RoveCommPacket[] & read();
+        void CloseSockets();
+        int Write(RoveCommPacket& Packet);
+        int Connect(std::string szAddress);
+        void HandleIncomingConnection();
+        RoveCommPacket[] & Read();
 }
 
 #endif    // ROVECOMM_ETHERNET_TCP_H

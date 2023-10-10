@@ -34,17 +34,15 @@ class RoveCommPacket
 */
 {
     public:
-        int data_id;    // FIXME: Change member variable names to meet our style guide.
-        char data_type;
-        int data_count;
-        int data[];
+        int m_nDataId;
+        char m_cDataType;
+        int m_nDataCount;
+        int m_nData[];
 
-        // FIXME: Change parameter variables names to meet our style guide.
-        RoveCommPacket(int data_id = 0, char data_type = 'b', int data[], std::string ip = "", int port = ROVECOMM_UDP_PORT);
+        RoveCommPacket(int nDataId = 0, char cDataType = 'b', int aData[], std::string szIp = "", int nPort = ROVECOMM_UDP_PORT);
 
-        // FIXME: Change function names and paramerter variable names to meet our style guide.
-        void setIp(std::string ip, int port = NULL);
-        void print();
+        void SetIp(std::string szIp, int nPort = NULL);
+        void Print();
 
         // FIXME: This struct shouldn't be a part of the class and should exist at the global scope.
         //        Also, make sure to change variable names to meet our style guide. Note that you

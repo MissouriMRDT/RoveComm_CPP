@@ -13,15 +13,6 @@
 #include "Consts.h"
 #include "RoveComm.cpp"
 #include "RoveCommPacket.h"
-#include "string"
-#include <map>
-
-// FIXME: These maps should be moved to the constants namespace
-std::map<int, char> types_int_to_byte  = {{0, 'b'}, {1, 'B'}, {2, 'h'}, {3, 'H'}, {4, 'l'}, {5, 'L'}, {6, 'f'}, {7, 'd'}, {8, 'c'}};
-
-std::map<char, int> types_byte_to_int  = {{'b', 0}, {'B', 1}, {'h', 2}, {'H', 3}, {'l', 4}, {'L', 5}, {'f', 6}, {'d', 7}, {'c', 8}};
-
-std::map<char, int> types_byte_to_size = {{'b', 1}, {'B', 1}, {'h', 2}, {'H', 2}, {'l', 4}, {'L', 4}, {'f', 4}, {'q', 8}, {'d', 8}, {'c', 1}};
 
 class RoveComm
 /*
@@ -38,17 +29,15 @@ class RoveComm
 */
 {
     public:
-        // FIXME: Change parameter variables names to meet our style guide.
-        RoveComm(int udp_port, int tcp_addr);
+        RoveComm(int nUdpPort, int nTcpAddr);
 
-        // FIXME: Change function names and parameter variable names to meet our style guide.
-        void listen();
-        void set_callback(int data_id, std::string& func);    // Find a way to pass function as argument
-        void clear_callback(int data_id);
-        void set_default_callback(std::string& func);         // Find a way to pass function as argument
-        void clear_default_callback();
-        int write(RoveCommPacket& packet, bool reliable = false);
-        void close_thread();
+        void Listen();
+        void SetCallback(int nDataId, std::string& Func);    // Find a way to pass function as argument
+        void ClearCallback(int nDataId);
+        void SetDefaultCallback(std::string& Func);          // Find a way to pass function as argument
+        void ClearDefaultCallback();
+        int Write(RoveCommPacket& Packet, bool bReliable = false);
+        void CloseThread();
 }
 
 // FIXME: Change function names and paramerter variable names to meet our style guide.

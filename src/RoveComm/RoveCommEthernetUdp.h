@@ -34,14 +34,12 @@ class RoveCommEthernetUdp
 */
 {
     public:
-        // FIXME: Change parameter variables names to meet our style guide.
-        RoveCommEthernetUdp(int port = ROVECOMM_UDP_PORT);
+        RoveCommEthernetUdp(int nPort = ROVECOMM_UDP_PORT);
 
-        // FIXME: Change function names and paramerter variable names to meet our style guide.
-        int subscribe(std::string sub_to_ip);
-        int write(RoveCommPacket& packet);
-        RoveCommPacket& read();
-        void close_socket();
+        int Subscribe(std::string szSubToIp);
+        int Write(RoveCommPacket& Packet);
+        RoveCommPacket& Read();
+        void CloseSocket();
 }
 
 #endif    // ROVECOMM_ETHERNET_UDP_H
