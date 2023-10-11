@@ -13,6 +13,7 @@
 #include "Consts.h"
 #include "RoveComm.cpp"
 #include "RoveCommPacket.h"
+#include <map>
 
 class RoveComm
 /*

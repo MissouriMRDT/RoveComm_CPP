@@ -12,6 +12,7 @@
 #define ROVECOMM_ETHERNET_UDP_H
 #include "Consts.h"
 #include "RoveCommPacket.h"
+#include <sys/socket.h>
 
 class RoveCommEthernetUdp
 /*
@@ -34,6 +35,9 @@ class RoveCommEthernetUdp
 */
 {
     public:
+        int m_nRoveCommPort;
+        sockaddr* m_aSubscribers[10];
+        socklen_t RoveCommSocket;
         RoveCommEthernetUdp(int nPort = ROVECOMM_UDP_PORT);
 
         int Subscribe(std::string szSubToIp);

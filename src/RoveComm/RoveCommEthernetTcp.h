@@ -13,6 +13,8 @@
 #include "Consts.h"
 #include "RoveCommPacket.h"
 #include "string"
+#include <map>
+#include <sys/socket.h>
 
 class RoveCommEthernetTcp
 /*
@@ -33,6 +35,11 @@ class RoveCommEthernetTcp
 */
 {
     public:
+        std::map<std::string, socklen_t> m_OpenSockets;
+        std::map<std::string, socklen_t> m_IncomingSockets;
+        std::map<std::string, int> m_Buffers;
+        socklen_t Server;
+
         RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOMM_TCP_PORT);
 
         void CloseSockets();
