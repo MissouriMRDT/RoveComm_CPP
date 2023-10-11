@@ -15,17 +15,17 @@ RoveCommPacket::RoveCommPacket(int nDataId = 0, char cDataType = 'b', int aData[
 {
     this->m_nDataId   = nDataId;
     this->m_cDataType = cDataType;
-    //int data_count  = std::size(data);
-    this->m_aData = aData;
-    // IP should be the full IP address
-    //  in case of empty IP default to unknown IP
+    // int data_count  = std::size(data);
+    // this->m_aData = aData;
+    //  IP should be the full IP address
+    //   in case of empty IP default to unknown IP
     if (szIp != "")
     {
-        ip_address = (szIp, nPort);
+        m_stIp = {szIp, nPort};
     }
     else
     {
-        ip_address = ("0.0.0.0", 0);
+        m_stIp = {"0.0.0.0", 0};
     }
 
     return;

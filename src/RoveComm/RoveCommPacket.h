@@ -14,8 +14,8 @@
 
 struct ip_address
 {
-        std::string ip;
-        int port;
+        std::string szIp;
+        int nPort;
 };
 
 class RoveCommPacket
@@ -43,7 +43,10 @@ class RoveCommPacket
         int m_nDataId;
         char m_cDataType;
         int m_nDataCount;
-        int m_aData[];
+        // FIXME: Find the actual size of the data array
+        static const int m_nMaxData = 9;
+        int m_aData[m_nMaxData];
+        struct ip_address m_stIp;
 
         RoveCommPacket(int nDataId = 0, char cDataType = 'b', int aData[], std::string szIp = "", int nPort = ROVECOMM_UDP_PORT);
 
