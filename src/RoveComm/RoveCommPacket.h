@@ -52,10 +52,6 @@ class RoveCommPacket
 
         void SetIp(std::string szIp, int nPort = NULL);
         void Print();
-
-        // FIXME: This struct shouldn't be a part of the class and should exist at the global scope.
-        //        Also, make sure to change variable names to meet our style guide. Note that you
-        //        don't need the `m_` for structs.
 };
 
 #endif    // ROVECOMM_PACKET_H

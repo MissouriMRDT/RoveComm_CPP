@@ -60,5 +60,3 @@ RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to arr
     RoveCommPacket aReturnValues[10];
     return aReturnValues;
 }
-
-// FIXME: Move RoveCommEthernetTcp Class Source Implementation to here!

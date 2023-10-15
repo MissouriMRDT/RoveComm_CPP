@@ -45,3 +45,13 @@ RoveCommPacket::RoveCommPacket(int nDataId = 0, char cDataType = 'b', int aData[
         return
     */
 }
+
+void RoveCommPacket::SetIp(std::string szIp, int nPort = NULL)
+{
+    return;
+}
+
+void RoveCommPacket::Print()
+{
+    return;
+}

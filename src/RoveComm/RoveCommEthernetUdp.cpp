@@ -9,5 +9,30 @@
  ******************************************************************************/
 
 #include "RoveCommEthernetUdp.h"
+#include "RoveCommPacket.h"
 
-// FIXME: Move RoveCommEthernetUdp Class Source Implementation to here!
+RoveCommEthernetUdp::RoveCommEthernetUdp(int nPort = ROVECOMM_UDP_PORT)
+{
+    return;
+}
+
+int RoveCommEthernetUdp::Subscribe(std::string szSubToIp)
+{
+    return 1;
+}
+
+int RoveCommEthernetUdp::Write(RoveCommPacket& Packet)
+{
+    return 1;
+}
+
+RoveCommPacket& RoveCommEthernetUdp::Read()
+{
+    RoveCommPacket ReturnValue = RoveCommPacket();
+    return ReturnValue;
+}
+
+void RoveCommEthernetUdp::CloseSocket()
+{
+    return;
+}
