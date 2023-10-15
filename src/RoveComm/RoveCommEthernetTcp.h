@@ -46,7 +46,7 @@ class RoveCommEthernetTcp
         int Write(RoveCommPacket& Packet);
         int Connect(std::string szAddress);
         void HandleIncomingConnection();
-        RoveCommPacket[] & Read();
-}
+        RoveCommPacket* Read();
+};
 
 #endif    // ROVECOMM_ETHERNET_TCP_H

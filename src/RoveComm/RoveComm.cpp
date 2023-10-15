@@ -13,6 +13,46 @@
 #include "string"
 #include <map>
 
+RoveComm::RoveComm(int nUdpPort, int nTcpAddr)
+{
+    return;
+}
+
+void RoveComm::Listen()
+{
+    return;
+}
+
+void RoveComm::SetCallback(int nDataId, std::string& Func)    // Find a way to pass function as argument
+{
+    return;
+}
+
+void RoveComm::ClearCallback(int nDataId)
+{
+    return;
+}
+
+void RoveComm::SetDefaultCallback(std::string& Func)    // Find a way to pass function as argument
+{
+    return;
+}
+
+void RoveComm::ClearDefaultCallback()
+{
+    return;
+}
+
+int RoveComm::Write(RoveCommPacket& Packet, bool bReliable = false)
+{
+    return 1;
+}
+
+void RoveComm::CloseThread()
+{
+    return;
+}
+
 std::map<std::string, std::string> get_manifest(std::string szPath = "")
 {
     /*

@@ -12,7 +12,7 @@
 
 RoveCommEthernetTcp::RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOMM_TCP_PORT)
 {
-        return;
+    return;
 
     /*
         self.open_sockets = {}
@@ -35,10 +35,30 @@ RoveCommEthernetTcp::RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOM
     */
 }
 
-void CloseSockets();
-int Write(RoveCommPacket& Packet);
-int Connect(std::string szAddress);
-void HandleIncomingConnection();
-RoveCommPacket[] & Read();
+void RoveCommEthernetTcp::CloseSockets()
+{
+    return;
+}
+
+int RoveCommEthernetTcp::Write(RoveCommPacket& Packet)
+{
+    return 1;
+}
+
+int RoveCommEthernetTcp::Connect(std::string szAddress)
+{
+    return 1;
+}
+
+void RoveCommEthernetTcp::HandleIncomingConnection()
+{
+    return;
+}
+
+RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to array of RoveCommPackets
+{
+    RoveCommPacket aReturnValues[10];
+    return aReturnValues;
+}
 
 // FIXME: Move RoveCommEthernetTcp Class Source Implementation to here!

@@ -31,7 +31,6 @@ class RoveComm
 {
     public:
         RoveComm(int nUdpPort, int nTcpAddr);
-
         void Listen();
         void SetCallback(int nDataId, std::string& Func);    // Find a way to pass function as argument
         void ClearCallback(int nDataId);
@@ -41,7 +40,6 @@ class RoveComm
         void CloseThread();
 };
 
-// FIXME: Change function names and paramerter variable names to meet our style guide.
-std::map<std::string, std::string> get_manifest(std::string szPath = "");
+std::map<std::string, std::string> GetManifest(std::string szPath = "");
 
 #endif    // ROVECOMM_H
