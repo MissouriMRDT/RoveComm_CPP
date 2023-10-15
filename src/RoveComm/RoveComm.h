@@ -32,7 +32,7 @@ class RoveComm
 */
 {
     public:
-        std::map<std::string, std::string> Callbacks;
+        std::map<int, std::string> Callbacks;
         std::string DefaultCallback;
         RoveCommEthernetUdp UdpNode;
         RoveCommEthernetTcp TcpNode;
