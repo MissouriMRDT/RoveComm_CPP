@@ -10,6 +10,11 @@
 
 #include "RoveCommEthernetTcp.h"
 
+RoveCommEthernetTcp::RoveCommEthernetTcp()
+{
+    return;
+}
+
 RoveCommEthernetTcp::RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOMM_TCP_PORT)
 {
     return;

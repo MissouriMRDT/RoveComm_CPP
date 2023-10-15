@@ -10,11 +10,28 @@
 
 #include "RoveComm.h"
 #include "Consts.h"
+#include "RoveCommEthernetTcp.h"
+#include "RoveCommEthernetUdp.h"
+#include "RoveCommPacket.h"
 #include "string"
 #include <map>
 
-RoveComm::RoveComm(int nUdpPort, int nTcpAddr)
+RoveComm::RoveComm(int nUdpPort, ip_address& stTcpAddr)
 {
+    // Map of specific function call backs for data ids
+    Callbacks = {};
+
+    // An optional callback for all incoming packets (can be used for logging, etc)
+    // DefaultCallback = NULL;
+    // self.default_callback = None
+
+    UdpNode = RoveCommEthernetUdp(nUdpPort);
+    TcpNode = RoveCommEthernetTcp(stTcpAddr.szIp, stTcpAddr.nPort);
+
+    // ShutdownEvent = threading.event();
+    // ^ Find a C++ equivalent to a thread object
+    // Thread = threading.Thread(target=Listen);
+    // Thread.start();
     return;
 }
 

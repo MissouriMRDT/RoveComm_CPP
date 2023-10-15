@@ -40,6 +40,7 @@ class RoveCommEthernetTcp
         std::map<std::string, int> m_Buffers;
         socklen_t Server;
 
+        RoveCommEthernetTcp();
         RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOMM_TCP_PORT);
 
         void CloseSockets();

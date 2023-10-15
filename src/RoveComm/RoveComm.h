@@ -12,6 +12,8 @@
 #define ROVECOMM_H
 #include "Consts.h"
 #include "RoveComm.cpp"
+#include "RoveCommEthernetTcp.h"
+#include "RoveCommEthernetUdp.h"
 #include "RoveCommPacket.h"
 #include <map>
 
@@ -30,7 +32,12 @@ class RoveComm
 */
 {
     public:
-        RoveComm(int nUdpPort, int nTcpAddr);
+        std::map<std::string, std::string> Callbacks;
+        std::string DefaultCallback;
+        RoveCommEthernetUdp UdpNode;
+        RoveCommEthernetTcp TcpNode;
+
+        RoveComm(int nUdpPort, ip_address& stTcpAddr);
 
         void Listen();
         void SetCallback(int nDataId, std::string& Func);    // Find a way to pass function as argument
