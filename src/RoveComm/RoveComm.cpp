@@ -14,6 +14,7 @@
 #include "RoveCommEthernetUdp.h"
 #include "RoveCommPacket.h"
 #include "string"
+#include <functional>
 #include <map>
 
 RoveComm::RoveComm(int nUdpPort, ip_address& stTcpAddr)
@@ -40,6 +41,21 @@ RoveComm::RoveComm(int nUdpPort, ip_address& stTcpAddr)
 
 void RoveComm::Listen()
 {
+    TcpNode.HandleIncomingConnection();
+    RoveCommPacket* packets = TcpNode.Read();
+    for (int index = 0; index < 10; index++)
+    {    // use packet length as condition
+        RoveCommPacket* packet = &packets[index];
+        if (packet != NULL)
+        {
+            std::invoke(*Callbacks[(*packet).m_nDataId], packet);
+            if (DefaultCallback != NULL)
+            {
+                std::invoke(*DefaultCallback, packet);
+            }
+        }
+    }
+
     /*
     while(threading.main_thread().is_alive() and !(ShutdownEvent.isSet())){
     TcpNode.HandleIncomingConnection();
@@ -71,7 +87,7 @@ void RoveComm::Listen()
     return;
 }
 
-void RoveComm::SetCallback(int nDataId, std::string& Func)    // Find a way to pass function as argument
+void RoveComm::SetCallback(int nDataId, std::function<void(RoveCommPacket*)>* Func)
 {
     Callbacks[nDataId] = Func;
     return;
@@ -83,7 +99,7 @@ void RoveComm::ClearCallback(int nDataId)
     return;
 }
 
-void RoveComm::SetDefaultCallback(std::string& Func)    // Find a way to pass function as argument
+void RoveComm::SetDefaultCallback(std::function<void(RoveCommPacket*)>* Func)
 {
     DefaultCallback = Func;
     return;
@@ -91,8 +107,7 @@ void RoveComm::SetDefaultCallback(std::string& Func)    // Find a way to pass fu
 
 void RoveComm::ClearDefaultCallback()
 {
-    // FIXME: Maybe implement DefaultCallback to a pointer to a function, so that it can be cleared by pointing to NULL
-    // DefaultCallback = NULL;
+    DefaultCallback = NULL;
     return;
 }
 
