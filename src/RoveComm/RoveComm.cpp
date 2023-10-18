@@ -112,24 +112,3 @@ void RoveComm::CloseThread()
 {
     return;
 }
-
-std::map<std::string, std::string> GetManifest(std::string szPath = "")
-{
-    /*
-    Grabs the json manifest file and returns it in map form
-
-    Parameters:
-    -----------
-        path - the path to a specified manifest file. If left blank we default
-        to manifest found in this repo
-    Returns:
-    --------
-        manifest - the manifest in dictionary form
-    */
-
-    // FIXME: Find way to load a JSON file and convert it to a map, and return this map
-
-    std::map<std::string, std::string> manifest;
-
-    return (manifest);
-}

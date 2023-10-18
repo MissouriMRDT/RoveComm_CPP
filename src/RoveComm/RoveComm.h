@@ -48,6 +48,4 @@ class RoveComm
         void CloseThread();
 };
 
-std::map<std::string, std::string> GetManifest(std::string szPath = "");
-
 #endif    // ROVECOMM_H
