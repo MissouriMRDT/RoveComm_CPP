@@ -15,6 +15,7 @@
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
 #include "RoveCommPacket.h"
+#include <functional>
 #include <map>
 
 class RoveComm
@@ -32,17 +33,17 @@ class RoveComm
 */
 {
     public:
-        std::map<int, std::string> Callbacks;
-        std::string DefaultCallback;
+        std::map<int, std::function<void(RoveCommPacket*)>*> Callbacks;
+        std::function<void(RoveCommPacket*)>* DefaultCallback;
         RoveCommEthernetUdp UdpNode;
         RoveCommEthernetTcp TcpNode;
 
         RoveComm(int nUdpPort, ip_address& stTcpAddr);
 
         void Listen();
-        void SetCallback(int nDataId, std::string& Func);    // Find a way to pass function as argument
+        void SetCallback(int nDataId, std::function<void(RoveCommPacket*)>* Func);
         void ClearCallback(int nDataId);
-        void SetDefaultCallback(std::string& Func);          // Find a way to pass function as argument
+        void SetDefaultCallback(std::function<void(RoveCommPacket*)>* Func);
         void ClearDefaultCallback();
         int Write(RoveCommPacket& Packet, bool bReliable = false);
         void CloseThread();
