@@ -16,6 +16,11 @@
 #include <sstream>
 #include <string>
 
+#include "RoveComm/Consts.h"
+#include "RoveComm/RoveComm.h"
+#include "RoveComm/RoveCommEthernetTcp.h"
+#include "RoveComm/RoveCommEthernetUdp.h"
+#include "RoveComm/RoveCommPacket.h"
 #include "RoveCommGlobals.h"
 
 /******************************************************************************

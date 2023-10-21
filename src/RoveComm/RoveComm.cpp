@@ -13,11 +13,8 @@
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
 #include "RoveCommPacket.h"
-#include "string"
-#include <functional>
-#include <map>
 
-RoveComm::RoveComm(int nUdpPort, ip_address& stTcpAddr)
+RoveComm::RoveComm(int nUdpPort, ip_address stTcpAddr)
 {
     // FIXME: Change Callback and DefaultCallback to use some kind of function objects
     // FIXME: Find an equivalent to Python's threading library
@@ -111,7 +108,7 @@ void RoveComm::ClearDefaultCallback()
     return;
 }
 
-int RoveComm::Write(RoveCommPacket& Packet, bool bReliable = false)
+int RoveComm::Write(RoveCommPacket& Packet, bool bReliable /*= false*/)
 {
     if (bReliable)
     {

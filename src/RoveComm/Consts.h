@@ -10,8 +10,9 @@
 
 #ifndef CONSTS_H
 #define CONSTS_H
-#include "string"
+
 #include <map>
+#include <string>
 
 const int ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS = 10;
 const int ROVECOMM_PACKET_MAX_DATA_COUNT        = 65535;
@@ -20,7 +21,6 @@ const int ROVECOMM_VERSION                      = 3;
 
 const int ROVECOMM_UDP_PORT                     = 11000;
 const int ROVECOMM_TCP_PORT                     = 12000;
-const int ROVECOMM_VERSION                      = 3;
 const std::string ROVECOMM_HEADER_FORMAT        = ">BHHB";
 
 const int ROVECOMM_PING_REQUEST                 = 1;

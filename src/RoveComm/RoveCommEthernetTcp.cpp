@@ -10,12 +10,18 @@
 
 #include "RoveCommEthernetTcp.h"
 
+#include <chrono>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <thread>
+
 RoveCommEthernetTcp::RoveCommEthernetTcp()
 {
     return;
 }
 
-RoveCommEthernetTcp::RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOMM_TCP_PORT)
+RoveCommEthernetTcp::RoveCommEthernetTcp(std::string szHost /*= "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/)
 {
     return;
 
@@ -62,6 +68,7 @@ void RoveCommEthernetTcp::HandleIncomingConnection()
 
 RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to array of RoveCommPackets
 {
-    RoveCommPacket aReturnValues[10];
-    return aReturnValues;
+    RoveCommPacket* rcReturn = new RoveCommPacket();
+
+    return rcReturn;
 }
