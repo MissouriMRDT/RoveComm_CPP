@@ -23,8 +23,7 @@ RoveComm::RoveComm(int nUdpPort, ip_address stTcpAddr)
     Callbacks = {};
 
     // An optional callback for all incoming packets (can be used for logging, etc)
-    // DefaultCallback = NULL;
-    // self.default_callback = None
+    DefaultCallback = NULL;
 
     UdpNode = RoveCommEthernetUdp(nUdpPort);
     TcpNode = RoveCommEthernetTcp(stTcpAddr.szIp, stTcpAddr.nPort);

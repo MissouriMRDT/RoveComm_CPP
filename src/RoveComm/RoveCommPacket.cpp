@@ -11,7 +11,7 @@
 #include "RoveCommPacket.h"
 #include "Consts.h"
 
-RoveCommPacket::RoveCommPacket(int nDataId /*= 0*/, char cDataType /*= 'b'*/, std::string szIp /*= ""*/, int nPort /*= ROVECOMM_UDP_PORT*/, int* aData /*= nullptr*/)
+RoveCommPacket::RoveCommPacket(int nDataId, char cDataType, std::string szIp, int nPort, int* aData)
 {
     this->m_nDataId   = nDataId;
     this->m_cDataType = cDataType;
