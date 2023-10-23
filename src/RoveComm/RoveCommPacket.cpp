@@ -15,8 +15,8 @@ RoveCommPacket::RoveCommPacket(int nDataId, char cDataType, std::string szIp, in
 {
     this->m_nDataId   = nDataId;
     this->m_cDataType = cDataType;
-    // int data_count  = std::size(data);
-    // this->m_aData = aData;
+    //int data_count  = std::size(data);
+    aData = this->m_aData;
     //  IP should be the full IP address
     //   in case of empty IP default to unknown IP
     if (szIp != "")
