@@ -10,13 +10,15 @@
 
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
+
 #include "Consts.h"
-#include "RoveComm.cpp"
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
 #include "RoveCommPacket.h"
+
 #include <functional>
 #include <map>
+#include <string>
 
 class RoveComm
 /*
@@ -38,7 +40,7 @@ class RoveComm
         RoveCommEthernetUdp UdpNode;
         RoveCommEthernetTcp TcpNode;
 
-        RoveComm(int nUdpPort, ip_address& stTcpAddr);
+        RoveComm(int nUdpPort, ip_address stTcpAddr);
 
         void Listen();
         void SetCallback(int nDataId, std::function<void(RoveCommPacket*)>* Func);

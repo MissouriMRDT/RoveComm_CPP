@@ -10,6 +10,7 @@
 
 #ifndef ROVECOMM_ETHERNET_UDP_H
 #define ROVECOMM_ETHERNET_UDP_H
+
 #include "Consts.h"
 #include "RoveCommPacket.h"
 #include <sys/socket.h>
@@ -43,7 +44,7 @@ class RoveCommEthernetUdp
 
         int Subscribe(std::string szSubToIp);
         int Write(RoveCommPacket& Packet);
-        RoveCommPacket& Read();
+        RoveCommPacket* Read();
         void CloseSocket();
 };
 

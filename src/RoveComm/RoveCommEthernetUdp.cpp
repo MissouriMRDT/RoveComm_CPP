@@ -11,7 +11,7 @@
 #include "RoveCommEthernetUdp.h"
 #include "RoveCommPacket.h"
 
-RoveCommEthernetUdp::RoveCommEthernetUdp(int nPort = ROVECOMM_UDP_PORT)
+RoveCommEthernetUdp::RoveCommEthernetUdp(int nPort /*= ROVECOMM_UDP_PORT*/)
 {
     return;
 }
@@ -26,10 +26,10 @@ int RoveCommEthernetUdp::Write(RoveCommPacket& Packet)
     return 1;
 }
 
-RoveCommPacket& RoveCommEthernetUdp::Read()
+RoveCommPacket* RoveCommEthernetUdp::Read()
 {
-    RoveCommPacket ReturnValue = RoveCommPacket();
-    return ReturnValue;
+    RoveCommPacket* rcReturn = new RoveCommPacket();
+    return rcReturn;
 }
 
 void RoveCommEthernetUdp::CloseSocket()

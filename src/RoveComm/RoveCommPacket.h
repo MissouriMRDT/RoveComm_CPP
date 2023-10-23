@@ -10,7 +10,10 @@
 
 #ifndef ROVECOMM_PACKET_H
 #define ROVECOMM_PACKET_H
-#include "string"
+
+#include "Consts.h"
+
+#include <string>
 
 struct ip_address
 {
@@ -48,9 +51,9 @@ class RoveCommPacket
         int m_aData[m_nMaxData];
         struct ip_address m_stIp;
 
-        RoveCommPacket(int nDataId = 0, char cDataType = 'b', int aData[], std::string szIp = "", int nPort = ROVECOMM_UDP_PORT);
+        RoveCommPacket(int nDataId = 0, char cDataType = 'b', std::string szIp = "", int nPort = ROVECOMM_UDP_PORT, int* aData = nullptr);
 
-        void SetIp(std::string szIp, int nPort = NULL);
+        void SetIp(std::string szIp, int nPort = 11000);
         void Print();
 };
 

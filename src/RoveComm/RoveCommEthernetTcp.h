@@ -10,10 +10,12 @@
 
 #ifndef ROVECOMM_ETHERNET_TCP_H
 #define ROVECOMM_ETHERNET_TCP_H
+
 #include "Consts.h"
 #include "RoveCommPacket.h"
-#include "string"
+
 #include <map>
+#include <string>
 #include <sys/socket.h>
 
 class RoveCommEthernetTcp
@@ -41,7 +43,7 @@ class RoveCommEthernetTcp
         socklen_t Server;
 
         RoveCommEthernetTcp();
-        RoveCommEthernetTcp(std::string szHost, int nPort = ROVECOMM_TCP_PORT);
+        RoveCommEthernetTcp(std::string szHost /* = "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/);
 
         void CloseSockets();
         int Write(RoveCommPacket& Packet);
