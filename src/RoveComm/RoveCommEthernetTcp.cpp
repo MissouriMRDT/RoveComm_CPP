@@ -71,34 +71,33 @@ int RoveCommEthernetTcp::Write(RoveCommPacket& Packet)
 {
     try
     {
-        /*
-        rovecomm_packet = struct.pack(
-            ROVECOMM_HEADER_FORMAT,
-            ROVECOMM_VERSION,
-            packet.data_id,
-            packet.data_count,
-            types_byte_to_int[packet.data_type],
-        )
-        */
+        std::string szRoveCommPacket;
+        szRoveCommPacket += ROVECOMM_HEADER_FORMAT;
+        szRoveCommPacket += static_cast<char>(ROVECOMM_VERSION);
+        szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
+        szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
+        szRoveCommPacket += static_cast<char>(Packet.m_nDataCount);
+        szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
+        szRoveCommPacket += Packet.m_cDataType;
+
         for (int i = 0; i < Packet.m_nDataCount; i++)
         {
-            // rovecomm_packet += struct.pack(">" + Packet.m_cDataType, i);
-            continue;
+            szRoveCommPacket += '>' + Packet.m_cDataType + static_cast<char>(i);
         }
         for (const auto& nCurrentPair : m_IncomingSockets)
         {
             int nCurrentFd = nCurrentPair.second;
 
             // Notifies other end that we are terminating the connection
-            // send(nCurrentFd, ?, ?, ?); - should send packed RoveCommPacket
+            send(nCurrentFd, &szRoveCommPacket, sizeof(szRoveCommPacket), 0);
         }
-        if (true)    //(Packet.m_stIp != ("0.0.0.0", 0))
+        if (!(Packet.m_stIp.nPort == 0 && Packet.m_stIp.stIp.sa_data == "0.0.0.0"))
         {
-            if (Connect(Packet.m_stIp.szIp) == 0)
+            if (Connect(Packet.m_stIp.stIp) == 0)
             {
                 return 0;
             }
-            // send(m_ServerFd, m_OpenSockets[Packet.m_stIp.szIp], ?, ?); - should send packed RoveCommPacket
+            send(m_OpenSockets[Packet.m_stIp.stIp.sa_data], &szRoveCommPacket, sizeof(szRoveCommPacket), 0);
             // Establish a new connection if the destination has not yet been connected to yet
             return 1;
         }
@@ -109,9 +108,9 @@ int RoveCommEthernetTcp::Write(RoveCommPacket& Packet)
     }
 }
 
-int RoveCommEthernetTcp::Connect(std::string szAddress)
+int RoveCommEthernetTcp::Connect(sockaddr stAddress)
 {
-    if (!m_OpenSockets.contains(szAddress))
+    if (!m_OpenSockets.contains(stAddress.sa_data))
     {
         int nTCPSocketFd = socket(-1, SOCK_STREAM, -1);
         try

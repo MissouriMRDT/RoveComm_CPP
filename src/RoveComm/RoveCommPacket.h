@@ -17,7 +17,7 @@
 
 struct ip_address
 {
-        std::string szIp;
+        sockaddr stIp;
         int nPort;
 };
 

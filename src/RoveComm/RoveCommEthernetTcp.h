@@ -37,8 +37,8 @@ class RoveCommEthernetTcp
 */
 {
     public:
-        std::map<std::string, socklen_t> m_OpenSockets;
-        std::map<std::string, socklen_t> m_IncomingSockets;
+        std::map<std::string, int> m_OpenSockets;
+        std::map<std::string, int> m_IncomingSockets;
         std::map<std::string, int> m_Buffers;
         int m_ServerFd;
 
@@ -47,7 +47,7 @@ class RoveCommEthernetTcp
 
         void CloseSockets();
         int Write(RoveCommPacket& Packet);
-        int Connect(std::string szAddress);
+        int Connect(sockaddr stAddress);
         void HandleIncomingConnection();
         RoveCommPacket* Read();
 };
