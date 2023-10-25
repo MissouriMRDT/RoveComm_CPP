@@ -39,8 +39,10 @@ class RoveCommEthernetTcp
     public:
         std::map<std::string, int> m_OpenSockets;
         std::map<std::string, int> m_IncomingSockets;
-        std::map<std::string, int> m_Buffers;
+        std::map<int, int> m_Buffers;
         int m_ServerFd;
+        int m_nOpenSocketLength;
+        int m_nIncomingSocketLength;
 
         RoveCommEthernetTcp();
         RoveCommEthernetTcp(std::string szHost /* = "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/);
