@@ -79,9 +79,7 @@ int RoveCommEthernetTcp::Write(RoveCommPacket& Packet)
         szRoveCommPacket += ROVECOMM_HEADER_FORMAT;
         szRoveCommPacket += static_cast<char>(ROVECOMM_VERSION);
         szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
-        szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
         szRoveCommPacket += static_cast<char>(Packet.m_nDataCount);
-        szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
         szRoveCommPacket += Packet.m_cDataType;
 
         for (int i = 0; i < Packet.m_nDataCount; i++)
