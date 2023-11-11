@@ -16,20 +16,20 @@
 #include <sstream>
 #include <string>
 
-#include "RoveComm/Consts.h"
-#include "RoveComm/RoveComm.h"
+#include "RoveComm/RoveCommConstants.h"
 #include "RoveComm/RoveCommEthernetTcp.h"
 #include "RoveComm/RoveCommEthernetUdp.h"
 #include "RoveComm/RoveCommPacket.h"
 #include "RoveCommGlobals.h"
+#include "RoveCommLogging.h"
 
 /******************************************************************************
- * @brief RoveComm C++ main function.
+ * @brief RoveComm C++ main function. Initializes singletons.
  *
  * @return int - Exit status number.
  *
  * @author Eli Byrd (edbgkk@mst.edu)
- * @date 2023-06-25
+ * @date 2023-07-29
  ******************************************************************************/
 int main()
 {
@@ -47,7 +47,7 @@ int main()
     std::cout << "Copyright \u00A9 2023 - Mars Rover Design Team\n" << std::endl;
 
     // Initialize Loggers
-    InitializeLoggers();
+    logging::InitializeLoggers();
 
     // TODO: Initialize RoveComm
 

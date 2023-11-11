@@ -11,7 +11,7 @@
 #ifndef ROVECOMM_ETHERNET_TCP_H
 #define ROVECOMM_ETHERNET_TCP_H
 
-#include "Consts.h"
+#include "RoveCommConstants.h"
 #include "RoveCommPacket.h"
 
 #include <map>

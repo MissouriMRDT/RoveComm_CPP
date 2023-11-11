@@ -11,22 +11,19 @@
 #ifndef ROVECOMM_PACKET_H
 #define ROVECOMM_PACKET_H
 
-#include "Consts.h"
+#include "RoveCommConstants.h"
 
 #include <string>
 
-struct ip_address
-{
-        sockaddr stIp;
-        int nPort;
-};
-
+// FIXME: Move RoveCommPacket Class Header Implementation to here!
+// FIXME: Switch from using python style to using our doxygen formatter.
 class RoveCommPacket
 /*
     The RoveComm packet is the encapsulation of a message sent across the rover
     network that can be parsed by all rover computing systems.
 
     A RoveComm Packet contains:
+        - Version id
         - A data id
         - A data type
         - The number of data entries (data count)
@@ -43,18 +40,27 @@ class RoveCommPacket
 */
 {
     public:
-        int m_nDataId;
-        char m_cDataType;
-        int m_nDataCount;
-        // FIXME: Find the actual size of the data array
-        static const int m_nMaxData = 9;
-        int m_aData[m_nMaxData];
-        struct ip_address m_stIp;
+        int version_id;
+        int data_id;    // FIXME: Change member variable names to meet our style guide.
+        char data_type;
+        int data_count;
+        int data[];
 
-        RoveCommPacket(int nDataId = 0, char cDataType = 'b', std::string szIp = "", int nPort = ROVECOMM_UDP_PORT, int* aData = nullptr);
+        // FIXME: Change parameter variables names to meet our style guide.
+        RoveCommPacket(int data_id = 0, char data_type = 'b', int data[], std::string ip = "", int port = constants::ROVECOMM_UDP_PORT);
 
-        void SetIp(std::string szIp, int nPort = 11000);
-        void Print();
+        // FIXME: Change function names and paramerter variable names to meet our style guide.
+        void setIp(std::string ip, int port = NULL);
+        void print();
+
+        // FIXME: This struct shouldn't be a part of the class and should exist at the global scope.
+        //        Also, make sure to change variable names to meet our style guide. Note that you
+        //        don't need the `m_` for structs.
+        struct ip_address
+        {
+                std::string ip;
+                int port;
+        };
 };
 
 #endif    // ROVECOMM_PACKET_H

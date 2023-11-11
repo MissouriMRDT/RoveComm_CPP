@@ -16,20 +16,11 @@
 // Only worry about compiling if we are not in 'Library-Only Mode'.
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
-#include <chrono>
-#include <ctime>
-#include <iostream>
-#include <quill/Quill.h>
-
 #ifndef ROVECOMM_GLOBALS_H
 #define ROVECOMM_GLOBALS_H
 
-// Logging:
-extern quill::Logger* g_qFileLogger;
-extern quill::Logger* g_qConsoleLogger;
-extern quill::Logger* g_qSharedLogger;
-
-void InitializeLoggers();
+namespace globals
+{}
 
 #endif    // ROVECOMM_GLOBALS_H
 
