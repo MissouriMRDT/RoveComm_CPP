@@ -10,6 +10,7 @@
 
 #include "RoveCommPacket.h"
 #include "Consts.h"
+#include <iostream>
 
 RoveCommPacket::RoveCommPacket(int nDataId, char cDataType, std::string szIp, int nPort, int* aData)
 {
@@ -48,10 +49,34 @@ RoveCommPacket::RoveCommPacket(int nDataId, char cDataType, std::string szIp, in
 
 void RoveCommPacket::SetIp(std::string szIp, int nPort /*= 11000*/)
 {
+    
+    if(nPort == 11000)
+    {
+        nPort = m_stIp.nPort;
+    }
+    m_stIp = {szIp, nPort};
     return;
 }
 
 void RoveCommPacket::Print()
 {
+    std::cout << "----------" << std::endl;
+    std::cout << "ID: " << m_nDataId << std::endl;
+    std::cout << "Type: " << m_cDataType << std::endl;
+    std::cout << "IP: (" << m_stIp.stIp.sa_data << ", " << m_stIp.nPort << ")" << std::endl;
+    std::cout << "Data: [";
+    for(int i=0; i < m_nDataCount; i++)
+    {
+        
+        std::cout << m_aData[i];
+        if(i != m_nDataCount - 1)
+        {
+            std::cout << ", ";
+        }
+        
+    }
+
+    std::cout << "]" << std::endl;
+    std::cout << "----------" << std::endl;
     return;
 }

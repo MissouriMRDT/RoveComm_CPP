@@ -37,13 +37,14 @@ class RoveCommEthernetUdp
 {
     public:
         int m_nRoveCommPort;
+        int m_nNumSubscribers;
         sockaddr* m_aSubscribers[10];
-        socklen_t RoveCommSocket;
+        int m_RoveCommSocketFd;
 
         RoveCommEthernetUdp(int nPort = ROVECOMM_UDP_PORT);
 
         int Subscribe(std::string szSubToIp);
-        int Write(RoveCommPacket& Packet);
+        int Write(const RoveCommPacket& Packet);
         RoveCommPacket* Read();
         void CloseSocket();
 };
