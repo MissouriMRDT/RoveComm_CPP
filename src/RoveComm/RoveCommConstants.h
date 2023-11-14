@@ -14,7 +14,7 @@
 #include <map>
 #include <string>
 
-namespace constants
+namespace rovecomm
 {
     const int ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS = 10;
     const int ROVECOMM_PACKET_MAX_DATA_COUNT        = 65535;
@@ -36,5 +36,5 @@ namespace constants
     const std::map<char, int> TYPES_BYTE_TO_INT     = {{'b', 0}, {'B', 1}, {'h', 2}, {'H', 3}, {'l', 4}, {'L', 5}, {'f', 6}, {'d', 7}, {'c', 8}};
 
     const std::map<char, int> TYPES_BYTE_TO_SIZE    = {{'b', 1}, {'B', 1}, {'h', 2}, {'H', 2}, {'l', 4}, {'L', 4}, {'f', 4}, {'q', 8}, {'d', 8}, {'c', 1}};
-}    // namespace constants
+}    // namespace rovecomm
 #endif    // CONSTS_H

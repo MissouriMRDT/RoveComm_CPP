@@ -12,55 +12,58 @@
 #define ROVECOMM_PACKET_H
 
 #include "RoveCommConstants.h"
+#include "RoveCommManifest.h"
 
+#include <ostream>
+#include <stdlib.h>
 #include <string>
 
-// FIXME: Move RoveCommPacket Class Header Implementation to here!
-// FIXME: Switch from using python style to using our doxygen formatter.
-class RoveCommPacket
+using RoveCommVersionId = uint8_t;
+using RoveCommDataId    = uint16_t;
+using RoveCommDataCount = uint16_t;
+using RoveCommDataType  = rovecomm::DataTypes;
+
 /*
-    The RoveComm packet is the encapsulation of a message sent across the rover
-    network that can be parsed by all rover computing systems.
+ *  Header format (sits under TCP/UDP header):
+ *       0      7 8     15 16    23 24    31 32    39 40    47 48
+ *      +--------+--------+--------+--------+--------+--------+-- ...
+ *      |version |intended use (id)| # of elements   | type   | the actual data
+ *      +--------+--------+--------+--------+--------+--------+-- ...
+ *
+ */
 
-    A RoveComm Packet contains:
-        - Version id
-        - A data id
-        - A data type
-        - The number of data entries (data count)
-        - The data itself
-
-    The autonomy implementation also includes the remote ip of the sender.
-
-    Methods:
-    --------
-        SetIp(ip, port):
-            Sets packet's IP to address parameter
-        print():
-            Prints the packet'c contents
-*/
+/******************************************************************************
+ * @brief The RoveComm packet is the encapsulation of a message sent across the rover
+ *  network that can be parsed by all rover computing systems.
+ *
+ *  In this implementation, packets are immutable state.
+ *
+ ******************************************************************************/
+class RoveCommPacket
 {
     public:
-        int version_id;
-        int data_id;    // FIXME: Change member variable names to meet our style guide.
-        char data_type;
-        int data_count;
-        int data[];
+        RoveCommPacket();
+        RoveCommPacket(unsigned int unDataId, rovecomm::DataTypes eDataType, void* aData);
 
-        // FIXME: Change parameter variables names to meet our style guide.
-        RoveCommPacket(int data_id = 0, char data_type = 'b', int data[], std::string ip = "", int port = constants::ROVECOMM_UDP_PORT);
+        inline RoveCommVersionId getVersionId() const { return m_unVersionId; }
 
-        // FIXME: Change function names and paramerter variable names to meet our style guide.
-        void setIp(std::string ip, int port = NULL);
-        void print();
+        inline RoveCommDataId getDataId() const { return m_unDataId; }
 
-        // FIXME: This struct shouldn't be a part of the class and should exist at the global scope.
-        //        Also, make sure to change variable names to meet our style guide. Note that you
-        //        don't need the `m_` for structs.
-        struct ip_address
-        {
-                std::string ip;
-                int port;
-        };
+        inline RoveCommDataCount getDataCount() const { return m_unDataCount; }
+
+        inline rovecomm::DataTypes getDataType() const { return m_eDataType; }
+
+        inline void* getData() const { return m_aData; }
+
+    private:
+        RoveCommVersionId m_unVersionId;
+        RoveCommDataId m_unDataId;
+        RoveCommDataCount m_unDataCount;
+        RoveCommDataType m_eDataType;
+        void* m_aData;    // consider making this an std::array<int> for ease of use
 };
+
+// print with std::cout
+inline std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet);
 
 #endif    // ROVECOMM_PACKET_H
