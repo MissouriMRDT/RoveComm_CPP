@@ -11,50 +11,59 @@
 #ifndef ROVECOMM_PACKET_H
 #define ROVECOMM_PACKET_H
 
-#include "Consts.h"
+#include "RoveCommConstants.h"
+#include "RoveCommManifest.h"
 
+#include <ostream>
+#include <stdlib.h>
 #include <string>
 
-struct ip_address
-{
-        sockaddr stIp;
-        int nPort;
-};
+using RoveCommVersionId = uint8_t;
+using RoveCommDataId    = uint16_t;
+using RoveCommDataCount = uint16_t;
+using RoveCommDataType  = rovecomm::DataTypes;
 
-class RoveCommPacket
 /*
-    The RoveComm packet is the encapsulation of a message sent across the rover
-    network that can be parsed by all rover computing systems.
+ *  Header format (sits under TCP/UDP header):
+ *       0      7 8     15 16    23 24    31 32    39 40    47 48
+ *      +--------+--------+--------+--------+--------+--------+-- ...
+ *      |version |intended use (id)| # of elements   | type   | the actual data
+ *      +--------+--------+--------+--------+--------+--------+-- ...
+ *
+ */
 
-    A RoveComm Packet contains:
-        - A data id
-        - A data type
-        - The number of data entries (data count)
-        - The data itself
-
-    The autonomy implementation also includes the remote ip of the sender.
-
-    Methods:
-    --------
-        SetIp(ip, port):
-            Sets packet's IP to address parameter
-        print():
-            Prints the packet'c contents
-*/
+/******************************************************************************
+ * @brief The RoveComm packet is the encapsulation of a message sent across the rover
+ *  network that can be parsed by all rover computing systems.
+ *
+ *  In this implementation, packets are immutable state.
+ *
+ ******************************************************************************/
+class RoveCommPacket
 {
     public:
-        int m_nDataId;
-        char m_cDataType;
-        int m_nDataCount;
-        // FIXME: Find the actual size of the data array
-        static const int m_nMaxData = 9;
-        int m_aData[m_nMaxData];
-        struct ip_address m_stIp;
+        RoveCommPacket();
+        RoveCommPacket(unsigned int unDataId, rovecomm::DataTypes eDataType, void* aData);
 
-        RoveCommPacket(int nDataId = 0, char cDataType = 'b', std::string szIp = "", int nPort = ROVECOMM_UDP_PORT, int* aData = nullptr);
+        inline RoveCommVersionId getVersionId() const { return m_unVersionId; }
 
-        void SetIp(std::string szIp, int nPort = 11000);
-        void Print();
+        inline RoveCommDataId getDataId() const { return m_unDataId; }
+
+        inline RoveCommDataCount getDataCount() const { return m_unDataCount; }
+
+        inline rovecomm::DataTypes getDataType() const { return m_eDataType; }
+
+        inline void* getData() const { return m_aData; }
+
+    private:
+        RoveCommVersionId m_unVersionId;
+        RoveCommDataId m_unDataId;
+        RoveCommDataCount m_unDataCount;
+        RoveCommDataType m_eDataType;
+        void* m_aData;    // consider making this an std::array<int> for ease of use
 };
+
+// print with std::cout
+inline std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet);
 
 #endif    // ROVECOMM_PACKET_H

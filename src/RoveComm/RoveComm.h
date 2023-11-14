@@ -1,5 +1,5 @@
 /******************************************************************************
- * @brief Main Header for RoveComm C++
+ * @brief Main Header for RoveComm C++. Look at RoveCommServer.h for the main singleton.
  *
  * @file RoveComm.h
  * @author Eli Byrd (edbgkk@mst.edu)
@@ -11,44 +11,11 @@
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
 
-#include "Consts.h"
+#include "RoveCommConstants.h"
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
+#include "RoveCommManifest.h"
 #include "RoveCommPacket.h"
-
-#include <functional>
-#include <map>
-#include <string>
-
-class RoveComm
-/*
-    Creates a separate thread to read all RoveComm connections
-
-    Methods:
-    --------
-        write(packet, reliable):
-            Writes the given packet to its destination address
-        set_callback(data_id, func):
-            Sets the callback function for any incoming packets with the given data id
-        close_thread():
-            Shuts down the listener thread
-*/
-{
-    public:
-        std::map<int, std::function<void(RoveCommPacket*)>*> Callbacks;
-        std::function<void(RoveCommPacket*)>* DefaultCallback;
-        RoveCommEthernetUdp UdpNode;
-        RoveCommEthernetTcp TcpNode;
-
-        RoveComm(int nUdpPort, ip_address stTcpAddr);
-
-        void Listen();
-        void SetCallback(int nDataId, std::function<void(RoveCommPacket*)>* Func);
-        void ClearCallback(int nDataId);
-        void SetDefaultCallback(std::function<void(RoveCommPacket*)>* Func);
-        void ClearDefaultCallback();
-        int Write(RoveCommPacket& Packet, bool bReliable = false);
-        void CloseThread();
-};
+#include "RoveCommServer.h"
 
 #endif    // ROVECOMM_H
