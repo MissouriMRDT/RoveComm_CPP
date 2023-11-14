@@ -13,12 +13,49 @@
 
 #include "Consts.h"
 #include "RoveCommPacket.h"
+#include "RoveCommServer.h"
 
 #include <map>
 #include <string>
 #include <sys/socket.h>
 
-class RoveCommEthernetTcp
+/******************************************************************************
+ * @brief Extends RoveCommServer to use the TCP protocol. Both hosts must establish a
+ * connection first. TCP guarantees no data corruption and successful delivery of data
+ * in the same order in which it was sent.
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2023-11-14
+ ******************************************************************************/
+class RoveCommEthernetTcp : RoveCommServer
+{
+    public:
+        void init() override;
+        void shutdown() override;
+
+        void write(RoveCommPacket& packet) const override;
+        RoveCommPacket& read() const override;
+
+        // std::map<std::string, int> m_OpenSockets;
+        // std::map<std::string, int> m_IncomingSockets;
+        // std::map<int, int> m_Buffers;
+        // int m_ServerFd;
+        // int m_nOpenSocketLength;
+        // int m_nIncomingSocketLength;
+
+        // RoveCommEthernetTcp();
+        // RoveCommEthernetTcp(std::string szHost /* = "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/);
+
+        // void CloseSockets();
+        // int Write(RoveCommPacket& Packet);
+        // int Connect(sockaddr stAddress);
+        // void HandleIncomingConnection();
+        // RoveCommPacket* Read();
+};
+
+#endif    // ROVECOMM_ETHERNET_TCP_H
+
+// old comments
 /*
     The TCP implementation for RoveComm.
 
@@ -35,23 +72,3 @@ class RoveCommEthernetTcp
         handle_incoming_connections():
             Accepts socket connection requests
 */
-{
-    public:
-        std::map<std::string, int> m_OpenSockets;
-        std::map<std::string, int> m_IncomingSockets;
-        std::map<int, int> m_Buffers;
-        int m_ServerFd;
-        int m_nOpenSocketLength;
-        int m_nIncomingSocketLength;
-
-        RoveCommEthernetTcp();
-        RoveCommEthernetTcp(std::string szHost /* = "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/);
-
-        void CloseSockets();
-        int Write(RoveCommPacket& Packet);
-        int Connect(sockaddr stAddress);
-        void HandleIncomingConnection();
-        RoveCommPacket* Read();
-};
-
-#endif    // ROVECOMM_ETHERNET_TCP_H

@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-namespace manifest
+namespace rovecomm
 {
     /******************************************************************************
      * @brief Enumeration of Data Types to be used in RoveComm
@@ -502,6 +502,6 @@ namespace manifest
         const int NO_DATA_DATA_ID         = 6;
     }    // namespace System
 
-}    // namespace manifest
+}    // namespace rovecomm
 
 #endif    // MANIFEST_H
