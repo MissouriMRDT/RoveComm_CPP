@@ -11,6 +11,7 @@
 #include "RoveCommEthernetTcp.h"
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -160,16 +161,33 @@ RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to arr
     {
         // available_sockets = select.select(available_sockets, [], [], 0)[0]
     }
-    return rcReturn;
 
     for (int i = 0; i < m_nOpenSocketLength; i++)
     {
         int OpenSocket = aAvailableSockets[i];
         try
         {
-            int buffer      = m_Buffers[getpeername(OpenSocket, NULL, NULL)];
-            int nHeaderSize = sizeof(ROVECOMM_HEADER_FORMAT);
-            int nHeader     = recv(OpenSocket, &buffer, nHeaderSize, 0);
+            unsigned char* buffer = &m_Buffers[getpeername(OpenSocket, NULL, NULL)];
+            int nHeaderSize       = sizeof(ROVECOMM_HEADER_FORMAT);
+            unsigned char header[nHeaderSize];
+            int nHeaderLength = recv(OpenSocket, &header, nHeaderSize, 0);
+            int nBufferLength = sizeof(buffer);
+            for (int index = nBufferLength; index < nBufferLength + nHeaderSize; index++)
+            {
+                buffer[index] = header[index - nBufferLength];
+            }
+            nBufferLength += nHeaderLength;
+            if (sizeof(m_Buffers[0]) >= nHeaderSize)
+            {
+                std::string ROVECOMM_VERSION;
+                int nDataId;
+                int nDataCount;
+                char cDataType;
+                memcpy(&ROVECOMM_VERSION, header, sizeof(ROVECOMM_HEADER_FORMAT));
+                memcpy(&nDataId, header, sizeof(nDataId));
+                memcpy(&nDataCount, header, sizeof(nDataCount));
+                memcpy(&cDataType, header, sizeof(cDataType));
+            }
             return;
         }
         catch (...)

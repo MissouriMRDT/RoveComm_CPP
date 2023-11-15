@@ -39,7 +39,7 @@ class RoveCommEthernetTcp
     public:
         std::map<std::string, int> m_OpenSockets;
         std::map<std::string, int> m_IncomingSockets;
-        std::map<int, int> m_Buffers;
+        std::map<int, unsigned char> m_Buffers;
         int m_ServerFd;
         int m_nOpenSocketLength;
         int m_nIncomingSocketLength;

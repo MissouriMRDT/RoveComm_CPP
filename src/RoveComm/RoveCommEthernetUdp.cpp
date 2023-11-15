@@ -11,6 +11,7 @@
 #include "RoveCommEthernetUdp.h"
 #include "RoveCommPacket.h"
 #include <sys/socket.h>
+#include <unistd.h>
 
 RoveCommEthernetUdp::RoveCommEthernetUdp(int nPort /*= ROVECOMM_UDP_PORT*/)
 {
@@ -71,11 +72,29 @@ int RoveCommEthernetUdp::Write(const RoveCommPacket& Packet)
 
 RoveCommPacket* RoveCommEthernetUdp::Read()
 {
+    
+    try
+    {
+        unsigned char buffer[1024];
+        sockaddr packet = {m_nRoveCommPort};
+        socklen_t length;
+        recvfrom(m_RoveCommSocketFd, &buffer, 1024, 0, &packet, &length);
+        
+        //int nHeader     = recv(m_RoveCommSocketFd, &buffer, nHeaderSize, 0);
+        
+
+    }
+    catch(...)
+    {
+        RoveCommPacket* rcReturn = new RoveCommPacket();
+        return rcReturn;
+    }
     RoveCommPacket* rcReturn = new RoveCommPacket();
     return rcReturn;
 }
 
 void RoveCommEthernetUdp::CloseSocket()
 {
+    close(m_RoveCommSocketFd);
     return;
 }
