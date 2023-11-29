@@ -187,17 +187,40 @@ RoveCommPacket* RoveCommEthernetTcp::Read()
             // If we have enough bytes for the header, parse those
             if (sizeof(m_Buffers[0]) >= nHeaderSize)
             {
-                std::string ROVECOMM_VERSION;
+                int nRoveCommVersion;
                 int nDataId;
                 int nDataCount;
-                char cDataType;
-                memcpy(&ROVECOMM_VERSION, header, sizeof(ROVECOMM_HEADER_FORMAT));
+                int nDataType;
+                memcpy(&nRoveCommVersion, header, sizeof(ROVECOMM_HEADER_FORMAT));
                 memcpy(&nDataId, header, sizeof(nDataId));
                 memcpy(&nDataCount, header, sizeof(nDataCount));
-                memcpy(&cDataType, header, sizeof(cDataType));
+                memcpy(&nDataType, header, sizeof(nDataType));
                 // Equivalent of struct.unpack
 
+                unsigned char* data = new unsigned char[nDataCount];    // Should be a dynamically allocated char array of length nDataCount
+                char cDataTypeByte  = TYPES_INT_TO_BYTE[nDataType];
+                recv(OpenSocket, data, nDataCount * TYPES_BYTE_TO_SIZE[cDataTypeByte], 0);
+
+                for (int index = nDataCount; index < nBufferLength + nDataCount; index++)
+                {
+                    buffer[index] = data[index - nBufferLength];
+                }
+                nBufferLength += nHeaderLength;
+                // Equivalent of buffer.extend(data)
+
                 // If we have enough bytes for header + expected packet size, parse those
+                if (nBufferLength >= nDataCount * TYPES_BYTE_TO_SIZE[cDataTypeByte] + nHeaderSize)
+                {
+                    if (nRoveCommVersion != ROVECOMM_VERSION)
+                    {
+                        // Create return packet that shows incompatible version
+                    }
+                    else
+                    {
+                        // If compatible, parse rest of packet and create a return RoveCommPacket of the results
+                    }
+                }
+                delete data;
             }
             return;
         }
