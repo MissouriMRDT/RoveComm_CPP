@@ -35,23 +35,23 @@ int RoveCommEthernetUdp::Subscribe(std::string szSubToIp)
     return Write(Packet);
 }
 
-int RoveCommEthernetUdp::Write(const RoveCommPacket& Packet)
+int RoveCommEthernetUdp::write(const RoveCommPacket& packet)
 {
     try
     {
         std::string szRoveCommPacket;
-        szRoveCommPacket += ROVECOMM_HEADER_FORMAT;
-        szRoveCommPacket += static_cast<char>(ROVECOMM_VERSION);
+        szRoveCommPacket += rovecomm::ROVECOMM_HEADER_FORMAT;
+        szRoveCommPacket += static_cast<char>(rovecomm::ROVECOMM_VERSION);
         szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
         szRoveCommPacket += static_cast<char>(Packet.m_nDataCount);
-        szRoveCommPacket += Packet.m_cDataType;
+        szRoveCommPacket += packet.getDataType();
 
         for (int i = 0; i < Packet.m_nDataCount; i++)
         {
             szRoveCommPacket += '>' + Packet.m_cDataType + static_cast<char>(i);
         }
-        //for (const auto& nCurrentPair : m_aSubscribers)
-        for(int i = 0; i < m_nNumSubscribers; i++)
+        // for (const auto& nCurrentPair : m_aSubscribers)
+        for (int i = 0; i < m_nNumSubscribers; i++)
         {
             sendto(m_RoveCommSocketFd, &szRoveCommPacket, sizeof(szRoveCommPacket), 0, m_aSubscribers[i], 4);
         }
@@ -67,9 +67,9 @@ int RoveCommEthernetUdp::Write(const RoveCommPacket& Packet)
     {
         return 0;
     }
-} 
+}
 
-RoveCommPacket* RoveCommEthernetUdp::Read()
+RoveCommPacket* RoveCommEthernetUdp::read()
 {
     RoveCommPacket* rcReturn = new RoveCommPacket();
     return rcReturn;
