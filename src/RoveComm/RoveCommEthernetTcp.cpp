@@ -133,6 +133,9 @@ int RoveCommEthernetTcp::Connect(sockaddr stAddress)
 
 void RoveCommEthernetTcp::HandleIncomingConnection()
 {
+    // The select function is used to poll the socket and check whether
+    // There is an incoming connection to accept, preventing the read
+    // From blocking the thread while waiting for a request
     sockaddr connection;
     socklen_t length;
     int conn                              = accept(m_ServerFd, &connection, &length);
@@ -143,7 +146,7 @@ void RoveCommEthernetTcp::HandleIncomingConnection()
     return;
 }
 
-RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to array of RoveCommPackets
+RoveCommPacket* RoveCommEthernetTcp::Read()
 {
     int aAvailableSockets[5];
     int packetLength = 0;
@@ -159,6 +162,9 @@ RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to arr
 
     if (m_nOpenSocketLength > 0)
     {
+        // The select function is used to poll the socket and check whether
+        // there is data available to be read, preventing the read from
+        // blocking the thread while waiting for a packet
         // available_sockets = select.select(available_sockets, [], [], 0)[0]
     }
 
@@ -177,6 +183,8 @@ RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to arr
                 buffer[index] = header[index - nBufferLength];
             }
             nBufferLength += nHeaderLength;
+
+            // If we have enough bytes for the header, parse those
             if (sizeof(m_Buffers[0]) >= nHeaderSize)
             {
                 std::string ROVECOMM_VERSION;
@@ -187,6 +195,9 @@ RoveCommPacket* RoveCommEthernetTcp::Read()    // needs to return pointer to arr
                 memcpy(&nDataId, header, sizeof(nDataId));
                 memcpy(&nDataCount, header, sizeof(nDataCount));
                 memcpy(&cDataType, header, sizeof(cDataType));
+                // Equivalent of struct.unpack
+
+                // If we have enough bytes for header + expected packet size, parse those
             }
             return;
         }

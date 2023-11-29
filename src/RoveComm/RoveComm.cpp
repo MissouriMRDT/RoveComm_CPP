@@ -25,8 +25,8 @@ RoveComm::RoveComm(int nUdpPort, ip_address stTcpAddr)
     // An optional callback for all incoming packets (can be used for logging, etc)
     DefaultCallback = NULL;
 
-    UdpNode = RoveCommEthernetUdp(nUdpPort);
-    TcpNode = RoveCommEthernetTcp(stTcpAddr.szIp, stTcpAddr.nPort);
+    UdpNode         = RoveCommEthernetUdp(nUdpPort);
+    TcpNode         = RoveCommEthernetTcp(stTcpAddr.szIp, stTcpAddr.nPort);
 
     // ShutdownEvent = threading.event();
     // ^ Find a C++ equivalent to a thread object

@@ -51,8 +51,8 @@ int RoveCommEthernetUdp::Write(const RoveCommPacket& Packet)
         {
             szRoveCommPacket += '>' + Packet.m_cDataType + static_cast<char>(i);
         }
-        //for (const auto& nCurrentPair : m_aSubscribers)
-        for(int i = 0; i < m_nNumSubscribers; i++)
+        // for (const auto& nCurrentPair : m_aSubscribers)
+        for (int i = 0; i < m_nNumSubscribers; i++)
         {
             sendto(m_RoveCommSocketFd, &szRoveCommPacket, sizeof(szRoveCommPacket), 0, m_aSubscribers[i], 4);
         }
@@ -68,23 +68,24 @@ int RoveCommEthernetUdp::Write(const RoveCommPacket& Packet)
     {
         return 0;
     }
-} 
+}
 
 RoveCommPacket* RoveCommEthernetUdp::Read()
 {
-    
+    // The select function is used to poll the socket and check whether
+    // There is data available to be read, preventing the read from
+    // Blocking the thread while waiting for a packet
     try
     {
         unsigned char buffer[1024];
         sockaddr packet = {m_nRoveCommPort};
         socklen_t length;
         recvfrom(m_RoveCommSocketFd, &buffer, 1024, 0, &packet, &length);
-        
-        //int nHeader     = recv(m_RoveCommSocketFd, &buffer, nHeaderSize, 0);
-        
+        // Above is equivalent to recvfrom
 
+        // int nHeader     = recv(m_RoveCommSocketFd, &buffer, nHeaderSize, 0);
     }
-    catch(...)
+    catch (...)
     {
         RoveCommPacket* rcReturn = new RoveCommPacket();
         return rcReturn;
