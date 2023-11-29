@@ -33,6 +33,35 @@ using RoveCommDataType  = rovecomm::DataTypes;
  */
 
 /******************************************************************************
+ * @brief internal typedef to make the RoveCommPacketHeader union work
+ *
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2023-11-29
+ ******************************************************************************/
+typedef struct
+{
+        RoveCommVersionId unVersionId;
+        RoveCommDataId unDataId;
+        RoveCommDataCount unDataCount;
+        RoveCommDataType eDataType;
+} RoveCommPacketHeader_t;
+
+/******************************************************************************
+ * @brief A convenient tool for reading a RoveCommPacketHeader as a char array
+ * Meant to be internal, but you can use it if you want I guess
+ *
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2023-11-29
+ ******************************************************************************/
+typedef union
+{
+        RoveCommPacketHeader_t fields;
+        char bytes[sizeof(RoveCommPacketHeader_t)];
+} RoveCommPacketHeader;
+
+/******************************************************************************
  * @brief The RoveComm packet is the encapsulation of a message sent across the rover
  *  network that can be parsed by all rover computing systems.
  *
@@ -45,21 +74,18 @@ class RoveCommPacket
         RoveCommPacket();
         RoveCommPacket(unsigned int unDataId, rovecomm::DataTypes eDataType, void* aData);
 
-        inline RoveCommVersionId getVersionId() const { return m_unVersionId; }
+        inline RoveCommVersionId getVersionId() const { return m_uHeader.fields.unVersionId; }
 
-        inline RoveCommDataId getDataId() const { return m_unDataId; }
+        inline RoveCommDataId getDataId() const { return m_uHeader.fields.unDataId; }
 
-        inline RoveCommDataCount getDataCount() const { return m_unDataCount; }
+        inline RoveCommDataCount getDataCount() const { return m_uHeader.fields.unDataCount; }
 
-        inline rovecomm::DataTypes getDataType() const { return m_eDataType; }
+        inline rovecomm::DataTypes getDataType() const { return m_uHeader.fields.eDataType; }
 
         inline void* getData() const { return m_aData; }
 
     private:
-        RoveCommVersionId m_unVersionId;
-        RoveCommDataId m_unDataId;
-        RoveCommDataCount m_unDataCount;
-        RoveCommDataType m_eDataType;
+        RoveCommPacketHeader m_uHeader;
         void* m_aData;    // consider making this an std::array<int> for ease of use
 };
 

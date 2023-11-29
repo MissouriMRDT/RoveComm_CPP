@@ -21,20 +21,20 @@ namespace rovecomm
     const int ROVECOMM_PACKET_HEADER_SIZE           = 6;
     const int ROVECOMM_VERSION                      = 3;
 
-    const int ROVECOMM_UDP_PORT                     = 11000;
-    const int ROVECOMM_TCP_PORT                     = 12000;
-    const std::string ROVECOMM_HEADER_FORMAT        = ">BHHB";
+    // const int ROVECOMM_UDP_PORT                     = 11000;
+    // const int ROVECOMM_TCP_PORT                     = 12000;
+    // const std::string ROVECOMM_HEADER_FORMAT        = ">BHHB"; //python
 
-    const int ROVECOMM_PING_REQUEST                 = 1;
-    const int ROVECOMM_PING_REPLY                   = 2;
-    const int ROVECOMM_SUBSCRIBE_REQUEST            = 3;
-    const int ROVECOMM_UNSUBSCRIBE_REQUEST          = 4;
-    const int ROVECOMM_INCOMPATIBLE_VERSION         = 5;
+    /*const int ROVECOMM_PING_REQUEST              = 1;
+    const int ROVECOMM_PING_REPLY                = 2;
+    const int ROVECOMM_SUBSCRIBE_REQUEST         = 3;
+    const int ROVECOMM_UNSUBSCRIBE_REQUEST       = 4;
+    const int ROVECOMM_INCOMPATIBLE_VERSION      = 5;*/
 
-    const std::map<int, char> TYPES_INT_TO_BYTE     = {{0, 'b'}, {1, 'B'}, {2, 'h'}, {3, 'H'}, {4, 'l'}, {5, 'L'}, {6, 'f'}, {7, 'd'}, {8, 'c'}};
+    // const std::map<int, char> TYPES_INT_TO_BYTE  = {{0, 'b'}, {1, 'B'}, {2, 'h'}, {3, 'H'}, {4, 'l'}, {5, 'L'}, {6, 'f'}, {7, 'd'}, {8, 'c'}};
 
-    const std::map<char, int> TYPES_BYTE_TO_INT     = {{'b', 0}, {'B', 1}, {'h', 2}, {'H', 3}, {'l', 4}, {'L', 5}, {'f', 6}, {'d', 7}, {'c', 8}};
+    // const std::map<char, int> TYPES_BYTE_TO_INT  = {{'b', 0}, {'B', 1}, {'h', 2}, {'H', 3}, {'l', 4}, {'L', 5}, {'f', 6}, {'d', 7}, {'c', 8}};
 
-    const std::map<char, int> TYPES_BYTE_TO_SIZE    = {{'b', 1}, {'B', 1}, {'h', 2}, {'H', 2}, {'l', 4}, {'L', 4}, {'f', 4}, {'q', 8}, {'d', 8}, {'c', 1}};
+    // const std::map<char, int> TYPES_BYTE_TO_SIZE = {{'b', 1}, {'B', 1}, {'h', 2}, {'H', 2}, {'l', 4}, {'L', 4}, {'f', 4}, {'q', 8}, {'d', 8}, {'c', 1}};
 }    // namespace rovecomm
 #endif    // CONSTS_H
