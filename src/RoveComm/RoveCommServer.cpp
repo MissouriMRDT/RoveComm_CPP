@@ -9,3 +9,12 @@
  ******************************************************************************/
 
 #include "RoveCommServer.h"
+
+std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address)
+{
+    out << address.cOctants[0] << '.';
+    out << address.cOctants[1] << '.';
+    out << address.cOctants[2] << '.';
+    out << address.cOctants[3] << ':' << address.unPort;
+    return out;
+};

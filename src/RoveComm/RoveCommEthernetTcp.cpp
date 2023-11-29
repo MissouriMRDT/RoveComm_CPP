@@ -14,16 +14,12 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
 
-RoveCommEthernetTcp::RoveCommEthernetTcp()
-{
-    return;
-}
-
-RoveCommEthernetTcp::RoveCommEthernetTcp(std::string szHost /*= "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/)
+RoveCommEthernetTcp::init(std::string szHost /*= "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/)
 {
     m_OpenSockets           = {};
     m_IncomingSockets       = {};
@@ -56,7 +52,7 @@ RoveCommEthernetTcp::RoveCommEthernetTcp(std::string szHost /*= "127.0.0.1"*/, i
     listen(m_ServerFd, 5);
 }
 
-void RoveCommEthernetTcp::CloseSockets()
+void RoveCommEthernetTcp::shutdown()
 {
     for (const auto& nCurrentPair : m_OpenSockets)
     {
@@ -71,7 +67,7 @@ void RoveCommEthernetTcp::CloseSockets()
     return;
 }
 
-int RoveCommEthernetTcp::Write(RoveCommPacket& Packet)
+int RoveCommEthernetTcp::write(RoveCommPacket& Packet) const
 {
     try
     {
