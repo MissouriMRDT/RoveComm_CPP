@@ -11,7 +11,8 @@
 #ifndef ROVECOMM_ETHERNET_TCP_H
 #define ROVECOMM_ETHERNET_TCP_H
 
-#include "Consts.h"
+#include "External.h"
+#include "RoveCommConstants.h"
 #include "RoveCommPacket.h"
 #include "RoveCommServer.h"
 
@@ -28,17 +29,19 @@
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-14
  ******************************************************************************/
-class RoveCommEthernetTcp : RoveCommServer
+using RoveCommSocket = int;
+
+class RoveCommEthernetTcp : RoveCommServer, AutonomyThread
 {
     public:
-        RoveCommEthernetTcp(RoveCommServerPort port) : m_unPort(port){};
+        RoveCommEthernetTcp(RoveCommPort unPort) : RoveCommServer(unPort){};
 
         void Init() override;
         void Shutdown() override;
 
         int Write(RoveCommPacket& packet) const override;
-        int WriteTo(RoveCommPacket& packet, RoveCommAddress address) const override;
-        std::vector<RoveCommPacket>& Read() const override;
+        int SendTo(RoveCommPacket& packet, RoveCommAddress address) const override;
+        std::vector<RoveCommPacket> Read() const override;
 
         // std::map<std::string, int> m_OpenSockets;
         // std::map<std::string, int> m_IncomingSockets;
@@ -55,12 +58,16 @@ class RoveCommEthernetTcp : RoveCommServer
         // int Connect(sockaddr stAddress);
         // void HandleIncomingConnection();
         // RoveCommPacket* Read();
+
+    private:    // AutonomyThread
+        void ThreadedContinuousCode() override;
+        void PooledLinearCode() override;
+
     private:
         unsigned int m_unPort;
-        int m_ServerFd;
-        std::map<std::string, int> m_OpenSockets;
-        std::map<std::string, int> m_IncomingSockets;
-        std::map<int, int> m_Buffers;
+        RoveCommSocket m_nListeningSocket;
+        std::map<RoveCommAddress, RoveCommSocket> m_nOpenSockets;
+        std::map<RoveCommAddress, RoveCommSocket> m_nIncomingSockets;
         int m_nOpenSocketLength;
         int m_nIncomingSocketLength;
 };
