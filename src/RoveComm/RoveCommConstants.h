@@ -1,5 +1,6 @@
 /******************************************************************************
- * @brief Defines Global Constants within RoveComm C++
+ * @brief Defines Global Constants within RoveComm C++ that aren't already defined
+ * in RoveCommManifest.h
  *
  * @file Consts.h
  * @author Eli Byrd (edbgkk@mst.edu)
@@ -20,6 +21,12 @@ namespace rovecomm
     const int ROVECOMM_PACKET_MAX_DATA_COUNT        = 65535;
     const int ROVECOMM_PACKET_HEADER_SIZE           = 6;
     const int ROVECOMM_VERSION                      = 3;
+
+    namespace System
+    {
+        // pass to RoveCommServer::Fetch() signifying any data id. This is not a valid data id.
+        const int ANY = 0;
+    }    // namespace System
 
     // const int ROVECOMM_UDP_PORT                     = 11000;
     // const int ROVECOMM_TCP_PORT                     = 12000;

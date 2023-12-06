@@ -11,7 +11,10 @@
 #ifndef ROVECOMM_SERVER_H
 #define ROVECOMM_SERVER_H
 
+#include <future>
 #include <map>
+#include <queue>
+#include <shared_mutex>
 #include <thread>
 #include <vector>
 
@@ -19,20 +22,40 @@
 
 /******************************************************************************
  * @brief Allow us to add more protocols. Currently only TCP/UDP.
- * Enum class prevents accidental casting to int
+ * In functions that take multiple protocols, write TCP | UDP
  *
  *
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-14
  ******************************************************************************/
-enum class RoveCommServerProtocol
+enum RoveCommNetworkProtocol
 {
-    TCP,
-    UDP
+    TCP = 1 << 0,
+    UDP = 2 << 1
 };
 
-using RoveCommServerPort = unsigned int;
-using RoveCommCallback   = void();
+inline RoveCommNetworkProtocol operator|(RoveCommNetworkProtocol protocol, RoveCommNetworkProtocol other)
+{
+    return static_cast<RoveCommNetworkProtocol>(static_cast<int>(protocol) | static_cast<int>(protocol));
+}
+
+using RoveCommPort     = unsigned int;
+using RoveCommCallback = void();
+
+/******************************************************************************
+ * @brief Octant of an IP address where FIRST = 1, SECOND = 2, etc.
+ *
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2023-12-01
+ ******************************************************************************/
+enum RoveCommAddressOctant
+{
+    FIRST = 0x01,
+    SECOND,
+    THIRD,
+    FOURTH
+};
 
 /******************************************************************************
  * @brief Contains the octants of an IP address and a port number
@@ -44,13 +67,42 @@ using RoveCommCallback   = void();
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-29
  ******************************************************************************/
-typedef struct
+class RoveCommAddress    // should this be a struct?
 {
-        char cOctants[4];
-        unsigned int unPort;
-} RoveCommAddress;
+    public:
+        RoveCommAddress(char cFirstOctant, char cSecondOctant, char cThirdOctant, char cFourthOctant, RoveCommPort unPort) :
+            m_cOctants({cFirstOctant, cSecondOctant, cThirdOctant, cFourthOctant})
+        {}
+
+        RoveCommAddress(char cOctants[4], RoveCommPort unPort) : RoveCommAddress(cOctants[0], cOctants[1], cOctants[2], cOctants[3], 0) {}
+
+        RoveCommAddress() : RoveCommAddress(0, 0, 0, 0, 0) {}
+
+        // maybe have one that takes ("1.2.3.4", 0) ?
+
+        inline char GetOctant(RoveCommAddressOctant octant) { return m_cOctants[octant - 1]; }
+
+        inline RoveCommPort GetPort() { return m_unPort; }
+
+        friend inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
+        friend inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
+        friend inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
+
+        // for std::map lookups
+        inline bool operator<(RoveCommAddress& other) { return this->m_unPort < other.m_unPort; }
+
+    private:
+        char m_cOctants[4];
+        RoveCommPort m_unPort;
+
+    public:
+        // pass to RoveCommServer::Fetch() signifying any address. This is not a valid address.
+        const static RoveCommAddress ANY;
+};
 
 inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
+inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
+inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
 
 /******************************************************************************
  * @brief Base class that can be extended to add more protocols.
@@ -62,6 +114,8 @@ inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& addres
 class RoveCommServer
 {
     public:
+        RoveCommServer(RoveCommPort unPort) : m_unPort(unPort) {}
+
         virtual ~RoveCommServer();
 
         /******************************************************************************
@@ -100,23 +154,40 @@ class RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual int WriteTo(RoveCommPacket& packet, RoveCommAddress address) const;
+        virtual int SendTo(RoveCommPacket& packet, RoveCommAddress address) const;
         /******************************************************************************
-         * @brief Read incoming packets
+         * @brief Read incoming packets and clear queue
          *
-         * @return std::vector<RoveCommPacket>& - a list of RoveCommPackets. 0 if no packets available.
+         * @return std::vector<RoveCommPacket> - a list of RoveCommPackets. 0 if no packets available.
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual std::vector<RoveCommPacket>& Read() const;
+        virtual std::vector<RoveCommPacket> Read() const;
 
-        inline const RoveCommServerPort GetPort() const { return m_unPort; }
+        /******************************************************************************
+         * @brief Synchronously await the next RoveCommPacket with the given data_id.
+         * This packet is marked immediately as read and does not get queued for Read()
+         *
+         * @param unId - the desired id
+         * @param address - the desired address
+         * @return std::future<RoveCommPacket> - the desired RoveCommPacket
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-01
+         ******************************************************************************/
+        virtual std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY) const;
+
+        inline const RoveCommPort GetPort() const { return m_unPort; }
 
     protected:
-        const RoveCommServerPort m_unPort;
+        const RoveCommPort m_unPort;
         // std::map<RoveCommDataId, RoveCommCallback> m_fCallbacks;
-        std::thread m_thNetworkThread;
+        // std::thread m_thNetworkThread;
+        std::queue<RoveCommPacket> m_qPacketCopyQueue;
+
+        std::shared_mutex m_muPoolScheduleMutex;
+        std::mutex m_muPacketCopyMutex;
 };
 
 /******************************************************************************
@@ -129,26 +200,18 @@ class RoveCommServer
 class RoveCommServerManager
 {
     public:
-        static void OpenServerOnPort(unsigned int port, RoveCommServerProtocol protocol = RoveCommServerProtocol::UDP);
+        static void OpenServerOnPort(RoveCommPort port = rovecomm::General::ETHERNET_UDP_PORT, RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
         static void Shutdown();
-        static void Write(RoveCommPacket& packet, RoveCommServerProtocol protocol);
-
-        /******************************************************************************
-         * @brief Sets the callback function for any incoming packets with the given data id.
-         * This runs asynchronously on another thread!
-         *
-         * @param unId - data id to listen for
-         * @param fCallback - function to call
-         *
-         * @author OcelotEmpire (hobbz.pi@gmail.com)
-         * @date 2023-11-29
-         ******************************************************************************/
-        static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);
-        // more here eventually
+        static int Write(RoveCommPacket& packet, RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
+        static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
+        static std::vector<RoveCommPacket> Read(RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
+        static std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY);
+        // static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);
+        //  more here eventually
 
     private:
-        static std::map<RoveCommServerProtocol, std::vector<RoveCommServer>> s_Servers;
-        static std::map<RoveCommDataId, RoveCommCallback> s_fCallbacks;
+        // static std::map<RoveCommNetworkProtocol, std::vector<RoveCommServer>> s_Servers;
+        // static std::map<RoveCommDataId, RoveCommCallback> s_fCallbacks;
 };
 
 // This is the main singleton that we call static functions on
