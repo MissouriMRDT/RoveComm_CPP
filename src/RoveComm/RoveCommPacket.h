@@ -62,7 +62,7 @@ typedef union
 } RoveCommPacketHeader;
 
 /******************************************************************************
- * @brief The RoveComm packet is the encapsulation of a message sent across the rover
+ * @brief The RoveComm packet is an immutable encapsulation of a message sent across the rover
  *  network that can be parsed by all rover computing systems.
  *
  *  In this implementation, packets are immutable state.
@@ -71,22 +71,31 @@ typedef union
 class RoveCommPacket
 {
     public:
-        RoveCommPacket();
-        RoveCommPacket(unsigned int unDataId, rovecomm::DataTypes eDataType, void* aData);
+        RoveCommPacket() : RoveCommPacket(rovecomm::System::NO_DATA_DATA_ID, 0, RoveCommDataType::INT8_T, nullptr){};
+        RoveCommPacket(RoveCommDataId unDataId, RoveCommDataCount unDataCount, RoveCommDataType eDataType, const char* aData) :
+            m_uHeader({RoveCommPacketHeader_t{rovecomm::ROVECOMM_VERSION, unDataId, unDataCount, eDataType}}), m_aData(aData){};
 
-        inline RoveCommVersionId getVersionId() const { return m_uHeader.fields.unVersionId; }
+        // TODO: copy constructors and move semantics
+        //  RoveCommPacket(const RoveCommPacket& other);
+        //  RoveCommPacket operator=(const RoveCommPacket&& other);
 
-        inline RoveCommDataId getDataId() const { return m_uHeader.fields.unDataId; }
+        inline RoveCommVersionId GetVersionId() const { return m_uHeader.fields.unVersionId; }
 
-        inline RoveCommDataCount getDataCount() const { return m_uHeader.fields.unDataCount; }
+        inline RoveCommDataId GetDataId() const { return m_uHeader.fields.unDataId; }
 
-        inline rovecomm::DataTypes getDataType() const { return m_uHeader.fields.eDataType; }
+        inline RoveCommDataCount GetDataCount() const { return m_uHeader.fields.unDataCount; }
 
-        inline void* getData() const { return m_aData; }
+        inline RoveCommDataType GetDataType() const { return m_uHeader.fields.eDataType; }
+
+        inline const char* GetData() const { return m_aData; }
+
+        // An empty packet you can compare to I guess
+        static const RoveCommPacket NONE;
 
     private:
-        RoveCommPacketHeader m_uHeader;
-        void* m_aData;    // consider making this an std::array<int> for ease of use
+        const RoveCommPacketHeader m_uHeader;
+        const char* m_aData;
+        // const char m_aData[rovecomm::ROVECOMM_PACKET_MAX_DATA_COUNT];    // consider making this an std::array<int> for ease of use
 };
 
 // print with std::cout
