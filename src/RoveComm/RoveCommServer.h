@@ -11,98 +11,16 @@
 #ifndef ROVECOMM_SERVER_H
 #define ROVECOMM_SERVER_H
 
-#include <future>
+// #include <future>
+#include <iostream>
 #include <map>
-#include <queue>
-#include <shared_mutex>
+// #include <queue>
+// #include <shared_mutex>
 #include <thread>
 #include <vector>
 
+#include "RoveCommHelpers.h"
 #include "RoveCommPacket.h"
-
-/******************************************************************************
- * @brief Allow us to add more protocols. Currently only TCP/UDP.
- * In functions that take multiple protocols, write TCP | UDP
- *
- *
- * @author OcelotEmpire (hobbz.pi@gmail.com)
- * @date 2023-11-14
- ******************************************************************************/
-enum RoveCommNetworkProtocol
-{
-    TCP = 1 << 0,
-    UDP = 2 << 1
-};
-
-inline RoveCommNetworkProtocol operator|(RoveCommNetworkProtocol protocol, RoveCommNetworkProtocol other)
-{
-    return static_cast<RoveCommNetworkProtocol>(static_cast<int>(protocol) | static_cast<int>(protocol));
-}
-
-using RoveCommPort     = unsigned int;
-using RoveCommCallback = void();
-
-/******************************************************************************
- * @brief Octant of an IP address where FIRST = 1, SECOND = 2, etc.
- *
- *
- * @author OcelotEmpire (hobbz.pi@gmail.com)
- * @date 2023-12-01
- ******************************************************************************/
-enum RoveCommAddressOctant
-{
-    FIRST = 0x01,
-    SECOND,
-    THIRD,
-    FOURTH
-};
-
-/******************************************************************************
- * @brief Contains the octants of an IP address and a port number
- *
- * @param cOctants[4] - a char array with octants from most to least significant,
- * i.e. "1.2.3.4"
- * @param unPort - the port number
- *
- * @author OcelotEmpire (hobbz.pi@gmail.com)
- * @date 2023-11-29
- ******************************************************************************/
-class RoveCommAddress    // should this be a struct?
-{
-    public:
-        RoveCommAddress(char cFirstOctant, char cSecondOctant, char cThirdOctant, char cFourthOctant, RoveCommPort unPort) :
-            m_cOctants({cFirstOctant, cSecondOctant, cThirdOctant, cFourthOctant})
-        {}
-
-        RoveCommAddress(char cOctants[4], RoveCommPort unPort) : RoveCommAddress(cOctants[0], cOctants[1], cOctants[2], cOctants[3], 0) {}
-
-        RoveCommAddress() : RoveCommAddress(0, 0, 0, 0, 0) {}
-
-        // maybe have one that takes ("1.2.3.4", 0) ?
-
-        inline char GetOctant(RoveCommAddressOctant octant) { return m_cOctants[octant - 1]; }
-
-        inline RoveCommPort GetPort() { return m_unPort; }
-
-        friend inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
-        friend inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
-        friend inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
-
-        // for std::map lookups
-        inline bool operator<(RoveCommAddress& other) { return this->m_unPort < other.m_unPort; }
-
-    private:
-        char m_cOctants[4];
-        RoveCommPort m_unPort;
-
-    public:
-        // pass to RoveCommServer::Fetch() signifying any address. This is not a valid address.
-        const static RoveCommAddress ANY;
-};
-
-inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
-inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
-inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
 
 /******************************************************************************
  * @brief Base class that can be extended to add more protocols.
@@ -165,18 +83,18 @@ class RoveCommServer
          ******************************************************************************/
         virtual std::vector<RoveCommPacket> Read() const;
 
-        /******************************************************************************
-         * @brief Synchronously await the next RoveCommPacket with the given data_id.
-         * This packet is marked immediately as read and does not get queued for Read()
-         *
-         * @param unId - the desired id
-         * @param address - the desired address
-         * @return std::future<RoveCommPacket> - the desired RoveCommPacket
-         *
-         * @author OcelotEmpire (hobbz.pi@gmail.com)
-         * @date 2023-12-01
-         ******************************************************************************/
-        virtual std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY) const;
+        // /******************************************************************************
+        //  * @brief Synchronously await the next RoveCommPacket with the given data_id.
+        //  * This packet is marked immediately as read and does not get queued for Read()
+        //  *
+        //  * @param unId - the desired id
+        //  * @param address - the desired address
+        //  * @return std::future<RoveCommPacket> - the desired RoveCommPacket
+        //  *
+        //  * @author OcelotEmpire (hobbz.pi@gmail.com)
+        //  * @date 2023-12-01
+        //  ******************************************************************************/
+        // virtual std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY) const;
 
         inline const RoveCommPort GetPort() const { return m_unPort; }
 
@@ -184,10 +102,9 @@ class RoveCommServer
         const RoveCommPort m_unPort;
         // std::map<RoveCommDataId, RoveCommCallback> m_fCallbacks;
         // std::thread m_thNetworkThread;
-        std::queue<RoveCommPacket> m_qPacketCopyQueue;
-
-        std::shared_mutex m_muPoolScheduleMutex;
-        std::mutex m_muPacketCopyMutex;
+        // std::queue<RoveCommPacket> m_qPacketCopyQueue;
+        // std::shared_mutex m_muPoolScheduleMutex;
+        // std::mutex m_muPacketCopyMutex;
 };
 
 /******************************************************************************
@@ -200,18 +117,22 @@ class RoveCommServer
 class RoveCommServerManager
 {
     public:
-        static void OpenServerOnPort(RoveCommPort port = rovecomm::General::ETHERNET_UDP_PORT, RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
+        static void RoveCommInit();
+        static void OpenServerOnPort(RoveCommPort port = rovecomm::General::ETHERNET_UDP_PORT, RoveCommProtocol protocol = RoveCommProtocol::UDP);
         static void Shutdown();
-        static int Write(RoveCommPacket& packet, RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
-        static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
-        static std::vector<RoveCommPacket> Read(RoveCommNetworkProtocol protocol = RoveCommNetworkProtocol::UDP);
-        static std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY);
-        // static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);
-        //  more here eventually
+        static int Write(RoveCommPacket& packet, RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
+        static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
+        static std::vector<RoveCommPacket> Read(RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
+
+        // static std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY);
+        //  static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);
+        //   more here eventually
 
     private:
-        // static std::map<RoveCommNetworkProtocol, std::vector<RoveCommServer>> s_Servers;
-        // static std::map<RoveCommDataId, RoveCommCallback> s_fCallbacks;
+        static std::map<RoveCommProtocol, std::vector<RoveCommServer*>> s_Servers;
+        static std::map<RoveCommDataId, RoveCommCallback> s_fCallbacks;
+
+        static std::thread s_thNetworkThread;
 };
 
 // This is the main singleton that we call static functions on
