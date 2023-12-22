@@ -32,6 +32,7 @@
 class RoveCommServer
 {
     public:
+        // RoveCommServer(RoveCommPort unPort) : m_unPort(unPort) {}
         RoveCommServer(RoveCommPort unPort) : m_unPort(unPort) {}
 
         virtual ~RoveCommServer();
@@ -54,8 +55,8 @@ class RoveCommServer
         /******************************************************************************
          * @brief Write a packet to all subscribers/connections
          *
-         * @param packet - the RoveCommPacket to write
-         * @return int - the number of bytes written (0 if error)
+         * @param packet the RoveCommPacket to write
+         * @return int the number of bytes written (0 if error)
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
@@ -65,9 +66,9 @@ class RoveCommServer
          * @brief Write a packet to a single address, but not subscribers/connections.
          * If you want to send a packet to subscribers AND the ip, call SubscribeTo()
          *
-         * @param packet - the RoveCommPacket to write
-         * @param address - the RoveCommAddress (IP, Port) to send to
-         * @return int - the number of bytes written (0 if error)
+         * @param packet the RoveCommPacket to write
+         * @param address the RoveCommAddress (IP, Port) to send to
+         * @return int the number of bytes written (0 if error)
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
@@ -76,7 +77,7 @@ class RoveCommServer
         /******************************************************************************
          * @brief Read incoming packets and clear queue
          *
-         * @return std::vector<RoveCommPacket> - a list of RoveCommPackets. 0 if no packets available.
+         * @return std::vector<RoveCommPacket> a list of RoveCommPackets. 0 if no packets available.
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
@@ -87,9 +88,9 @@ class RoveCommServer
         //  * @brief Synchronously await the next RoveCommPacket with the given data_id.
         //  * This packet is marked immediately as read and does not get queued for Read()
         //  *
-        //  * @param unId - the desired id
-        //  * @param address - the desired address
-        //  * @return std::future<RoveCommPacket> - the desired RoveCommPacket
+        //  * @param unId the desired id
+        //  * @param address the desired address
+        //  * @return std::future<RoveCommPacket> the desired RoveCommPacket
         //  *
         //  * @author OcelotEmpire (hobbz.pi@gmail.com)
         //  * @date 2023-12-01
@@ -117,16 +118,15 @@ class RoveCommServer
 class RoveCommServerManager
 {
     public:
-        static void RoveCommInit();
-        static void OpenServerOnPort(RoveCommPort port = rovecomm::General::ETHERNET_UDP_PORT, RoveCommProtocol protocol = RoveCommProtocol::UDP);
+        static void Init();
+        static void OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol = RoveCommProtocol::UDP);
         static void Shutdown();
         static int Write(RoveCommPacket& packet, RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
         static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
         static std::vector<RoveCommPacket> Read(RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
 
         // static std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY);
-        //  static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);
-        //   more here eventually
+        static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);
 
     private:
         static std::map<RoveCommProtocol, std::vector<RoveCommServer*>> s_Servers;
@@ -137,7 +137,7 @@ class RoveCommServerManager
 
 // This is the main singleton that we call static functions on
 // So we can get Java-style RoveComm.write(...);
-extern RoveCommServerManager RoveComm;
+extern RoveCommServerManager RoveComm;    // TODO: make this a real singleton
 
 #endif
 

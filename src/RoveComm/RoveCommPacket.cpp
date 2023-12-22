@@ -13,16 +13,40 @@
 
 #include <iostream>
 
+size_t rovecomm::DataTypeSize(RoveCommDataType unType)
+{
+    switch (unType)
+    {
+        case INT8_T:
+        case UINT8_T: return 1;
+        case INT16_T:
+        case UINT16_T: return 2;
+        case INT32_T:
+        case UINT32_T: return 4;
+        case FLOAT_T: return 4;
+        case DOUBLE_T: return 8;
+        case CHAR: return 1;
+        default:
+        {
+            std::cout << "Unknown data type!" << std::endl;
+            return -1;
+        }
+    }
+}
+
+size_t RoveCommPacket::size() const
+{
+    return rovecomm::ROVECOMM_PACKET_HEADER_SIZE + (m_sHeader.unDataCount * rovecomm::DataTypeSize(m_sHeader.unDataType));
+}
+
 std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet)
 {
     out << "----------";
-    out << "ID: " << packet.getDataId() << "\n";
-    out << "Count: " << packet.getDataCount() << "\n";
-    out << "Type: " << packet.getDataType() << "\n";
-    std::cout << "Data: [";
-    // for (int i=0, i<)
-    out << "]\n";
-    out << "----------" << std::endl;
+    out << "ID: " << packet.GetDataId() << "\n";
+    out << "Count: " << packet.GetDataCount() << "\n";
+    out << "Type: " << packet.GetDataType() << "\n";
+    out << "Data: [ " << packet.GetDataCount() * rovecomm::DataTypeSize(packet.GetDataType()) << " bytes ]\n";
+    out << "----------" << '\n';
     return out;
 }
 

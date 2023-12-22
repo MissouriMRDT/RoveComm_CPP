@@ -21,7 +21,12 @@
 using RoveCommVersionId = uint8_t;
 using RoveCommDataId    = uint16_t;
 using RoveCommDataCount = uint16_t;
-using RoveCommDataType  = rovecomm::DataTypes;
+using RoveCommDataType  = uint8_t;
+
+namespace rovecomm
+{
+    size_t DataTypeSize(RoveCommDataType unDataType);
+}
 
 /*
  *  Header format (sits under TCP/UDP header):
@@ -33,33 +38,19 @@ using RoveCommDataType  = rovecomm::DataTypes;
  */
 
 /******************************************************************************
- * @brief internal typedef to make the RoveCommPacketHeader union work
+ * @brief Encapsulates header data for a RoveCommPacket
  *
  *
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-29
  ******************************************************************************/
-typedef struct
+struct RoveCommPacketHeader
 {
         RoveCommVersionId unVersionId;
         RoveCommDataId unDataId;
         RoveCommDataCount unDataCount;
-        RoveCommDataType eDataType;
-} RoveCommPacketHeader_t;
-
-/******************************************************************************
- * @brief A convenient tool for reading a RoveCommPacketHeader as a char array
- * Meant to be internal, but you can use it if you want I guess
- *
- *
- * @author OcelotEmpire (hobbz.pi@gmail.com)
- * @date 2023-11-29
- ******************************************************************************/
-typedef union
-{
-        RoveCommPacketHeader_t fields;
-        char bytes[sizeof(RoveCommPacketHeader_t)];
-} RoveCommPacketHeader;
+        RoveCommDataType unDataType;
+};
 
 /******************************************************************************
  * @brief The RoveComm packet is an immutable encapsulation of a message sent across the rover
@@ -71,29 +62,31 @@ typedef union
 class RoveCommPacket
 {
     public:
-        RoveCommPacket() : RoveCommPacket(rovecomm::System::NO_DATA_DATA_ID, 0, RoveCommDataType::INT8_T, nullptr){};
-        RoveCommPacket(RoveCommDataId unDataId, RoveCommDataCount unDataCount, RoveCommDataType eDataType, const char* aData) :
-            m_uHeader({RoveCommPacketHeader_t{rovecomm::ROVECOMM_VERSION, unDataId, unDataCount, eDataType}}), m_aData(aData){};
+        RoveCommPacket() : RoveCommPacket(rovecomm::System::NO_DATA_DATA_ID, 0, rovecomm::DataTypes::INT8_T, nullptr){};
+        RoveCommPacket(RoveCommDataId unDataId, RoveCommDataCount unDataCount, RoveCommDataType unDataType, const char* aData) :
+            m_sHeader({rovecomm::ROVECOMM_VERSION, unDataId, unDataCount, unDataType}), m_aData(aData){};
 
         // TODO: copy constructors and move semantics
         //  RoveCommPacket(const RoveCommPacket& other);
         //  RoveCommPacket operator=(const RoveCommPacket&& other);
 
-        inline RoveCommVersionId GetVersionId() const { return m_uHeader.fields.unVersionId; }
+        inline RoveCommVersionId GetVersionId() const { return m_sHeader.unVersionId; }
 
-        inline RoveCommDataId GetDataId() const { return m_uHeader.fields.unDataId; }
+        inline RoveCommDataId GetDataId() const { return m_sHeader.unDataId; }
 
-        inline RoveCommDataCount GetDataCount() const { return m_uHeader.fields.unDataCount; }
+        inline RoveCommDataCount GetDataCount() const { return m_sHeader.unDataCount; }
 
-        inline RoveCommDataType GetDataType() const { return m_uHeader.fields.eDataType; }
+        inline RoveCommDataType GetDataType() const { return m_sHeader.unDataType; }
 
         inline const char* GetData() const { return m_aData; }
+
+        size_t size() const;
 
         // An empty packet you can compare to I guess
         static const RoveCommPacket NONE;
 
     private:
-        const RoveCommPacketHeader m_uHeader;
+        const RoveCommPacketHeader m_sHeader;
         const char* m_aData;
         // const char m_aData[rovecomm::ROVECOMM_PACKET_MAX_DATA_COUNT];    // consider making this an std::array<int> for ease of use
 };
