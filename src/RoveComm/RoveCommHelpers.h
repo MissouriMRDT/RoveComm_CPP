@@ -12,6 +12,9 @@
 #define ROVECOMM_HELPERS_H
 
 #include <iostream>
+#include <string>
+
+#include "RoveCommManifest.h"
 
 /******************************************************************************
  * @brief Implemented network protocols. Currently only TCP/UDP.
@@ -38,42 +41,56 @@ inline RoveCommProtocolFlags operator|(RoveCommProtocol protocol, RoveCommProtoc
 
 using RoveCommPort = unsigned int;
 
-using RoveCommIp   = struct
+struct RoveCommIp
 {
-        char firstOctant, secondOctant, thirdOctant, fourthOctant;
+        char firstOctet, secondOctet, thirdOctet, fourthOctet;
+
+        RoveCommIp(char firstOctet, char secondOctet, char thirdOctet, char fourthOctet) :
+            firstOctet(firstOctet), secondOctet(secondOctet), thirdOctet(thirdOctet), fourthOctet(fourthOctet)
+        {}
+
+        RoveCommIp(rovecomm::AddressEntry entry) : RoveCommIp(entry.FIRST_OCTET, entry.SECOND_OCTET, entry.THIRD_OCTET, entry.FOURTH_OCTET) {}
+
+        std::string ToString() const;
         friend inline std::ostream& operator<<(std::ostream& out, const RoveCommIp& ip);
+        friend inline bool operator==(RoveCommIp& ip, RoveCommIp& other);
+        friend inline bool operator!=(RoveCommIp& ip, RoveCommIp& other);
 };
 
 inline std::ostream& operator<<(std::ostream& out, const RoveCommIp& ip);
+inline bool operator==(RoveCommIp& ip, RoveCommIp& other);
+inline bool operator!=(RoveCommIp& ip, RoveCommIp& other);
+
 using RoveCommCallback = void();
 
 /******************************************************************************
- * @brief Contains the octants of an IP address and a port number
+ * @brief Contains the octets of an IPv4 address and a port number
  *
- * @param sOctants - the ipv4 address,
+ * @param sOctets - the IPv4 address,
  * i.e. "1.2.3.4"
  * @param unPort - the port number
  *
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-29
  ******************************************************************************/
-class RoveCommAddress    // should this be a struct?
+class RoveCommAddress
 {
     public:
-        RoveCommAddress(RoveCommIp sOctants, RoveCommPort unPort) : m_sOctants(sOctants), m_unPort(unPort) {}
+        RoveCommAddress(RoveCommIp sOctets, RoveCommPort unPort) : m_sOctets(sOctets), m_unPort(unPort) {}
 
-        RoveCommAddress(char cFirstOctant, char cSecondOctant, char cThirdOctant, char cFourthOctant, RoveCommPort unPort) :
-            RoveCommAddress({cFirstOctant, cSecondOctant, cThirdOctant, cFourthOctant}, unPort)
+        RoveCommAddress(char cFirstOctet, char cSecondOctet, char cThirdOctet, char cFourthOctet, RoveCommPort unPort) :
+            RoveCommAddress({cFirstOctet, cSecondOctet, cThirdOctet, cFourthOctet}, unPort)
         {}
 
         RoveCommAddress() : RoveCommAddress(0, 0, 0, 0, 0) {}
 
         // maybe have one that takes ("1.2.3.4", 0) ?
 
-        inline RoveCommIp GetIp() { return m_sOctants; }
+        inline RoveCommIp GetIp() { return m_sOctets; }
 
         inline RoveCommPort GetPort() { return m_unPort; }
 
+        std::string ToString() const;
         friend inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
         friend inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
         friend inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
@@ -82,7 +99,7 @@ class RoveCommAddress    // should this be a struct?
         inline bool operator<(RoveCommAddress& other) { return this->m_unPort < other.m_unPort; }
 
     private:
-        RoveCommIp m_sOctants;
+        RoveCommIp m_sOctets;
         RoveCommPort m_unPort;
 
     public:
