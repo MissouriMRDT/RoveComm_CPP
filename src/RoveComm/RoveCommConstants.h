@@ -21,6 +21,7 @@ namespace rovecomm
     const int ROVECOMM_PACKET_MAX_DATA_COUNT        = 65535;
     const int ROVECOMM_PACKET_HEADER_SIZE           = 6;
     const int ROVECOMM_VERSION                      = 3;
+    const int MAX_SOCKET_QUEUE_LENGTH               = 5;
 
     namespace System
     {

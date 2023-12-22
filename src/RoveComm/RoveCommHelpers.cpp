@@ -1,22 +1,44 @@
 #include "RoveCommHelpers.h"
 
+std::string RoveCommIp::ToString() const
+{
+    std::string ret = "";
+    ret += firstOctet + '.' + secondOctet + '.' + thirdOctet + '.' + fourthOctet;
+    return ret;
+}
+
 std::ostream& operator<<(std::ostream& out, const RoveCommIp& ip)
 {
-    out << ip.firstOctant << ':' << ip.secondOctant << ':' << ip.thirdOctant << ':' << ip.fourthOctant;
-    return out;
+    out << ip.ToString();
+}
+
+bool operator==(RoveCommIp& ip, RoveCommIp& other)
+{
+    return ip.firstOctet == other.firstOctet && ip.secondOctet == other.secondOctet && ip.thirdOctet == other.thirdOctet && ip.fourthOctet == other.fourthOctet;
+}
+
+bool operator!=(RoveCommIp& ip, RoveCommIp& other)
+{
+    return !(ip == other);
+}
+
+std::string RoveCommAddress::ToString() const
+{
+    std::string ret = "";
+    ret += m_sOctets.ToString() + ':';
+    ret += m_unPort;
+    return ret;
 }
 
 std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address)
 {
-    out << address.m_sOctants << ':' << address.m_unPort;
+    out << address.m_sOctets << ':' << address.m_unPort;
     return out;
 };
 
 bool operator==(RoveCommAddress& address, RoveCommAddress& other)
 {
-    return address.m_unPort == other.m_unPort && address.m_sOctants.firstOctant == other.m_sOctants.firstOctant &&
-           address.m_sOctants.secondOctant == other.m_sOctants.secondOctant && address.m_sOctants.thirdOctant == other.m_sOctants.thirdOctant &&
-           address.m_sOctants.fourthOctant == other.m_sOctants.fourthOctant;
+    return address.m_unPort == other.m_unPort && address.m_sOctets == other.m_sOctets;
 }
 
 bool operator!=(RoveCommAddress& address, RoveCommAddress& other)

@@ -11,15 +11,17 @@
 #ifndef ROVECOMM_ETHERNET_TCP_H
 #define ROVECOMM_ETHERNET_TCP_H
 
-#include "External.h"
 #include "RoveCommConstants.h"
 #include "RoveCommPacket.h"
 #include "RoveCommServer.h"
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <sys/socket.h>
 #include <vector>
+
+using RoveCommSocket = int;    // kind of stupid why is this a thing
 
 /******************************************************************************
  * @brief Extends RoveCommServer to use the TCP protocol. Both hosts must establish a
@@ -29,11 +31,18 @@
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-14
  ******************************************************************************/
-using RoveCommSocket = int;
+class RoveCommEthernetTcp : RoveCommServer
 
-class RoveCommEthernetTcp : RoveCommServer, AutonomyThread
 {
     public:
+        /******************************************************************************
+         * @brief Construct a new TCP server. Uses host IPv4 address
+         *
+         * @param unPort - port to listen on
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-21
+         ******************************************************************************/
         RoveCommEthernetTcp(RoveCommPort unPort) : RoveCommServer(unPort){};
 
         void Init() override;
@@ -42,6 +51,28 @@ class RoveCommEthernetTcp : RoveCommServer, AutonomyThread
         int Write(RoveCommPacket& packet) const override;
         int SendTo(RoveCommPacket& packet, RoveCommAddress address) const override;
         std::vector<RoveCommPacket> Read() const override;
+
+        /******************************************************************************
+         * @brief Try to open a TCP connection with another device (acting as client)
+         * This method is mostly used internally.
+         *
+         * @param address the address to connect to
+         *
+         * @throws
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-21
+         ******************************************************************************/
+        void Connect(RoveCommAddress& address);
+
+        /******************************************************************************
+         * @brief Check for other devices trying to connect to this device (acting as server)
+         * This will be private in a future iteration ;)
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-21
+         ******************************************************************************/
+        void AcceptIncomingConnections();
 
         // std::map<std::string, int> m_OpenSockets;
         // std::map<std::string, int> m_IncomingSockets;
@@ -59,17 +90,31 @@ class RoveCommEthernetTcp : RoveCommServer, AutonomyThread
         // void HandleIncomingConnection();
         // RoveCommPacket* Read();
 
-    private:    // AutonomyThread
-        void ThreadedContinuousCode() override;
-        void PooledLinearCode() override;
+    private:
+        // Socket for accepting connections from other devices
+        RoveCommSocket m_nListeningSocket;
+        // Connections opened by other devices (still 2-way!)
+        std::map<RoveCommAddress, RoveCommSocket> m_mIncomingSockets;
+        // Connections opened by this device (still 2-way!)
+        std::map<RoveCommAddress, RoveCommSocket> m_mOutgoingSockets;
+};
+
+/******************************************************************************
+ * @brief I love java so much! When calling RoveCommEthernetTCP::Connect(),
+ * remember to try{}catch(auto& exception) { exception.Print(); }
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2023-12-21
+ ******************************************************************************/
+class RoveCommTcpConnectionFailedException
+{
+    public:
+        void Print();
+
+        inline const int GetErrorCode() const { return m_nErrorCode; }
 
     private:
-        unsigned int m_unPort;
-        RoveCommSocket m_nListeningSocket;
-        std::map<RoveCommAddress, RoveCommSocket> m_nOpenSockets;
-        std::map<RoveCommAddress, RoveCommSocket> m_nIncomingSockets;
-        int m_nOpenSocketLength;
-        int m_nIncomingSocketLength;
+        const int m_nErrorCode;
 };
 
 #endif    // ROVECOMM_ETHERNET_TCP_H
