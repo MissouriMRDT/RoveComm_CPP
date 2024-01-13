@@ -1,5 +1,7 @@
 #include "RoveCommHelpers.h"
 
+#include <memory>
+
 std::string RoveCommIp::ToString() const
 {
     std::string ret = "";
