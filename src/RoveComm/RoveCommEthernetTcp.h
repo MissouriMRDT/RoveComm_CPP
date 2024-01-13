@@ -49,21 +49,20 @@ class RoveCommEthernetTcp : RoveCommServer
         void Shutdown() override;
 
         int Write(RoveCommPacket& packet) const override;
-        int SendTo(RoveCommPacket& packet, RoveCommAddress address) const override;
-        std::vector<RoveCommPacket> Read() const override;
+        int SendTo(RoveCommPacket& packet, RoveCommAddress address) override;
+        std::vector<std::unique_ptr<RoveCommPacket>> Read() const override;
 
         /******************************************************************************
          * @brief Try to open a TCP connection with another device (acting as client)
          * This method is mostly used internally.
          *
-         * @param address the address to connect to
-         *
-         * @throws
+         * @param address The address to connect to
+         * @return bool - Whether the connection was successful.
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-12-21
          ******************************************************************************/
-        void Connect(RoveCommAddress& address);
+        bool Connect(RoveCommAddress& address);
 
         /******************************************************************************
          * @brief Check for other devices trying to connect to this device (acting as server)
@@ -94,9 +93,18 @@ class RoveCommEthernetTcp : RoveCommServer
         // Socket for accepting connections from other devices
         RoveCommSocket m_nListeningSocket;
         // Connections opened by other devices (still 2-way!)
-        std::map<RoveCommAddress, RoveCommSocket> m_mIncomingSockets;
-        // Connections opened by this device (still 2-way!)
-        std::map<RoveCommAddress, RoveCommSocket> m_mOutgoingSockets;
+        std::map<RoveCommAddress, RoveCommSocket> m_mOpenSockets;
+        std::map<RoveCommSocket, RoveCommByteBuffer> m_mReadBuffers;
+
+        // fd_set's contain all sockets for interfacing with the c library
+
+        // This is kept precariously up to date with m_mOpenSockets
+        // For selecting sockets to read
+        fd_set m_sReadSet;
+        // Cache the max socket in m_sReadSet
+        int m_nMaxSocket = 0;
+        // For selecting sockets to accept
+        fd_set m_sAcceptSet;
 };
 
 /******************************************************************************

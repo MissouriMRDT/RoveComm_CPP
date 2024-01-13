@@ -39,7 +39,7 @@ inline RoveCommProtocolFlags operator|(RoveCommProtocol protocol, RoveCommProtoc
     return static_cast<RoveCommProtocolFlags>(static_cast<unsigned int>(protocol) | static_cast<unsigned int>(protocol));
 }
 
-using RoveCommPort = unsigned int;
+using RoveCommPort = unsigned short;
 
 struct RoveCommIp
 {

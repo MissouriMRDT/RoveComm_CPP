@@ -56,7 +56,7 @@ class RoveCommServer
          * @brief Write a packet to all subscribers/connections
          *
          * @param packet the RoveCommPacket to write
-         * @return int the number of bytes written (0 if error)
+         * @return int how many sockets sent successfully
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
@@ -64,7 +64,8 @@ class RoveCommServer
         virtual int Write(RoveCommPacket& packet) const;
         /******************************************************************************
          * @brief Write a packet to a single address, but not subscribers/connections.
-         * If you want to send a packet to subscribers AND the ip, call SubscribeTo()
+         * If connection does not already exist, the server will attempt to establish a new connection.
+         * If you want to send a packet to subscribers AND the ip, call Subscribe()
          *
          * @param packet the RoveCommPacket to write
          * @param address the RoveCommAddress (IP, Port) to send to
@@ -73,7 +74,7 @@ class RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual int SendTo(RoveCommPacket& packet, RoveCommAddress address) const;
+        virtual int SendTo(RoveCommPacket& packet, RoveCommAddress address);
         /******************************************************************************
          * @brief Read incoming packets and clear queue
          *
@@ -82,7 +83,7 @@ class RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual std::vector<RoveCommPacket> Read() const;
+        virtual std::vector<std::unique_ptr<RoveCommPacket>> Read() const;
 
         // /******************************************************************************
         //  * @brief Synchronously await the next RoveCommPacket with the given data_id.
