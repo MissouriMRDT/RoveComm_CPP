@@ -40,6 +40,7 @@ void RoveCommEthernetTcp::Init()
     {
         // error
         std::cout << "Failed to find IP! : " << gai_strerror(status) << std::endl;
+        exit(1);
         return;
     }
 
@@ -66,28 +67,39 @@ void RoveCommEthernetTcp::Init()
     }
 
     // bind the socket to the host ip and port
-    bind(m_nListeningSocket, result->ai_addr, result->ai_addrlen);
+    if (bind(m_nListeningSocket, result->ai_addr, result->ai_addrlen) == -1)
+    {
+        close(m_nListeningSocket);
+        std::cout << "Failed to bind socket!";
+        return;
+    }
 
     // Accept a backlog of 5 connections, before we start discarding them
     // Why 5? No idea but that's what the Python limit is so best leave it be.
     // According to an ancient webpage, most systems cap this number at 20, so 10 should be safe, but I digress.
-    listen(m_nListeningSocket, rovecomm::MAX_SOCKET_QUEUE_LENGTH);
+    if (listen(m_nListeningSocket, rovecomm::MAX_SOCKET_QUEUE_LENGTH) == -1)
+    {
+        std::cout << "Damned socket won't listen >:(";
+        close(m_nListeningSocket);
+        return;
+    }
+
+    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
+    // Set up fd_set for reading
+    FD_ZERO(&m_sReadSet);
+    // Set up fd_set for accepting
+    FD_ZERO(&m_sAcceptSet);
+    FD_SET(m_nListeningSocket, &m_sAcceptSet);
 }
 
 void RoveCommEthernetTcp::Shutdown()
 {
-    for (const auto& nCurrentPair : m_mOutgoingSockets)
+    for (const auto& nCurrentPair : m_mOpenSockets)
     {
         RoveCommSocket nCurrentFd = nCurrentPair.second;
 
         // Notifies other end that we are terminating the connection
         shutdown(nCurrentFd, 1);    // Value of 1 stops send() but lets the program finish up remaining recv()'s
-        // close(nCurrentFd);
-    }
-    for (const auto& nCurrentPair : m_mIncomingSockets)
-    {
-        RoveCommSocket nCurrentFd = nCurrentPair.second;
-        shutdown(nCurrentFd, 1);
         // close(nCurrentFd);
     }
     shutdown(m_nListeningSocket, 1);
@@ -98,85 +110,67 @@ void RoveCommEthernetTcp::Shutdown()
 
 int RoveCommEthernetTcp::Write(RoveCommPacket& packet) const
 {
-    // std::string szRoveCommPacket;
-    // szRoveCommPacket += ROVECOMM_HEADER_FORMAT;
-    // szRoveCommPacket += static_cast<char>(ROVECOMM_VERSION);
-    // szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
-    // szRoveCommPacket += static_cast<char>(Packet.m_nDataCount);
-    // szRoveCommPacket += Packet.m_cDataType;
+    RoveCommByteBuffer buffer = RoveCommPacket::Pack(packet);
 
-    char* blob = new char[packet.size()];
-
-    for (int i = 0; i < Packet.m_nDataCount; i++)
-    {
-        szRoveCommPacket += '>' + Packet.m_cDataType + static_cast<char>(i);
-    }
-    for (const auto& nCurrentPair : m_IncomingSockets)
+    int nSuccessful           = 0;
+    for (const auto& nCurrentPair : m_mOpenSockets)
     {
         int nCurrentFd = nCurrentPair.second;
-
-        // Notifies other end that we are terminating the connection
-        send(nCurrentFd, &szRoveCommPacket, sizeof(szRoveCommPacket), 0);
-    }
-    if (!(Packet.m_stIp.nPort == 0 && Packet.m_stIp.stIp.sa_data == "0.0.0.0"))
-    {
-        if (Connect(Packet.m_stIp.stIp) == 0)
+        int sent       = send(nCurrentFd, buffer.GetRawData(), buffer.GetSize(), 0);
+        if (sent <= 0)
         {
-            return 0;
+            std::cout << "A message failed to send!" << std::endl;
+            continue;
         }
-        send(m_mOutgoingSockets[Packet.m_stIp.stIp.sa_data], &szRoveCommPacket, sizeof(szRoveCommPacket), 0);
-        // Establish a new connection if the destination has not yet been connected to yet
-        return 1;
+        nSuccessful++;
     }
-    delete[] blob;
+    return nSuccessful;
 }
 
-std::vector<RoveCommPacket> RoveCommEthernetTcp::Read()    // needs to return pointer to array of RoveCommPackets
+int RoveCommEthernetTcp::SendTo(RoveCommPacket& packet, RoveCommAddress address)
 {
-    int aAvailableSockets[5];
-    int packetLength = 0;
-    // FIX ME: Add an actual length to packets array
-    RoveCommPacket packets[5];
-    int currentIndex         = 0;
-    RoveCommPacket* rcReturn = new RoveCommPacket();
-    for (const auto& nCurrentPair : m_mOutgoingSockets)
+    // Establish a new connection if the destination has not yet been connected to yet
+    if (!Connect(address))
     {
-        aAvailableSockets[currentIndex] = nCurrentPair.second;
-        currentIndex++;
+        return -1;
     }
+    RoveCommByteBuffer buffer = RoveCommPacket::Pack(packet);
+    int nBytesSent            = send(m_mOpenSockets.at(address), buffer.GetRawData(), buffer.GetSize(), 0);
+    return nBytesSent;
+}
 
-    if (m_nOpenSocketLength > 0)
+std::vector<std::unique_ptr<RoveCommPacket>> RoveCommEthernetTcp::Read() const    // needs to return pointer to array of RoveCommPackets
+{
+    auto packets = std::vector<std::unique_ptr<RoveCommPacket>>();
+    // determine which sockets have data waiting
+    fd_set sReadSetCopy = m_sReadSet;
+    int nReady;
+    if (nReady = select(m_nMaxSocket, &sReadSetCopy, NULL, NULL, 0) == -1)
     {
-        // available_sockets = select.select(available_sockets, [], [], 0)[0]
+        std::cout << "something went wrong idk";
+        return;
     }
-    return rcReturn;
+    if (nReady == 0)    // no packets to read
+        return;
 
-    for (int i = 0; i < m_nOpenSocketLength; i++)
+    for (const auto& pair : m_mOpenSockets)
     {
-        int OpenSocket = aAvailableSockets[i];
-        try
-        {
-            int buffer      = m_Buffers[getpeername(OpenSocket, NULL, NULL)];
-            int nHeaderSize = sizeof(ROVECOMM_HEADER_FORMAT);
-            int nHeader     = recv(OpenSocket, &buffer, nHeaderSize, 0);
-            return;
-        }
-        catch (...)
-        {
-            RoveCommPacket returnPacket = RoveCommPacket();
-            packets[packetLength]       = returnPacket;
-            packetLength++;
-        }
+        RoveCommSocket nOpenSocket = pair.second;
+        if (!FD_ISSET(nOpenSocket, &sReadSetCopy))
+            continue;
+        // you got mail!
+        // read into buffer and stuff and add to packets[]
+        // make sure to FD_CLR() if recv returns 0!
     }
     return packets;
 }
 
-void RoveCommEthernetTcp::Connect(RoveCommAddress& address)
+bool RoveCommEthernetTcp::Connect(RoveCommAddress& address)
 {
-    if (m_mOutgoingSockets.contains(address))
+    if (m_mOpenSockets.contains(address))
     {
-        std::cout << "Host tried to connect to address " << address << ", but already had an open connection.";
-        return;
+        std::cout << "Host tried to connect to address " << address << ", but already had an open connection." << std::endl;
+        return false;
     }
     struct addrinfo hints, *result;
     RoveCommSocket nTcpSocketFd;
@@ -187,25 +181,38 @@ void RoveCommEthernetTcp::Connect(RoveCommAddress& address)
 
     if (nTcpSocketFd = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
     {
-        std::cout << "Failed to create socket!";
-        return;
+        std::cout << "Failed to create socket!" << std::endl;
+        return false;
     }
     if (connect(nTcpSocketFd, result->ai_addr, result->ai_addrlen) == -1)
     {
-        std::cout << "Failed to connect to address " << address << "!";
-        return;
+        std::cout << "Failed to connect to address: " << address << "!" << std::endl;
+        close(nTcpSocketFd);
+        return false;
     }
-    m_mOutgoingSockets.emplace(address, nTcpSocketFd);
+    m_mOpenSockets.emplace(address, nTcpSocketFd);
+    FD_SET(nTcpSocketFd, &m_sReadSet);
+    if (nTcpSocketFd > m_nMaxSocket)
+        m_nMaxSocket = nTcpSocketFd;
     std::cout << "Successfully connected to: " << address << std::endl;
+    return true;
 }
 
 void RoveCommEthernetTcp::AcceptIncomingConnections()
 {
     sockaddr_in sIncomingAddress;
     socklen_t sAddressSize = sizeof(sIncomingAddress);
+
+    fd_set sAcceptSetCopy  = m_sAcceptSet;
+    if (select(m_nListeningSocket, &sAcceptSetCopy, NULL, NULL, 0) == -1)
+    {
+        std::cout << "something went wrong idk";    // exit(1);
+        return;
+    }
+    if (!FD_ISSET(m_nListeningSocket, &sAcceptSetCopy))
+        return;
     // accept a connection request from another device, if one exists
     RoveCommSocket nIncomingConnection;
-
     if (nIncomingConnection = accept(m_nListeningSocket, (struct sockaddr*) &sIncomingAddress, &sAddressSize) == -1)
     {
         std::cout << "Failed to accept connection!" << std::endl;
@@ -226,60 +233,14 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
     RoveCommIp sIncomingIp{nReadIp >> 3 & 0xFF, nReadIp >> 2 & 0xFF, nReadIp >> 1 & 0xFF, nReadIp >> 0 & 0xFF};
     RoveCommAddress newRoveCommAddress(sIncomingIp, unIncomingPort);
 
-    if (m_mIncomingSockets.contains(newRoveCommAddress))    // this shouldn't happen but better safe than sorry
+    if (m_mOpenSockets.contains(newRoveCommAddress))    // this shouldn't happen but better safe than sorry
     {
         std::cout << "Another device tried to connect, but already had an open TCP connection!" << std::endl;
         return;
     }
-    m_mIncomingSockets.emplace(newRoveCommAddress, nIncomingConnection);
-    std::cout << "Successfully accepted client request: " << newRoveCommAddress << std::endl;
+    m_mOpenSockets.emplace(newRoveCommAddress, nIncomingConnection);
+    FD_SET(nIncomingConnection, &m_sReadSet);
+    if (nIncomingConnection > m_nMaxSocket)
+        m_nMaxSocket = nIncomingConnection;
+    std::cout << "Successfully accepted connection from: " << newRoveCommAddress << std::endl;
 }
-
-/*
-
-    packets = []
-
-    if len(available_sockets) > 0:
-        # The select function is used to poll the socket and check whether
-        # there is data available to be read, preventing the read from
-        # blocking the thread while waiting for a packet
-        available_sockets = select.select(available_sockets, [], [], 0)[0]
-
-    for open_socket in available_sockets:
-        try:
-            buffer = self.buffers[open_socket.getpeername()]
-            header_size = struct.calcsize(ROVECOMM_HEADER_FORMAT)
-            header = open_socket.recv(header_size)
-            buffer.extend(header)
-
-            # If we have enough bytes for the header, parse those
-            if len(self.buffers[open_socket.getpeername()]) >= header_size:
-                rovecomm_version, data_id, data_count, data_type = struct.unpack(ROVECOMM_HEADER_FORMAT, header)
-                data_type_byte = types_int_to_byte[data_type]
-                data = open_socket.recv(data_count * types_byte_to_size[data_type_byte])
-                buffer.extend(data)
-
-                # If we have enough bytes for header + expected packet size, parse those
-                if len(buffer) >= data_count * types_byte_to_size[data_type_byte] + header_size:
-                    if rovecomm_version != ROVECOMM_VERSION:
-                        returnPacket = RoveCommPacket(ROVECOMM_INCOMPATIBLE_VERSION, "b", (1,), "")
-                        returnPacket.SetIp(*open_socket.getpeername())
-                        packets.append(returnPacket)
-                        # Remove the parsed packet bytes from buffer
-                        buffer = buffer[data_count * types_byte_to_size[data_type_byte] + header_size:]
-
-                    else:
-                        data_type = types_int_to_byte[data_type]
-                        data = struct.unpack(">" + data_type * data_count, data)
-
-                        returnPacket = RoveCommPacket(data_id, data_type, data, "")
-                        returnPacket.SetIp(*open_socket.getpeername())
-                        packets.append(returnPacket)
-                        # Remove the parsed packet bytes from buffer
-                        buffer = buffer[data_count * types_byte_to_size[data_type_byte] + header_size:]
-
-        except Exception:
-            returnPacket = RoveCommPacket()
-            packets.append(returnPacket)
-
-    return packets*/

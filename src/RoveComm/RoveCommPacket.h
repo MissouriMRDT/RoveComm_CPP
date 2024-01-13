@@ -11,6 +11,7 @@
 #ifndef ROVECOMM_PACKET_H
 #define ROVECOMM_PACKET_H
 
+#include "RoveCommByteBuffer.hpp"
 #include "RoveCommConstants.h"
 #include "RoveCommManifest.h"
 
@@ -38,7 +39,7 @@ namespace rovecomm
  */
 
 /******************************************************************************
- * @brief Encapsulates header data for a RoveCommPacket
+ * @brief Encapsulates header data for a RoveCommPacket. This might be removed later.
  *
  *
  * @author OcelotEmpire (hobbz.pi@gmail.com)
@@ -63,12 +64,12 @@ class RoveCommPacket
 {
     public:
         RoveCommPacket() : RoveCommPacket(rovecomm::System::NO_DATA_DATA_ID, 0, rovecomm::DataTypes::INT8_T, nullptr){};
-        RoveCommPacket(RoveCommDataId unDataId, RoveCommDataCount unDataCount, RoveCommDataType unDataType, const char* aData) :
-            m_sHeader({rovecomm::ROVECOMM_VERSION, unDataId, unDataCount, unDataType}), m_aData(aData){};
+        RoveCommPacket(RoveCommDataId unDataId, RoveCommDataCount unDataCount, RoveCommDataType unDataType, std::unique_ptr<char>&& pData) :
+            RoveCommPacket({rovecomm::ROVECOMM_VERSION, unDataId, unDataCount, unDataType}, std::move(pData)){};
 
-        // TODO: copy constructors and move semantics
-        //  RoveCommPacket(const RoveCommPacket& other);
-        //  RoveCommPacket operator=(const RoveCommPacket&& other);
+        RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) :
+            m_sHeader(sHeader), m_pData(std::move(pData)), m_dataSize(m_sHeader.unDataCount * rovecomm::DataTypeSize(m_sHeader.unDataType))
+        {}
 
         inline RoveCommVersionId GetVersionId() const { return m_sHeader.unVersionId; }
 
@@ -78,17 +79,110 @@ class RoveCommPacket
 
         inline RoveCommDataType GetDataType() const { return m_sHeader.unDataType; }
 
-        inline const char* GetData() const { return m_aData; }
+        // Templates have to be defined in the header or else the linker sh*ts itself
 
-        size_t size() const;
+        /******************************************************************************
+         * @brief Extract an element from the packet's internal array.
+         *
+         * @tparam T Type of value to extract (filled in automatically)
+         * @param dest Reference in which to store the result.
+         * @param index Index of the desired element (scaled to T, not in bytes!)
+         * @return size_t - sizeof(T) if successful, 0 if out of range.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-23
+         ******************************************************************************/
+        template<typename T>
+        size_t Get(T& dest, int index) const
+        {
+            if (sizeof(T) * index > m_dataSize)
+                return 0;
+            dest = *((T*) m_pData) + index;
+            return sizeof(T);
+        }
+
+        /******************************************************************************
+         * @brief Bulk extract elements from the packet's internal array.
+         *
+         * @tparam T Type of value to extract (filled in automatically)
+         * @param pDest Pointer to destination array
+         * @param start Index of first element (scaled to T, not in bytes!)
+         * @param count How many elements to extract (T, not bytes)
+         * @return size_t - How many bytes were successfully read, 0 if out of range.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-23
+         ******************************************************************************/
+        template<typename T>
+        size_t Get(T* pDest, int start, int count) const
+        {
+            size_t bytesToRead = std::min(start + count, m_dataSize / sizeof(T)) * sizeof(T);
+            std::memcpy(pDest, &m_pData[start * sizeof(T)], bytesToRead);
+        }
+
+        /******************************************************************************
+         * @brief Access the internal raw pointer. The pointer will be deleted if the packet goes out of scope!
+         * If you just need the data, use RoveCommPacket::Get() instead.
+         *
+         * @return const char* - The internal raw pointer.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-23
+         ******************************************************************************/
+        const char* GetRawData() const { return m_pData.get(); }
+
+        // inline const std::unique_ptr<const char> GetData() const { return m_pData; }
+
+        /******************************************************************************
+         * @brief Get the size of the packet's internal array.
+         *
+         * @return size_t - Size of the array in bytes.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-23
+         ******************************************************************************/
+        inline size_t GetDataSize() const { return m_dataSize; }
+
+        /******************************************************************************
+         * @brief Get the size of the packet (including the header)
+         *
+         * @return size_t - The size of the packet in bytes.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-23
+         ******************************************************************************/
+        size_t GetSize() const { return rovecomm::ROVECOMM_PACKET_HEADER_SIZE + m_dataSize; }
+
+        /******************************************************************************
+         * @brief Pack data into a char array.
+         * This is meant to be an internal method.
+         *
+         * @param packet The packet to pack.
+         * @param dest Buffer to write to.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-23
+         ******************************************************************************/
+        static RoveCommByteBuffer Pack(const RoveCommPacket& packet);
+        /******************************************************************************
+         * @brief Unpack data from a raw char array (in netowrk order) to construct a new RoveCommPacket.
+         * This is meant to be an internal method.
+         *
+         * @param source Buffer to read (in network order)
+         * @return RoveCommPacket& The new RoveCommPacket. Returns RoveCommPacket::NONE if there was an error.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-22
+         ******************************************************************************/
+        static const RoveCommPacket Unpack(RoveCommByteBuffer& source);
 
         // An empty packet you can compare to I guess
         static const RoveCommPacket NONE;
 
     private:
         const RoveCommPacketHeader m_sHeader;
-        const char* m_aData;
-        // const char m_aData[rovecomm::ROVECOMM_PACKET_MAX_DATA_COUNT];    // consider making this an std::array<int> for ease of use
+        const std::unique_ptr<char> m_pData;    // Shared pointer so that packets are copyable
+        const size_t m_dataSize;
 };
 
 // print with std::cout
