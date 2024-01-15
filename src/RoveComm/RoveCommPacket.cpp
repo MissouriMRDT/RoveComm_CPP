@@ -9,17 +9,17 @@
  ******************************************************************************/
 
 #include "RoveCommPacket.h"
-#include "RoveCommByteBuffer.hpp"
 #include "RoveCommConstants.h"
 #include "RoveCommHelpers.h"
 
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <netinet/in.h>
 
-size_t rovecomm::DataTypeSize(RoveCommDataType unType)
+size_t rovecomm::DataTypeSize(RoveCommDataType ucType)
 {
-    switch (unType)
+    switch (ucType)
     {
         case INT8_T:
         case UINT8_T: return 1;
@@ -32,76 +32,49 @@ size_t rovecomm::DataTypeSize(RoveCommDataType unType)
         case CHAR: return 1;
         default:
         {
-            std::cout << "Unknown data type!" << std::endl;
-            return -1;
+            // unknown data type
+            return 0;
         }
     }
 }
 
-RoveCommByteBuffer RoveCommPacket::Pack(const RoveCommPacket& packet)
+RoveCommPacketBuffer RoveCommPacket::Pack(const RoveCommPacket& packet)
 {
-    // Write header first
-    RoveCommByteBuffer dest(packet.GetSize());
-    dest.Put(packet.GetVersionId());
-    dest.Put(htons(packet.GetDataId()));    // convert to network order
-    dest.Put(htons(packet.GetDataCount()));
-    dest.Put(packet.GetDataType());
+    char* pDest = new char[packet.GetSize()];
 
-    switch (packet.GetDataType())
+    // Write header first
+    pDest[0] = packet.GetVersionId();
+    pDest[1] = packet.GetDataId() >> 8;    // convert to network order
+    pDest[2] = packet.GetDataId() & 0xFF;
+    pDest[3] = packet.GetDataCount() >> 8;
+    pDest[4] = packet.GetDataCount() & 0xFF;
+    pDest[5] = packet.GetDataType();
+
+    // make sure type is valid
+    size_t siTypeSize = rovecomm::DataTypeSize(packet.GetDataType());
+    if (siTypeSize == -1)
     {
-        case rovecomm::DataTypes::INT8_T:
-        case rovecomm::DataTypes::UINT8_T:
-        case rovecomm::DataTypes::CHAR:
+        std::cout << "unknown type!" << std::endl;
+        delete[] pDest;
+        return {nullptr, 0};
+    }
+    char* pBegin = &pDest[6];
+    char* pEnd   = pBegin + packet.GetDataCount() * siTypeSize;
+    // sizeof double, the largest size
+    char pSwap[8] = {0};
+    for (char* it = pBegin; it < pEnd; it += siTypeSize)
+    {
+        std::memcpy(pSwap, it, siTypeSize);
+        for (int byte = 0; byte < siTypeSize; byte++)
         {
-            int8_t d;
-            for (int i = 0; i < packet.GetDataCount(); i++)
-            {
-                packet.Get(d, i);
-                dest.Put(d);
-            }
-            break;
-        }
-        case rovecomm::DataTypes::INT16_T:
-        case rovecomm::DataTypes::UINT16_T:
-        {
-            int16_t d;
-            for (int i = 0; i < packet.GetDataCount(); i++)
-            {
-                packet.Get(d, i);
-                dest.Put(htons(d));
-            }
-            break;
-        }
-        case rovecomm::DataTypes::INT32_T:
-        case rovecomm::DataTypes::UINT32_T:
-        {
-            int32_t d;
-            for (int i = 0; i < packet.GetDataCount(); i++)
-            {
-                packet.Get(d, i);
-                dest.Put(htonl(d));
-            }
-            break;
-        }
-        case rovecomm::DataTypes::DOUBLE_T:
-        {
-            // IDK what to do here
-            break;
-        }
-        case rovecomm::DataTypes::FLOAT_T:
-        {
-            // IDK
-            break;
-        }
-        default:
-        {
-            std::cout << "Unknown data type!" << std::endl;
+            it[byte] = pSwap[siTypeSize - byte - 1];
         }
     }
-    return dest;
+
+    return RoveCommPacketBuffer{std::unique_ptr<char>(pDest), packet.GetSize()};
 }
 
-const RoveCommPacket RoveCommPacket::Unpack(RoveCommByteBuffer& source)
+const RoveCommPacket RoveCommPacket::Unpack(const char* source)
 {
     if (source.GetSize() < rovecomm::ROVECOMM_PACKET_HEADER_SIZE)
     {
@@ -110,17 +83,17 @@ const RoveCommPacket RoveCommPacket::Unpack(RoveCommByteBuffer& source)
     }
     RoveCommPacketHeader sHeader;
     source.Flip();
-    source.Get(sHeader.unVersionId);
-    source.Get(sHeader.unDataId);
-    source.Get(sHeader.unDataCount);
-    source.Get(sHeader.unDataType);
+    source.Get(sHeader.ucVersionId);
+    source.Get(sHeader.usDataId);
+    source.Get(sHeader.usDataCount);
+    source.Get(sHeader.ucDataType);
 
     // Convert short values to correct byte order
-    sHeader.unDataId    = ntohs(sHeader.unDataId);
-    sHeader.unDataCount = ntohs(sHeader.unDataCount);
+    sHeader.usDataId    = ntohs(sHeader.usDataId);
+    sHeader.usDataCount = ntohs(sHeader.usDataCount);
 
     // Make sure there is enough data to read
-    size_t promisedLength = sHeader.unDataCount * rovecomm::DataTypeSize(sHeader.unDataType), actualLength = source.GetSize() - rovecomm::ROVECOMM_PACKET_HEADER_SIZE;
+    size_t promisedLength = sHeader.usDataCount * rovecomm::DataTypeSize(sHeader.ucDataType), actualLength = source.GetSize() - rovecomm::ROVECOMM_PACKET_HEADER_SIZE;
 
     if (actualLength != promisedLength)
     {
@@ -130,14 +103,14 @@ const RoveCommPacket RoveCommPacket::Unpack(RoveCommByteBuffer& source)
 
     RoveCommByteBuffer buffer(actualLength);
 
-    switch (sHeader.unDataType)
+    switch (sHeader.ucDataType)
     {
         case rovecomm::DataTypes::INT8_T:
         case rovecomm::DataTypes::UINT8_T:
         case rovecomm::DataTypes::CHAR:
         {
             int8_t d;
-            for (int i = 0; i < sHeader.unDataCount; i++)
+            for (int i = 0; i < sHeader.usDataCount; i++)
             {
                 source.Get(d);
                 buffer.Put(d);
@@ -148,7 +121,7 @@ const RoveCommPacket RoveCommPacket::Unpack(RoveCommByteBuffer& source)
         case rovecomm::DataTypes::UINT16_T:
         {
             int16_t d;
-            for (int i = 0; i < sHeader.unDataCount; i++)
+            for (int i = 0; i < sHeader.usDataCount; i++)
             {
                 source.Get(d);
                 buffer.Put(ntohs(d));
@@ -159,7 +132,7 @@ const RoveCommPacket RoveCommPacket::Unpack(RoveCommByteBuffer& source)
         case rovecomm::DataTypes::UINT32_T:
         {
             int32_t d;
-            for (int i = 0; i < sHeader.unDataCount; i++)
+            for (int i = 0; i < sHeader.usDataCount; i++)
             {
                 source.Get(d);
                 buffer.Put(ntohl(d));

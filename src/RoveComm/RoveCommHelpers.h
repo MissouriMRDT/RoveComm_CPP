@@ -86,9 +86,9 @@ class RoveCommAddress
 
         // maybe have one that takes ("1.2.3.4", 0) ?
 
-        inline RoveCommIp GetIp() { return m_sOctets; }
+        inline RoveCommIp GetIp() const { return m_sOctets; }
 
-        inline RoveCommPort GetPort() { return m_unPort; }
+        inline RoveCommPort GetPort() const { return m_unPort; }
 
         std::string ToString() const;
         friend inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
@@ -96,7 +96,7 @@ class RoveCommAddress
         friend inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
 
         // for std::map lookups
-        inline bool operator<(RoveCommAddress& other) { return this->m_unPort < other.m_unPort; }
+        inline bool operator<(RoveCommAddress& other) const { return this->m_unPort < other.m_unPort; }
 
     private:
         RoveCommIp m_sOctets;

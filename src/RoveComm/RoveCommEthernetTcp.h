@@ -48,9 +48,9 @@ class RoveCommEthernetTcp : RoveCommServer
         void Init() override;
         void Shutdown() override;
 
-        int Write(RoveCommPacket& packet) const override;
-        int SendTo(RoveCommPacket& packet, RoveCommAddress address) override;
-        std::vector<std::unique_ptr<RoveCommPacket>> Read() const override;
+        int Write(const RoveCommPacket& packet) override;
+        int SendTo(const RoveCommPacket& packet, RoveCommAddress address) override;
+        std::vector<const RoveCommPacket> Read() override;
 
         /******************************************************************************
          * @brief Try to open a TCP connection with another device (acting as client)
@@ -62,7 +62,7 @@ class RoveCommEthernetTcp : RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-12-21
          ******************************************************************************/
-        bool Connect(RoveCommAddress& address);
+        bool Connect(const RoveCommAddress& address);
 
         /******************************************************************************
          * @brief Check for other devices trying to connect to this device (acting as server)
@@ -73,28 +73,19 @@ class RoveCommEthernetTcp : RoveCommServer
          ******************************************************************************/
         void AcceptIncomingConnections();
 
-        // std::map<std::string, int> m_OpenSockets;
-        // std::map<std::string, int> m_IncomingSockets;
-        // std::map<int, int> m_Buffers;
-        // int m_ServerFd;
-        // int m_nOpenSocketLength;
-        // int m_nIncomingSocketLength;
-
-        // RoveCommEthernetTcp();
-        // RoveCommEthernetTcp(std::string szHost /* = "127.0.0.1"*/, int nPort /*= ROVECOMM_TCP_PORT*/);
-
-        // void CloseSockets();
-        // int Write(RoveCommPacket& Packet);
-        // int Connect(sockaddr stAddress);
-        // void HandleIncomingConnection();
-        // RoveCommPacket* Read();
+    private:
+        void _register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket);
+        void _unregister_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket);
 
     private:
         // Socket for accepting connections from other devices
         RoveCommSocket m_nListeningSocket;
         // Connections opened by other devices (still 2-way!)
+        // Note to self: in Python RoveComm, incoming_sockets are tracked separately,
+        // and outgoing messages only get broadcasted to incoming_socket's
         std::map<RoveCommAddress, RoveCommSocket> m_mOpenSockets;
-        std::map<RoveCommSocket, RoveCommByteBuffer> m_mReadBuffers;
+        // Buffers to persist incomplete recv()'s
+        std::map<RoveCommSocket, std::vector<char>> m_mReadBuffers;
 
         // fd_set's contain all sockets for interfacing with the c library
 
