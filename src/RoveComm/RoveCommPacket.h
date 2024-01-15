@@ -11,10 +11,10 @@
 #ifndef ROVECOMM_PACKET_H
 #define ROVECOMM_PACKET_H
 
-#include "RoveCommByteBuffer.hpp"
 #include "RoveCommConstants.h"
 #include "RoveCommManifest.h"
 
+#include <memory>
 #include <ostream>
 #include <stdlib.h>
 #include <string>
@@ -26,7 +26,7 @@ using RoveCommDataType  = uint8_t;
 
 namespace rovecomm
 {
-    size_t DataTypeSize(RoveCommDataType unDataType);
+    size_t DataTypeSize(RoveCommDataType ucDataType);
 }
 
 /*
@@ -36,10 +36,15 @@ namespace rovecomm
  *      |version |intended use (id)| # of elements   | type   | the actual data
  *      +--------+--------+--------+--------+--------+--------+-- ...
  *
+ *  Because of memory alignment, RoveCommHeader will look something like:
+ *  |aabbbb--|ccccaa--|
+ *  with a total size of 8 bytes
+ *  so make sure to use rovecomm::ROVECOMM_PACKET_HEADER_SIZE and not
+ *  sizeof(RoveCommPacketHeader) when writing data
  */
 
 /******************************************************************************
- * @brief Encapsulates header data for a RoveCommPacket. This might be removed later.
+ * @brief Encapsulates header data for a RoveCommPacket.
  *
  *
  * @author OcelotEmpire (hobbz.pi@gmail.com)
@@ -47,37 +52,41 @@ namespace rovecomm
  ******************************************************************************/
 struct RoveCommPacketHeader
 {
-        RoveCommVersionId unVersionId;
-        RoveCommDataId unDataId;
-        RoveCommDataCount unDataCount;
-        RoveCommDataType unDataType;
+        RoveCommVersionId ucVersionId;
+        RoveCommDataId usDataId;
+        RoveCommDataCount usDataCount;
+        RoveCommDataType ucDataType;
+
+        static void Pack(char* pDest, const RoveCommPacketHeader& header);
+        static void Unpack(RoveCommPacketHeader& dest, const char* pSource);
 };
 
 /******************************************************************************
  * @brief The RoveComm packet is an immutable encapsulation of a message sent across the rover
  *  network that can be parsed by all rover computing systems.
+ *  These can be copied freely, as the data underneath is backed by an std::shared_pointer<char>.
  *
- *  In this implementation, packets are immutable state.
- *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2023-11-29
  ******************************************************************************/
 class RoveCommPacket
 {
     public:
         RoveCommPacket() : RoveCommPacket(rovecomm::System::NO_DATA_DATA_ID, 0, rovecomm::DataTypes::INT8_T, nullptr){};
-        RoveCommPacket(RoveCommDataId unDataId, RoveCommDataCount unDataCount, RoveCommDataType unDataType, std::unique_ptr<char>&& pData) :
-            RoveCommPacket({rovecomm::ROVECOMM_VERSION, unDataId, unDataCount, unDataType}, std::move(pData)){};
+        RoveCommPacket(RoveCommDataId usDataId, RoveCommDataCount usDataCount, RoveCommDataType ucDataType, std::unique_ptr<char>&& pData) :
+            RoveCommPacket({rovecomm::ROVECOMM_VERSION, usDataId, usDataCount, ucDataType}, std::move(pData)){};
 
         RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) :
-            m_sHeader(sHeader), m_pData(std::move(pData)), m_dataSize(m_sHeader.unDataCount * rovecomm::DataTypeSize(m_sHeader.unDataType))
+            m_sHeader(sHeader), m_pData(std::move(pData)), m_dataSize(m_sHeader.usDataCount * rovecomm::DataTypeSize(m_sHeader.ucDataType))
         {}
 
-        inline RoveCommVersionId GetVersionId() const { return m_sHeader.unVersionId; }
+        inline RoveCommVersionId GetVersionId() const { return m_sHeader.ucVersionId; }
 
-        inline RoveCommDataId GetDataId() const { return m_sHeader.unDataId; }
+        inline RoveCommDataId GetDataId() const { return m_sHeader.usDataId; }
 
-        inline RoveCommDataCount GetDataCount() const { return m_sHeader.unDataCount; }
+        inline RoveCommDataCount GetDataCount() const { return m_sHeader.usDataCount; }
 
-        inline RoveCommDataType GetDataType() const { return m_sHeader.unDataType; }
+        inline RoveCommDataType GetDataType() const { return m_sHeader.ucDataType; }
 
         // Templates have to be defined in the header or else the linker sh*ts itself
 
@@ -114,14 +123,14 @@ class RoveCommPacket
          * @date 2023-12-23
          ******************************************************************************/
         template<typename T>
-        size_t Get(T* pDest, int start, int count) const
+        size_t GetBulk(T* pDest, int start, int count) const
         {
             size_t bytesToRead = std::min(start + count, m_dataSize / sizeof(T)) * sizeof(T);
             std::memcpy(pDest, &m_pData[start * sizeof(T)], bytesToRead);
         }
 
         /******************************************************************************
-         * @brief Access the internal raw pointer. The pointer will be deleted if the packet goes out of scope!
+         * @brief Access the internal raw pointer. The pointer will be deleted with the packet!
          * If you just need the data, use RoveCommPacket::Get() instead.
          *
          * @return const char* - The internal raw pointer.
@@ -158,34 +167,61 @@ class RoveCommPacket
          * This is meant to be an internal method.
          *
          * @param packet The packet to pack.
-         * @param dest Buffer to write to.
+         * @return std::unique_ptr<char> Pointer to newly allocated data (in network order)
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-12-23
          ******************************************************************************/
-        static RoveCommByteBuffer Pack(const RoveCommPacket& packet);
+        static RoveCommPacketBuffer Pack(const RoveCommPacket& packet);
         /******************************************************************************
          * @brief Unpack data from a raw char array (in netowrk order) to construct a new RoveCommPacket.
          * This is meant to be an internal method.
          *
-         * @param source Buffer to read (in network order)
-         * @return RoveCommPacket& The new RoveCommPacket. Returns RoveCommPacket::NONE if there was an error.
+         * @param source Data to read (in network order)
+         * @return const RoveCommPacket The new RoveCommPacket. Returns RoveCommPacket::NONE if there was an error.
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-12-22
          ******************************************************************************/
-        static const RoveCommPacket Unpack(RoveCommByteBuffer& source);
+        static const RoveCommPacket Unpack(const char* source);
 
         // An empty packet you can compare to I guess
         static const RoveCommPacket NONE;
 
     private:
         const RoveCommPacketHeader m_sHeader;
-        const std::unique_ptr<char> m_pData;    // Shared pointer so that packets are copyable
         const size_t m_dataSize;
+
+        /*
+         *  Shared pointer allows safe copying of packets without copying the data.
+         *  This pointer should never be exposed directly.
+         *
+         *  Yes, data is stored on the heap, but the alternative is making EVERY packet occupy 65543 bytes.
+         *  This is actually what Embedded RoveComm does (except the size changes between controllers).
+         *  The Teensyduino compiler also allows variable sized stack allocated arrays.
+         *
+         *  Stack allocating the max amount would cause ALL 65543 BYTES to be copied on assignment. (BAD)
+         *  In the vast majority of cases, we only send one or two ints, so we don't need 65 kilobytes.
+         *
+         *  Some packets could be big (camera data) but that will be fixed in the multithreading update.
+         */
+        const std::shared_ptr<char> m_pData;
 };
 
 // print with std::cout
 inline std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet);
+
+/******************************************************************************
+ * @brief Literally only exists to give a unique_ptr a length.
+ *
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2024-01-14
+ ******************************************************************************/
+struct RoveCommPacketBuffer
+{
+        std::unique_ptr<char> pData;
+        size_t length;
+};
 
 #endif    // ROVECOMM_PACKET_H

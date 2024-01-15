@@ -61,7 +61,7 @@ class RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual int Write(RoveCommPacket& packet) const;
+        virtual int Write(const RoveCommPacket& packet);
         /******************************************************************************
          * @brief Write a packet to a single address, but not subscribers/connections.
          * If connection does not already exist, the server will attempt to establish a new connection.
@@ -74,16 +74,16 @@ class RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual int SendTo(RoveCommPacket& packet, RoveCommAddress address);
+        virtual int SendTo(const RoveCommPacket& packet, RoveCommAddress address);
         /******************************************************************************
          * @brief Read incoming packets and clear queue
          *
-         * @return std::vector<RoveCommPacket> a list of RoveCommPackets. 0 if no packets available.
+         * @return std::vector<const RoveCommPacket> a list of RoveCommPackets. size() == 0 if no packets available.
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual std::vector<std::unique_ptr<RoveCommPacket>> Read() const;
+        virtual std::vector<const RoveCommPacket> Read();
 
         // /******************************************************************************
         //  * @brief Synchronously await the next RoveCommPacket with the given data_id.
