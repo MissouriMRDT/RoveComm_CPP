@@ -21,8 +21,6 @@
 #include <sys/socket.h>
 #include <vector>
 
-using RoveCommSocket = int;    // kind of stupid why is this a thing
-
 /******************************************************************************
  * @brief Extends RoveCommServer to use the TCP protocol. Both hosts must establish a
  * connection first. TCP guarantees no data corruption and successful delivery of data
@@ -74,16 +72,16 @@ class RoveCommEthernetTcp : RoveCommServer
         void AcceptIncomingConnections();
 
     private:
-        void _register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket);
-        void _unregister_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket);
+        void _register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket, bool bIsIncoming);
+        void _unregister_socket(const RoveCommAddress& sAddress);
 
     private:
         // Socket for accepting connections from other devices
         RoveCommSocket m_nListeningSocket;
-        // Connections opened by other devices (still 2-way!)
-        // Note to self: in Python RoveComm, incoming_sockets are tracked separately,
-        // and outgoing messages only get broadcasted to incoming_socket's
+        // All open connections (outgoing and incoming)
         std::map<RoveCommAddress, RoveCommSocket> m_mOpenSockets;
+        // The sockets that Write() will send() to
+        std::map<RoveCommAddress, RoveCommSocket> m_mIncomingSockets;
         // Buffers to persist incomplete recv()'s
         std::map<RoveCommSocket, std::vector<char>> m_mReadBuffers;
 
@@ -98,40 +96,4 @@ class RoveCommEthernetTcp : RoveCommServer
         fd_set m_sAcceptSet;
 };
 
-/******************************************************************************
- * @brief I love java so much! When calling RoveCommEthernetTCP::Connect(),
- * remember to try{}catch(auto& exception) { exception.Print(); }
- *
- * @author OcelotEmpire (hobbz.pi@gmail.com)
- * @date 2023-12-21
- ******************************************************************************/
-class RoveCommTcpConnectionFailedException
-{
-    public:
-        void Print();
-
-        inline const int GetErrorCode() const { return m_nErrorCode; }
-
-    private:
-        const int m_nErrorCode;
-};
-
 #endif    // ROVECOMM_ETHERNET_TCP_H
-
-// old comments
-/*
-    The TCP implementation for RoveComm.
-
-    Methods:
-    --------
-        write(packet):
-            Transmits a packet to the destination IP and all active subscribers.
-        read():
-            Receives all TCP packets from open sockets and packs data into RoveCommPacket instances
-        connect(ip_octet):
-            Opens a socket connection to the given address
-        close_sockets():
-            Closes the server socket and all open sockets
-        handle_incoming_connections():
-            Accepts socket connection requests
-*/

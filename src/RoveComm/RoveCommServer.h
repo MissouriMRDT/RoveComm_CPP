@@ -122,9 +122,9 @@ class RoveCommServerManager
         static void Init();
         static void OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol = RoveCommProtocol::UDP);
         static void Shutdown();
-        static int Write(RoveCommPacket& packet, RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
-        static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
-        static std::vector<RoveCommPacket> Read(RoveCommProtocolFlags protocol = RoveCommProtocol::UDP);
+        static int Write(RoveCommPacket& packet, RoveCommProtocol protocol = RoveCommProtocol::UDP);
+        static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocol protocol = RoveCommProtocol::UDP);
+        static std::vector<RoveCommPacket> Read(RoveCommProtocol protocol = RoveCommProtocol::UDP);
 
         // static std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY);
         static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);

@@ -26,8 +26,17 @@ using RoveCommDataType  = uint8_t;
 
 namespace rovecomm
 {
+    /******************************************************************************
+     * @brief Get the size of a RoveCommDataType.
+     *
+     * @param ucDataType - Value to convert
+     * @return size_t - Size of the data type. Returns 0 if no matching data type was found.
+     *
+     * @author OcelotEmpire (hobbz.pi@gmail.com)
+     * @date 2024-01-15
+     ******************************************************************************/
     size_t DataTypeSize(RoveCommDataType ucDataType);
-}
+}    // namespace rovecomm
 
 /*
  *  Header format (sits under TCP/UDP header):
@@ -56,9 +65,6 @@ struct RoveCommPacketHeader
         RoveCommDataId usDataId;
         RoveCommDataCount usDataCount;
         RoveCommDataType ucDataType;
-
-        static void Pack(char* pDest, const RoveCommPacketHeader& header);
-        static void Unpack(RoveCommPacketHeader& dest, const char* pSource);
 };
 
 /******************************************************************************
@@ -79,6 +85,8 @@ class RoveCommPacket
         RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) :
             m_sHeader(sHeader), m_pData(std::move(pData)), m_dataSize(m_sHeader.usDataCount * rovecomm::DataTypeSize(m_sHeader.ucDataType))
         {}
+
+        // RoveCommPacket(rovecomm::ManifestEntry sEntry, void* pData);
 
         inline RoveCommVersionId GetVersionId() const { return m_sHeader.ucVersionId; }
 
@@ -162,29 +170,6 @@ class RoveCommPacket
          ******************************************************************************/
         size_t GetSize() const { return rovecomm::ROVECOMM_PACKET_HEADER_SIZE + m_dataSize; }
 
-        /******************************************************************************
-         * @brief Pack data into a char array.
-         * This is meant to be an internal method.
-         *
-         * @param packet The packet to pack.
-         * @return std::unique_ptr<char> Pointer to newly allocated data (in network order)
-         *
-         * @author OcelotEmpire (hobbz.pi@gmail.com)
-         * @date 2023-12-23
-         ******************************************************************************/
-        static RoveCommPacketBuffer Pack(const RoveCommPacket& packet);
-        /******************************************************************************
-         * @brief Unpack data from a raw char array (in netowrk order) to construct a new RoveCommPacket.
-         * This is meant to be an internal method.
-         *
-         * @param source Data to read (in network order)
-         * @return const RoveCommPacket The new RoveCommPacket. Returns RoveCommPacket::NONE if there was an error.
-         *
-         * @author OcelotEmpire (hobbz.pi@gmail.com)
-         * @date 2023-12-22
-         ******************************************************************************/
-        static const RoveCommPacket Unpack(const char* source);
-
         // An empty packet you can compare to I guess
         static const RoveCommPacket NONE;
 
@@ -206,6 +191,72 @@ class RoveCommPacket
          *  Some packets could be big (camera data) but that will be fixed in the multithreading update.
          */
         const std::shared_ptr<char> m_pData;
+
+    public:    ////////////////// STATIC METHODS /////////////////////////
+        /******************************************************************************
+         * @brief Helper function to write a RoveCommPacketHeader beginning at pDest.
+         * This function does NOT allocate memory, so make sure pDest points to something!
+         *
+         * @param pDest - Where to begin writing.
+         * @param header - Header to write.
+         * @throw std::runtime_error if wrong version or data type.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-15
+         ******************************************************************************/
+        static void WriteHeader(char* pDest, const RoveCommPacketHeader& header);
+        /******************************************************************************
+         * @brief Helper function to read a RoveCommPacketHeader from an array beginning at pSource.
+         *
+         * @param dest - Existing RoveCommPacketHeader struct to set the values of.
+         * @param pSource - Where to begin reading.
+         * @throw std::runtime_error if wrong version or data type.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-15
+         ******************************************************************************/
+        static void ReadHeader(RoveCommPacketHeader& dest, const char* pSource);
+        /******************************************************************************
+         * @brief Helper function to wrute RoveCommPacket's data into an array beginning at pDest.
+         * Converts from host byte order to network order.
+         * This function does not also write the header.
+         * This function does NOT allocate memory, so make sure pDest points to something!
+         *
+         * @param pDest - Where to begin writing.
+         * @param packet - A description of the data to write.
+         * @throw std::runtime_error if something went wrong.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-18
+         ******************************************************************************/
+        static void WriteData(char* pDest, const RoveCommPacket& packet);
+        /******************************************************************************
+         * @brief Helper function to read a RoveCommPacket's data from an array beginning at pSource.
+         * Converts from network byte order to host order.
+         * This function does not read the header.
+         *
+         * @param pDest - Where to begin writing result into.
+         * @param pSource - Where to begin reading from.
+         * @param header - Descriptor header for how to read data.
+         * @throw std::runtime_error if something went wrong.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-18
+         ******************************************************************************/
+        static void ReadData(char* pDest, const char* pSource, const RoveCommPacketHeader& header);
+
+        /******************************************************************************
+         * @brief Helper function to allocate and fill an array with a RoveCommPacket's contents.
+         * Calls WriteHeader() and WriteData() internally.
+         *
+         * @param packet - Packet to pack
+         * @return RoveCommPacketBuffer - a struct containing { unique_ptr, size_t }
+         * @throw std::runtime_error if something went wrong.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-19
+         ******************************************************************************/
+        static RoveCommPacketBuffer Pack(const RoveCommPacket& packet);
 };
 
 // print with std::cout
@@ -221,7 +272,7 @@ inline std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet)
 struct RoveCommPacketBuffer
 {
         std::unique_ptr<char> pData;
-        size_t length;
+        size_t siLength;
 };
 
 #endif    // ROVECOMM_PACKET_H
