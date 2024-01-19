@@ -9,73 +9,184 @@
  ******************************************************************************/
 
 #include "RoveCommEthernetUdp.h"
-#include "RoveCommPacket.h"
+#include "../RoveCommLogging.h"
+
+#include <arpa/inet.h>
+#include <cstring>
+#include <iostream>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-RoveCommEthernetUdp::RoveCommEthernetUdp(int nPort /*= ROVECOMM_UDP_PORT*/)
+void RoveCommEthernetUdp::Init()
 {
-    m_nNumSubscribers = 0;
-    m_nRoveCommPort   = nPort;
+    struct addrinfo hints, *result;
+    std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
+    hints.ai_family   = AF_INET;              // IPv4
+    hints.ai_socktype = SOCK_DGRAM;           // use UDP
+    hints.ai_protocol = IPPROTO_UDP;          // idk i found this somewhere
+    hints.ai_flags    = AI_PASSIVE;           // fill in  host IP automatically
 
-    // socket() returns file descriptor and takes domain, type, and protocol ints, same as a Python socket
-    // While a socket object does not exist, SocketFd can be used to refer to the created socket in socket functions
-    m_RoveCommSocketFd        = socket(AF_INET, SOCK_DGRAM, -1);
+    // super magic function that lets us avoid packing a sockaddr_in struct manually
+    // and lets us avoid calling gethostbyname(gethostname())
+    // it also makes it easier to add IPv6 if we ever do which is unlikely
+    // format: getaddrinfo(char* ip, char* port, addrinfo* settings, addrinfo** linked list of results)
+    // if ip is NULL and AI_PASSIVE flag is set, then the host's ip will be used
+    // result will actually be a linked list but for now we just get the first entry
+    if (int status = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result) != 0)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
+        return;
+    }
 
-    sockaddr default_sockaddr = {m_nRoveCommPort};
+    addrinfo* p;
+    for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)    // getaddrinfo() returns a linked list of possible addresses
+    {
+        if (m_nSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
+        {
+            continue;
+        }
+        // bind the socket to the host ip and port
+        if (bind(m_nSocket, result->ai_addr, result->ai_addrlen) == -1)
+        {
+            close(m_nSocket);
+            continue;
+        }
+        break;
+    }
+    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
+    if (p == NULL)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to open TCP socket!");
+        return;
+    }
 
-    // C++ sys/socket does not have equivalent to Python's socket.setblocking(True) function
+    // not sure what nOptVal actually does?
+    int nOptVal = 1;
+    // Allows the socket address to be reused after being closed
+    if (setsockopt(m_nSocket, SOL_SOCKET, SO_REUSEADDR, &nOptVal, sizeof(nOptVal)) == -1)
+    {
+        LOG_WARNING(logging::g_qSharedLogger, "Warning: setsockopt(SO_REUSEADDR) failed.");
+    }
+    // Fixes an error on linux with opening the socket again too soon
+    if (setsockopt(m_nSocket, SOL_SOCKET, SO_REUSEPORT, &nOptVal, sizeof(nOptVal)) == -1)
+    {
+        LOG_WARNING(logging::g_qSharedLogger, "Warning: setsockopt(SO_REUSEPORT) failed.");
+    }
 
-    bind(m_RoveCommSocketFd, &default_sockaddr, 4);
-    return;
+    // Set up fd_set for reading
+    FD_ZERO(&m_sReadSet);
+    FD_SET(m_nSocket, &m_sReadSet);
 }
 
-int RoveCommEthernetUdp::Subscribe(std::string szSubToIp)
+void RoveCommEthernetUdp::Shutdown()
 {
-    RoveCommPacket Packet = RoveCommPacket(3, 'b', szSubToIp);
-    return Write(Packet);
+    shutdown(m_nSocket, 1);
+    FD_ZERO(&m_sReadSet);
+    m_lSubscribers.clear();
 }
 
-int RoveCommEthernetUdp::write(const RoveCommPacket& packet)
+int RoveCommEthernetUdp::Write(const RoveCommPacket& packet)
 {
+    auto [pData, siSize] = RoveCommPacket::Pack(packet);
+    int nSuccessful      = 0;
+    for (const auto& sAddress : m_lSubscribers)
+    {
+        int nSentBytes = sendto(m_nSocket, pData.get(), siSize, 0, (sockaddr*) &sAddress, sizeof(sAddress));
+        if (nSentBytes <= 0)
+        {
+            LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
+            continue;
+        }
+        nSuccessful++;
+    }
+    return nSuccessful;
+}
+
+int RoveCommEthernetUdp::SendTo(const RoveCommPacket& packet, RoveCommAddress address)
+{
+    auto [pData, siSize] = RoveCommPacket::Pack(packet);
+
+    struct addrinfo hints, *result;
+    std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
+    hints.ai_family   = AF_INET;              // IPv4
+    hints.ai_socktype = SOCK_DGRAM;           // use UDP
+                                              // do not specify AI_PASSIVE when using sendto()
+    hints.ai_protocol = IPPROTO_UDP;          // idk i found this somewhere
+
+    if (int status = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_unPort).c_str(), &hints, &result) != 0)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
+        return;
+    }
+    // I'll just be lazy so I won't do the for loop shenanigans and use the first value
+    int nSentBytes = sendto(m_nSocket, pData.get(), siSize, 0, result->ai_addr, result->ai_addrlen);
+    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
+    if (nSentBytes <= 0)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
+    }
+    return nSentBytes;
+}
+
+// Returns vector of length 0 or 1 which is kind of weird but anything for polymorphism :)
+std::vector<const RoveCommPacket> RoveCommEthernetUdp::Read()
+{
+    std::vector<const RoveCommPacket> packets;
+    fd_set sReadSetCopy = m_sReadSet;
+    int nReady;
+    if (nReady = select(m_nSocket, &sReadSetCopy, NULL, NULL, 0) == -1)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "something went wrong idk");
+        return packets;
+    }
+    if (!FD_ISSET(m_nSocket, &sReadSetCopy))
+        return packets;
+    // no fancy buffering here because UDP comes in discrete packets, not streams.
+    // UDP is also physically constrained in how many bytes it can send in one go.
+    // stack allocation is quick so this is fine hopefully
+    char pBuf[rovecomm::ROVECOMM_PACKET_MAX_DATA_COUNT];
+    sockaddr_in sFrom;
+    socklen_t sFromLen;
+    int nReceived;
+    if (nReceived = recvfrom(m_nSocket, pBuf, sizeof(pBuf), 0, (sockaddr*) &sFrom, &sFromLen) <= 0)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to receive data!");
+        return packets;
+    }
+    RoveCommPacketHeader sHeader;
     try
     {
-        std::string szRoveCommPacket;
-        szRoveCommPacket += rovecomm::ROVECOMM_HEADER_FORMAT;
-        szRoveCommPacket += static_cast<char>(rovecomm::ROVECOMM_VERSION);
-        szRoveCommPacket += static_cast<char>(Packet.m_nDataId);
-        szRoveCommPacket += static_cast<char>(Packet.m_nDataCount);
-        szRoveCommPacket += packet.getDataType();
+        RoveCommPacket::ReadHeader(sHeader, pBuf);
 
-        for (int i = 0; i < Packet.m_nDataCount; i++)
-        {
-            szRoveCommPacket += '>' + Packet.m_cDataType + static_cast<char>(i);
-        }
-        // for (const auto& nCurrentPair : m_aSubscribers)
-        for (int i = 0; i < m_nNumSubscribers; i++)
-        {
-            sendto(m_RoveCommSocketFd, &szRoveCommPacket, sizeof(szRoveCommPacket), 0, m_aSubscribers[i], 4);
-        }
+        // TODO: check nReceived to make sure the whole packet was received!
 
-        if (!(Packet.m_stIp.nPort == 0 && Packet.m_stIp.stIp.sa_data == "0.0.0.0"))
-        {
-            sendto(m_RoveCommSocketFd, &szRoveCommPacket, sizeof(szRoveCommPacket), 0, &Packet.m_stIp.stIp, 4);
-            // Establish a new connection if the destination has not yet been connected to yet
-        }
-        return 1;
+        char* pData = new char[sHeader.usDataCount * rovecomm::DataTypeSize(sHeader.ucDataType)];
+        RoveCommPacket::ReadData(pData, pBuf, sHeader);
+        packets.emplace_back(std::unique_ptr<char>(pData), sHeader);
     }
-    catch (...)
+    catch (std::runtime_error& eErr)
     {
-        return 0;
+        LOG_ERROR(logging::g_qSharedLogger, "Error: {}", eErr.what());
+        return packets;
     }
-}
+    if (sHeader.usDataId == rovecomm::System::SUBSCRIBE_DATA_ID)
+    {
+        m_lSubscribers.push_back(sFrom);
+        LOG_INFO(logging::g_qSharedLogger, "Received subscription from {}.", inet_ntoa(sFrom.sin_addr));
+    }
+    if (sHeader.usDataId == rovecomm::System::UNSUBSCRIBE_DATA_ID)
+    {
+        m_lSubscribers.remove_if(
+            [&sFrom](sockaddr_in el)
+            {
+                return el.sin_addr.s_addr == sFrom.sin_addr.s_addr &&    // s_addr is a uint_32
+                       el.sin_port == sFrom.sin_port;                    // sin_port is a uint_16
+            });
+        LOG_INFO(logging::g_qSharedLogger, "Received subscription from {}.", inet_ntoa(sFrom.sin_addr));
+    }
 
-RoveCommPacket* RoveCommEthernetUdp::read()
-{
-    RoveCommPacket* rcReturn = new RoveCommPacket();
-    return rcReturn;
-}
-
-void RoveCommEthernetUdp::CloseSocket()
-{
-    return;
+    return packets;
 }

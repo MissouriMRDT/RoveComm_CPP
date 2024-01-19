@@ -32,11 +32,9 @@ enum RoveCommProtocol
     ALL = TCP | UDP
 };
 
-using RoveCommProtocolFlags = unsigned int;
-
-inline RoveCommProtocolFlags operator|(RoveCommProtocol protocol, RoveCommProtocol other)
+inline RoveCommProtocol operator|(RoveCommProtocol protocol, RoveCommProtocol other)
 {
-    return static_cast<RoveCommProtocolFlags>(static_cast<unsigned int>(protocol) | static_cast<unsigned int>(protocol));
+    return static_cast<RoveCommProtocol>(static_cast<unsigned int>(protocol) | static_cast<unsigned int>(protocol));
 }
 
 using RoveCommPort = unsigned short;
@@ -106,6 +104,8 @@ class RoveCommAddress
         // pass to RoveCommServer::Fetch() signifying any address. This is not a valid address.
         const static RoveCommAddress ANY;
 };
+
+using RoveCommSocket = int;    // kind of stupid why is this a thing
 
 inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
 inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
