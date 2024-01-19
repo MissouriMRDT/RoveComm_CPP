@@ -38,124 +38,102 @@ size_t rovecomm::DataTypeSize(RoveCommDataType ucType)
     }
 }
 
-RoveCommPacketBuffer RoveCommPacket::Pack(const RoveCommPacket& packet)
+// RoveCommPacket::RoveCommPacket(rovecomm::ManifestEntry sEntry, void* pData): RoveCommPacket({rovecomm::ROVECOMM_VERSION, sEntry
+
+void RoveCommPacket::WriteHeader(char* pDest, const RoveCommPacketHeader& header)
 {
-    char* pDest = new char[packet.GetSize()];
-
-    // Write header first
-    pDest[0] = packet.GetVersionId();
-    pDest[1] = packet.GetDataId() >> 8;    // convert to network order
-    pDest[2] = packet.GetDataId() & 0xFF;
-    pDest[3] = packet.GetDataCount() >> 8;
-    pDest[4] = packet.GetDataCount() & 0xFF;
-    pDest[5] = packet.GetDataType();
-
-    // make sure type is valid
-    size_t siTypeSize = rovecomm::DataTypeSize(packet.GetDataType());
-    if (siTypeSize == -1)
+    pDest[0] = header.ucVersionId;
+    pDest[1] = header.usDataId >> 8;    // convert to network order
+    pDest[2] = header.usDataId & 0xFF;
+    pDest[3] = header.usDataCount >> 8;
+    pDest[4] = header.usDataCount & 0xFF;
+    pDest[5] = header.ucDataType;
+    if (header.ucVersionId != rovecomm::ROVECOMM_VERSION)
     {
-        std::cout << "unknown type!" << std::endl;
-        delete[] pDest;
-        return {nullptr, 0};
+        throw std::runtime_error("Tried to write header of unknown version.");
     }
-    char* pBegin = &pDest[6];
-    char* pEnd   = pBegin + packet.GetDataCount() * siTypeSize;
-    // sizeof double, the largest size
-    char pSwap[8] = {0};
-    for (char* it = pBegin; it < pEnd; it += siTypeSize)
+    if (rovecomm::DataTypeSize(header.ucDataType) == 0)
     {
-        std::memcpy(pSwap, it, siTypeSize);
-        for (int byte = 0; byte < siTypeSize; byte++)
-        {
-            it[byte] = pSwap[siTypeSize - byte - 1];
-        }
+        throw std::runtime_error("Tried to write header of unknown type.");
     }
-
-    return RoveCommPacketBuffer{std::unique_ptr<char>(pDest), packet.GetSize()};
 }
 
-const RoveCommPacket RoveCommPacket::Unpack(const char* source)
+void RoveCommPacket::ReadHeader(RoveCommPacketHeader& dest, const char* pSource)
 {
-    if (source.GetSize() < rovecomm::ROVECOMM_PACKET_HEADER_SIZE)
+    dest.ucVersionId = pSource[0];
+    dest.usDataId    = pSource[1] << 8 | pSource[2];
+    dest.usDataCount = pSource[3] << 8 | pSource[4];
+    dest.ucDataType  = pSource[5];
+
+    if (dest.ucVersionId != rovecomm::ROVECOMM_VERSION)
     {
-        std::cout << "Could not read packet! Not enough bytes." << std::endl;
-        return RoveCommPacket::NONE;
+        throw std::runtime_error("Tried to read header of unknown version.");
     }
-    RoveCommPacketHeader sHeader;
-    source.Flip();
-    source.Get(sHeader.ucVersionId);
-    source.Get(sHeader.usDataId);
-    source.Get(sHeader.usDataCount);
-    source.Get(sHeader.ucDataType);
-
-    // Convert short values to correct byte order
-    sHeader.usDataId    = ntohs(sHeader.usDataId);
-    sHeader.usDataCount = ntohs(sHeader.usDataCount);
-
-    // Make sure there is enough data to read
-    size_t promisedLength = sHeader.usDataCount * rovecomm::DataTypeSize(sHeader.ucDataType), actualLength = source.GetSize() - rovecomm::ROVECOMM_PACKET_HEADER_SIZE;
-
-    if (actualLength != promisedLength)
+    if (rovecomm::DataTypeSize(dest.ucDataType) == 0)
     {
-        std::cout << "Could not read packet! Promised " << promisedLength << " bytes, but only found " << actualLength << '.' << std::endl;
-        return RoveCommPacket::NONE;
+        throw std::runtime_error("Tried to read header of known version.");
     }
+}
 
-    RoveCommByteBuffer buffer(actualLength);
-
-    switch (sHeader.ucDataType)
+void RoveCommPacket::WriteData(char* pDest, const RoveCommPacket& packet)
+{
+    // make sure version is valid
+    if (packet.m_sHeader.ucVersionId != rovecomm::ROVECOMM_VERSION)
     {
-        case rovecomm::DataTypes::INT8_T:
-        case rovecomm::DataTypes::UINT8_T:
-        case rovecomm::DataTypes::CHAR:
-        {
-            int8_t d;
-            for (int i = 0; i < sHeader.usDataCount; i++)
-            {
-                source.Get(d);
-                buffer.Put(d);
-            }
-            break;
-        }
-        case rovecomm::DataTypes::INT16_T:
-        case rovecomm::DataTypes::UINT16_T:
-        {
-            int16_t d;
-            for (int i = 0; i < sHeader.usDataCount; i++)
-            {
-                source.Get(d);
-                buffer.Put(ntohs(d));
-            }
-            break;
-        }
-        case rovecomm::DataTypes::INT32_T:
-        case rovecomm::DataTypes::UINT32_T:
-        {
-            int32_t d;
-            for (int i = 0; i < sHeader.usDataCount; i++)
-            {
-                source.Get(d);
-                buffer.Put(ntohl(d));
-            }
-            break;
-        }
-        case rovecomm::DataTypes::DOUBLE_T:
-        {
-            // IDK what to do here
-            break;
-        }
-        case rovecomm::DataTypes::FLOAT_T:
-        {
-            // IDK
-            break;
-        }
-        default:
-        {
-            std::cout << "Unknown data type!" << std::endl;
-        }
+        throw std::runtime_error("Tried to serialize packet of unknown version.");
+    }
+    // make sure type is valid
+    size_t siTypeSize = rovecomm::DataTypeSize(packet.m_sHeader.ucDataType);
+    if (siTypeSize == 0)
+    {
+        throw std::runtime_error("Tried to serialize packet of unknown type.");
     }
 
-    return RoveCommPacket(sHeader, std::unique_ptr<char>(buffer.Release()));
+    char* pData = packet.m_pData.get();
+    for (int el = 0; el < packet.m_sHeader.usDataCount * siTypeSize; el++)
+    {
+        for (int byte = 0; byte < siTypeSize; byte++)
+        {
+            pDest[el * siTypeSize + byte] = pData[el * siTypeSize + siTypeSize - byte - 1];
+        }
+    }
+}
+
+void RoveCommPacket::ReadData(char* pDest, const char* pSource, const RoveCommPacketHeader& header)
+{
+    if (header.ucVersionId != rovecomm::ROVECOMM_VERSION)
+    {
+        throw std::runtime_error("Tried to deserialize packet of unknown version.");
+    }
+    size_t siTypeSize = rovecomm::DataTypeSize(header.ucDataType);
+    if (siTypeSize == 0)
+    {
+        throw std::runtime_error("Tried to deserialize packet of unknown type.");
+    }
+    for (int el = 0; el < header.usDataCount * siTypeSize; el++)
+    {
+        for (int byte = 0; byte < siTypeSize; byte++)
+        {
+            pDest[el * siTypeSize + byte] = pSource[el * siTypeSize + siTypeSize - byte - 1];
+        }
+    }
+}
+
+RoveCommPacketBuffer RoveCommPacket::Pack(const RoveCommPacket& packet)
+{
+    size_t siSize = packet.GetSize();
+    char* pData   = new char[siSize];
+    try
+    {
+        RoveCommPacket::WriteHeader(pData, packet.m_sHeader);
+        RoveCommPacket::WriteData(pData, packet);
+    }
+    catch (std::runtime_error& eErr)
+    {
+        delete[] pData;
+        throw eErr;
+    }
+    return {std::unique_ptr<char>(pData), siSize};
 }
 
 std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet)

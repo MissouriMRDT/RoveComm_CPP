@@ -25,6 +25,7 @@ void RoveCommEthernetTcp::Init()
     std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
     hints.ai_family   = AF_INET;              // IPv4
     hints.ai_socktype = SOCK_STREAM;          // use TCP
+    hints.ai_protocol = IPPROTO_TCP;          // idk i found this somewhere
     hints.ai_flags    = AI_PASSIVE;           // fill in  host IP automatically
 
     // super magic function that lets us avoid packing a sockaddr_in struct manually
@@ -35,22 +36,42 @@ void RoveCommEthernetTcp::Init()
     // result will actually be a linked list but for now we just get the first entry
     if (int status = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result) != 0)
     {
-        // error
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
-        // exit(1);
         return;
     }
 
-    // socket() returns an integer file descriptor and takes domain, type, and protocol ints, same as a Python socket
-    if (m_nListeningSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
+    addrinfo* p;
+    for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)    // getaddrinfo() returns a linked list of possible addresses
     {
-        freeaddrinfo(result);
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to create listening socket!");
+        if (m_nListeningSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
+        {
+            continue;
+        }
+        // bind the socket to the host ip and port
+        if (bind(m_nListeningSocket, result->ai_addr, result->ai_addrlen) == -1)
+        {
+            close(m_nListeningSocket);
+            continue;
+        }
+        // Accept a backlog of 5 connections, before we start discarding them
+        // Why 5? No idea but that's what the Python limit is so best leave it be.
+        // According to an ancient webpage, most systems cap this number at 20, so 10 should be safe, but I digress.
+        if (listen(m_nListeningSocket, rovecomm::ROVECOMM_ETHERNET_TCP_MAX_CONNECTIONS) == -1)
+        {
+            close(m_nListeningSocket);
+            continue;
+        }
+        break;
+        // bind/listen failed for all sockets
+    }
+    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
+    if (p == NULL)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to open TCP socket!");
         return;
     }
 
     // not sure what nOptVal actually does?
-
     int nOptVal = 1;
     // Allows the socket address to be reused after being closed
     if (setsockopt(m_nListeningSocket, SOL_SOCKET, SO_REUSEADDR, &nOptVal, sizeof(nOptVal)) == -1)
@@ -63,27 +84,6 @@ void RoveCommEthernetTcp::Init()
         LOG_WARNING(logging::g_qSharedLogger, "Warning: setsockopt(SO_REUSEPORT) failed.");
     }
 
-    // bind the socket to the host ip and port
-    if (bind(m_nListeningSocket, result->ai_addr, result->ai_addrlen) == -1)
-    {
-        freeaddrinfo(result);
-        close(m_nListeningSocket);
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to bind socket!");
-        return;
-    }
-
-    // Accept a backlog of 5 connections, before we start discarding them
-    // Why 5? No idea but that's what the Python limit is so best leave it be.
-    // According to an ancient webpage, most systems cap this number at 20, so 10 should be safe, but I digress.
-    if (listen(m_nListeningSocket, rovecomm::MAX_SOCKET_QUEUE_LENGTH) == -1)
-    {
-        freeaddrinfo(result);
-        close(m_nListeningSocket);
-        LOG_ERROR(logging::g_qSharedLogger, "Damned socket won't listen >:(");
-        return;
-    }
-
-    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
     // Set up fd_set for reading
     FD_ZERO(&m_sReadSet);
     // Set up fd_set for accepting
@@ -96,13 +96,12 @@ void RoveCommEthernetTcp::Shutdown()
     for (const auto& [sCurrentAddress, nCurrentFd] : m_mOpenSockets)
     {
         // Notifies other end that we are terminating the connection
-        shutdown(nCurrentFd, 1);                            // Value of 1 stops send() but lets the program finish up remaining recv()'s
-        _unregister_socket(sCurrentAddress, nCurrentFd);    // this could be a problem
+        shutdown(nCurrentFd, 1);                // Value of 1 stops send() but lets the program finish up remaining recv()'s
+        _unregister_socket(sCurrentAddress);    // this could be a problem
     }
     shutdown(m_nListeningSocket, 1);
     FD_ZERO(&m_sReadSet);
     FD_ZERO(&m_sAcceptSet);
-    return;
 }
 
 int RoveCommEthernetTcp::Write(const RoveCommPacket& packet)
@@ -110,9 +109,9 @@ int RoveCommEthernetTcp::Write(const RoveCommPacket& packet)
     auto [pData, siSize] = RoveCommPacket::Pack(packet);
     //
     int nSuccessful = 0;
-    for (const auto& [sAddress, nSocket] : m_mOpenSockets)
+    for (const auto& [sAddress, nSocket] : m_mIncomingSockets)
     {
-        int nSentBytes = send(nSocket, pData.get(), siSize, 0);
+        int nSentBytes = send(nSocket, pData.get(), siSize, 0);    // TODO: write helper function
         if (nSentBytes <= 0)
         {
             LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
@@ -132,12 +131,16 @@ int RoveCommEthernetTcp::SendTo(const RoveCommPacket& packet, RoveCommAddress ad
     }
     auto [pData, siSize] = RoveCommPacket::Pack(packet);
     int nSentBytes       = send(m_mOpenSockets.at(address), pData.get(), siSize, 0);
+    if (nSentBytes <= 0)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
+    }
     return nSentBytes;
 }
 
 std::vector<const RoveCommPacket> RoveCommEthernetTcp::Read()
 {
-    auto packets = std::vector<const RoveCommPacket>();
+    std::vector<const RoveCommPacket> packets;
     // determine which sockets have data waiting
     fd_set sReadSetCopy = m_sReadSet;
     int nReady;
@@ -168,7 +171,7 @@ std::vector<const RoveCommPacket> RoveCommEthernetTcp::Read()
                 if (nReceived == 0)
                 {
                     close(nSocket);
-                    _unregister_socket(sAddress, nSocket);
+                    _unregister_socket(sAddress);
                     LOG_ERROR(logging::g_qSharedLogger, "Device at address {} disconnected from host.", sAddress.ToString());
                 }
                 else
@@ -184,34 +187,25 @@ std::vector<const RoveCommPacket> RoveCommEthernetTcp::Read()
         else
         {
             RoveCommPacketHeader sHeader;
-            sHeader.ucVersionId = vBuffer[0];
-            if (sHeader.ucVersionId != rovecomm::ROVECOMM_VERSION)
+            try
+            {
+                RoveCommPacket::ReadHeader(sHeader, &vBuffer[0]);
+            }
+            catch (std::runtime_error& eErr)
             {
                 close(nSocket);
-                _unregister_socket(sAddress, nSocket);
+                _unregister_socket(sAddress);
                 LOG_ERROR(logging::g_qSharedLogger,
-                          "Packet of unknown version received from {}; terminating connection.\n"
-                          "It is possible that a packet lied about its type or length.",
-                          sAddress.ToString());
+                          "Error at {}: {}\n"
+                          "Terminating connection.",
+                          sAddress.ToString(),
+                          eErr.what());
                 continue;
             }
-            sHeader.usDataId    = (vBuffer[1] << 8) | vBuffer[2];    // network order
-            sHeader.usDataCount = (vBuffer[3] << 8) | vBuffer[4];
-            sHeader.ucDataType  = vBuffer[5];
-
-            size_t siTypeSize   = 0;
-            if (siTypeSize = rovecomm::DataTypeSize(sHeader.ucDataType) == -1)
-            {
-                close(nSocket);
-                _unregister_socket(sAddress, nSocket);
-                LOG_ERROR(logging::g_qSharedLogger,
-                          "Packet of unknown data type received from {}; terminating connection.\n"
-                          "It is possible that a packet lied about its type or length.",
-                          sAddress.ToString());
-                continue;
-            }
-            int nExpectedBytes = sHeader.usDataCount * siTypeSize;
-            int nPreviousSize  = vBuffer.size();
+            size_t siTypeSize   = rovecomm::DataTypeSize(sHeader.ucDataType);
+            size_t siPacketSize = nHeaderSize + sHeader.usDataCount * siTypeSize;
+            int nExpectedBytes  = siPacketSize - vBuffer.size();
+            int nPreviousSize   = vBuffer.size();
             vBuffer.resize(nHeaderSize + nExpectedBytes);
             int nReceived = 0;
             if (nReceived = recv(nSocket, ((void*) &vBuffer.back()) + 1, nExpectedBytes, 0) <= 0)
@@ -219,25 +213,26 @@ std::vector<const RoveCommPacket> RoveCommEthernetTcp::Read()
                 if (nReceived == 0)
                 {
                     close(nSocket);
-                    _unregister_socket(sAddress, nSocket);
+                    _unregister_socket(sAddress);
                     LOG_ERROR(logging::g_qSharedLogger, "Device at address {} disconnected from host", sAddress.ToString());
                 }
                 else
                 {
-                    LOG_ERROR(logging::g_qSharedLogger, "Failed to receive data!");
+                    LOG_ERROR(logging::g_qSharedLogger, "Failed to receive data from {}!", sAddress.ToString());
                 }
                 vBuffer.resize(nPreviousSize);
                 continue;
             }
             vBuffer.resize(nPreviousSize + nReceived);
-            if (vBuffer.size() >= nHeaderSize + nExpectedBytes)
-            {    // SUCCESS! Convert to RoveCommPacket!
-                char* pData = new char[nExpectedBytes];
-                std::memcpy(pData, &vBuffer[nHeaderSize], nExpectedBytes);
-                vBuffer.erase(vBuffer.begin(), vBuffer.begin() + nHeaderSize + nExpectedBytes);    // Clayton wants to parallelize this
+            if (vBuffer.size() >= siPacketSize)    // SUCCESS! Convert to RoveCommPacket!
+            {
+                char* pData = new char[sHeader.usDataCount * siTypeSize];
+                RoveCommPacket::ReadData(pData, &vBuffer[0], sHeader);    // this could throw an error
+                vBuffer.erase(vBuffer.begin(), vBuffer.begin() + siPacketSize);
                 //
                 packets.emplace_back(sHeader, std::unique_ptr<char>(pData));    // construct a new RoveCommPacket
-            }
+                //
+            }    // else wait until next Read() call to read rest of packet
         }
     }
     // for all buffers with enough bytes to read a header, attempt to read body
@@ -261,25 +256,28 @@ bool RoveCommEthernetTcp::Connect(const RoveCommAddress& address)
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
         return false;
     }
-
-    if (nTcpSocketFd = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
+    addrinfo* p;
+    for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)
     {
-        freeaddrinfo(result);
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to create socket!");
-        return false;
+        if (nTcpSocketFd = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
+        {
+            continue;
+        }
+        if (connect(nTcpSocketFd, result->ai_addr, result->ai_addrlen) == -1)
+        {
+            close(nTcpSocketFd);
+            continue;
+        }
+        break;
     }
-    if (connect(nTcpSocketFd, result->ai_addr, result->ai_addrlen) == -1)
+    freeaddrinfo(result);    // allocated by getaddrinfo()
+    if (p == NULL)
     {
-        freeaddrinfo(result);
-        close(nTcpSocketFd);
         LOG_ERROR(logging::g_qSharedLogger, "Failed to connect to address {}!", address.ToString());
         return false;
     }
-    freeaddrinfo(result);    // allocated by getaddrinfo()
-    _register_socket(address, nTcpSocketFd);
-    if (nTcpSocketFd > m_nMaxSocket)
-        m_nMaxSocket = nTcpSocketFd;
-    LOG_ERROR(logging::g_qSharedLogger, "Successfully connected to: {}.", address.ToString());
+    _register_socket(address, nTcpSocketFd, false);
+    LOG_INFO(logging::g_qSharedLogger, "Successfully connected to: {}.", address.ToString());
     return true;
 }
 
@@ -323,22 +321,27 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
         LOG_ERROR(logging::g_qSharedLogger, "Another device tried to connect, but already had an open TCP connection!");
         return;
     }
-    _register_socket(newRoveCommAddress, nIncomingConnection);
-    if (nIncomingConnection > m_nMaxSocket)
-        m_nMaxSocket = nIncomingConnection;
-    LOG_ERROR(logging::g_qSharedLogger, "Successfully accepted connection from: {}.", newRoveCommAddress.ToString());
+    _register_socket(newRoveCommAddress, nIncomingConnection, true);
+
+    LOG_INFO(logging::g_qSharedLogger, "Successfully accepted connection from: {}.", newRoveCommAddress.ToString());
 }
 
-void RoveCommEthernetTcp::_register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket)
+void RoveCommEthernetTcp::_register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket, bool bIsIncoming)
 {
     m_mOpenSockets.emplace(sAddress, nSocket);
+    if (bIsIncoming)
+        m_mIncomingSockets.emplace(sAddress, nSocket);
     m_mReadBuffers.emplace(nSocket);
     FD_SET(nSocket, &m_sReadSet);
+    if (nSocket > m_nMaxSocket)
+        m_nMaxSocket = nSocket;
 }
 
-void RoveCommEthernetTcp::_unregister_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket)
+void RoveCommEthernetTcp::_unregister_socket(const RoveCommAddress& sAddress)
 {
+    RoveCommSocket nSocket = m_mOpenSockets.at(sAddress);
     m_mOpenSockets.erase(sAddress);
+    m_mIncomingSockets.erase(sAddress);    // if it exists
     m_mReadBuffers.erase(nSocket);
     FD_CLR(nSocket, &m_sReadSet);
 }
