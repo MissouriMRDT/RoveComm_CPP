@@ -9,7 +9,7 @@
  ******************************************************************************/
 
 #include "RoveCommServer.h"
-#include "../RoveCommLogging.h"
+#include "LogHack.h"
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
 
