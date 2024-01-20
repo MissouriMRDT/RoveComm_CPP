@@ -12,9 +12,6 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-#include <map>
-#include <string>
-
 namespace rovecomm
 {
     const int ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS = 10;

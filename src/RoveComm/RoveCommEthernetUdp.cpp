@@ -119,7 +119,7 @@ int RoveCommEthernetUdp::SendTo(const RoveCommPacket& packet, RoveCommAddress ad
     if (int status = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_unPort).c_str(), &hints, &result) != 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
-        return;
+        return 0;
     }
     // I'll just be lazy so I won't do the for loop shenanigans and use the first value
     int nSentBytes = sendto(m_nSocket, pData.get(), siSize, 0, result->ai_addr, result->ai_addrlen);
@@ -132,9 +132,9 @@ int RoveCommEthernetUdp::SendTo(const RoveCommPacket& packet, RoveCommAddress ad
 }
 
 // Returns vector of length 0 or 1 which is kind of weird but anything for polymorphism :)
-std::vector<const RoveCommPacket> RoveCommEthernetUdp::Read()
+std::vector<RoveCommPacket> RoveCommEthernetUdp::Read()
 {
-    std::vector<const RoveCommPacket> packets;
+    std::vector<RoveCommPacket> packets;
     fd_set sReadSetCopy = m_sReadSet;
     int nReady;
     if (nReady = select(m_nSocket, &sReadSetCopy, NULL, NULL, 0) == -1)
@@ -161,11 +161,13 @@ std::vector<const RoveCommPacket> RoveCommEthernetUdp::Read()
     {
         RoveCommPacket::ReadHeader(sHeader, pBuf);
 
-        // TODO: check nReceived to make sure the whole packet was received!
+        int nDataLength = sHeader.usDataCount * rovecomm::DataTypeSize(sHeader.ucDataType);
+        if (nReceived < nDataLength + rovecomm::ROVECOMM_PACKET_HEADER_SIZE)
+            throw std::runtime_error("Incomplete UDP packet received.");
 
-        char* pData = new char[sHeader.usDataCount * rovecomm::DataTypeSize(sHeader.ucDataType)];
+        char* pData = new char[nDataLength];
         RoveCommPacket::ReadData(pData, pBuf, sHeader);
-        packets.emplace_back(std::unique_ptr<char>(pData), sHeader);
+        packets.emplace_back(sHeader, std::unique_ptr<char>(pData));
     }
     catch (std::runtime_error& eErr)
     {
@@ -190,3 +192,8 @@ std::vector<const RoveCommPacket> RoveCommEthernetUdp::Read()
 
     return packets;
 }
+
+// void RoveCommEthernetUdp::Subscribe(const RoveCommAddress& address)
+// {
+//     SendTo(RoveCommPacket(rovecomm::System::SUBSCRIBE_DATA_ID, rovecomm::DataTypes), address);
+// }

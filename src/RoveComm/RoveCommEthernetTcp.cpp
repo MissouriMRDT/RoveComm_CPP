@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 void RoveCommEthernetTcp::Init()
 {
@@ -138,9 +139,9 @@ int RoveCommEthernetTcp::SendTo(const RoveCommPacket& packet, RoveCommAddress ad
     return nSentBytes;
 }
 
-std::vector<const RoveCommPacket> RoveCommEthernetTcp::Read()
+std::vector<RoveCommPacket> RoveCommEthernetTcp::Read()
 {
-    std::vector<const RoveCommPacket> packets;
+    std::vector<RoveCommPacket> packets;
     // determine which sockets have data waiting
     fd_set sReadSetCopy = m_sReadSet;
     int nReady;
@@ -166,7 +167,7 @@ std::vector<const RoveCommPacket> RoveCommEthernetTcp::Read()
             int nPreviousSize = vBuffer.size();
             vBuffer.resize(nPreviousSize + nHeaderSize);    // this is probably UB but idc
             int nReceived = 0;
-            if (nReceived = recv(nSocket, ((void*) &vBuffer.back()) + 1, nHeaderSize, 0) <= 0)
+            if (nReceived = recv(nSocket, (void*) (&vBuffer.back() + 1), nHeaderSize, 0) <= 0)
             {
                 if (nReceived == 0)
                 {
@@ -208,7 +209,7 @@ std::vector<const RoveCommPacket> RoveCommEthernetTcp::Read()
             int nPreviousSize   = vBuffer.size();
             vBuffer.resize(nHeaderSize + nExpectedBytes);
             int nReceived = 0;
-            if (nReceived = recv(nSocket, ((void*) &vBuffer.back()) + 1, nExpectedBytes, 0) <= 0)
+            if (nReceived = recv(nSocket, (void*) (&vBuffer.back() + 1), nExpectedBytes, 0) <= 0)
             {
                 if (nReceived == 0)
                 {
@@ -311,9 +312,9 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
     // The following code is IPv4-specific. If you are a future developer switching to IPv6, use sockaddr_storage instead of sockaddr_in
 
     // Read back the address for storage in m_mIncomingSockets
-    RoveCommPort unIncomingPort = ntohs(sIncomingAddress.sin_port);    // convert to host byte order
-    long int nReadIp            = sIncomingAddress.sin_addr.s_addr;    // network byte order (1.2.3.4)
-    RoveCommIp sIncomingIp{nReadIp >> 3 & 0xFF, nReadIp >> 2 & 0xFF, nReadIp >> 1 & 0xFF, nReadIp >> 0 & 0xFF};
+    RoveCommPort unIncomingPort = ntohs(sIncomingAddress.sin_port);                              // convert to host byte order
+    char* nReadIp               = reinterpret_cast<char*>(&sIncomingAddress.sin_addr.s_addr);    // network byte order (1.2.3.4)
+    RoveCommIp sIncomingIp{nReadIp[0], nReadIp[1], nReadIp[2], nReadIp[3]};
     RoveCommAddress newRoveCommAddress(sIncomingIp, unIncomingPort);
 
     if (m_mOpenSockets.contains(newRoveCommAddress))    // this shouldn't happen but better safe than sorry
@@ -328,10 +329,10 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
 
 void RoveCommEthernetTcp::_register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket, bool bIsIncoming)
 {
-    m_mOpenSockets.emplace(sAddress, nSocket);
+    m_mOpenSockets[sAddress] = nSocket;
     if (bIsIncoming)
-        m_mIncomingSockets.emplace(sAddress, nSocket);
-    m_mReadBuffers.emplace(nSocket);
+        m_mIncomingSockets[sAddress] = nSocket;
+    m_mReadBuffers[nSocket] = std::vector<char>();
     FD_SET(nSocket, &m_sReadSet);
     if (nSocket > m_nMaxSocket)
         m_nMaxSocket = nSocket;
