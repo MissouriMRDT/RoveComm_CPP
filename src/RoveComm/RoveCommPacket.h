@@ -14,6 +14,7 @@
 #include "RoveCommConstants.h"
 #include "RoveCommManifest.h"
 
+#include <cstring>
 #include <memory>
 #include <ostream>
 #include <stdlib.h>
@@ -68,6 +69,19 @@ struct RoveCommPacketHeader
 };
 
 /******************************************************************************
+ * @brief Literally only exists to give a unique_ptr a length.
+ *
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2024-01-14
+ ******************************************************************************/
+struct RoveCommPacketBuffer
+{
+        std::unique_ptr<char> pData;
+        size_t siLength;
+};
+
+/******************************************************************************
  * @brief The RoveComm packet is an immutable encapsulation of a message sent across the rover
  *  network that can be parsed by all rover computing systems.
  *  These can be copied freely, as the data underneath is backed by an std::shared_pointer<char>.
@@ -82,9 +96,7 @@ class RoveCommPacket
         RoveCommPacket(RoveCommDataId usDataId, RoveCommDataCount usDataCount, RoveCommDataType ucDataType, std::unique_ptr<char>&& pData) :
             RoveCommPacket({rovecomm::ROVECOMM_VERSION, usDataId, usDataCount, ucDataType}, std::move(pData)){};
 
-        RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) :
-            m_sHeader(sHeader), m_pData(std::move(pData)), m_dataSize(m_sHeader.usDataCount * rovecomm::DataTypeSize(m_sHeader.ucDataType))
-        {}
+        RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) : m_sHeader(sHeader), m_pData(std::move(pData)) {}
 
         // RoveCommPacket(rovecomm::ManifestEntry sEntry, void* pData);
 
@@ -95,6 +107,29 @@ class RoveCommPacket
         inline RoveCommDataCount GetDataCount() const { return m_sHeader.usDataCount; }
 
         inline RoveCommDataType GetDataType() const { return m_sHeader.ucDataType; }
+
+        /******************************************************************************
+         * @brief Get the size of the packet's data array (not including the header)
+         *
+         * @return size_t - The size of the packet in bytes
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-20
+         ******************************************************************************/
+        size_t CalcDataSize() const { return m_sHeader.usDataCount * rovecomm::DataTypeSize(m_sHeader.ucDataType); }
+
+        /******************************************************************************
+         * @brief Get the size of the packet (including the header)
+         *
+         * @return size_t - The size of the packet in bytes.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-23
+         ******************************************************************************/
+        size_t CalcSize() const { return rovecomm::ROVECOMM_PACKET_HEADER_SIZE + CalcDataSize(); }
+
+        // An empty packet you can compare to I guess
+        static const RoveCommPacket NONE;
 
         // Templates have to be defined in the header or else the linker sh*ts itself
 
@@ -112,7 +147,7 @@ class RoveCommPacket
         template<typename T>
         size_t Get(T& dest, int index) const
         {
-            if (sizeof(T) * index > m_dataSize)
+            if (sizeof(T) * index >= CalcDataSize())
                 return 0;
             dest = *((T*) m_pData) + index;
             return sizeof(T);
@@ -131,10 +166,11 @@ class RoveCommPacket
          * @date 2023-12-23
          ******************************************************************************/
         template<typename T>
-        size_t GetBulk(T* pDest, int start, int count) const
+        size_t GetBulk(T* pDest, size_t start, size_t count) const
         {
-            size_t bytesToRead = std::min(start + count, m_dataSize / sizeof(T)) * sizeof(T);
-            std::memcpy(pDest, &m_pData[start * sizeof(T)], bytesToRead);
+            size_t bytesToRead = std::min(start + count, CalcDataSize() / sizeof(T)) * sizeof(T);
+            std::memcpy(pDest, m_pData.get() + start * sizeof(T), bytesToRead);
+            return bytesToRead;
         }
 
         /******************************************************************************
@@ -148,34 +184,8 @@ class RoveCommPacket
          ******************************************************************************/
         const char* GetRawData() const { return m_pData.get(); }
 
-        // inline const std::unique_ptr<const char> GetData() const { return m_pData; }
-
-        /******************************************************************************
-         * @brief Get the size of the packet's internal array.
-         *
-         * @return size_t - Size of the array in bytes.
-         *
-         * @author OcelotEmpire (hobbz.pi@gmail.com)
-         * @date 2023-12-23
-         ******************************************************************************/
-        inline size_t GetDataSize() const { return m_dataSize; }
-
-        /******************************************************************************
-         * @brief Get the size of the packet (including the header)
-         *
-         * @return size_t - The size of the packet in bytes.
-         *
-         * @author OcelotEmpire (hobbz.pi@gmail.com)
-         * @date 2023-12-23
-         ******************************************************************************/
-        size_t GetSize() const { return rovecomm::ROVECOMM_PACKET_HEADER_SIZE + m_dataSize; }
-
-        // An empty packet you can compare to I guess
-        static const RoveCommPacket NONE;
-
     private:
         const RoveCommPacketHeader m_sHeader;
-        const size_t m_dataSize;
 
         /*
          *  Shared pointer allows safe copying of packets without copying the data.
@@ -261,18 +271,5 @@ class RoveCommPacket
 
 // print with std::cout
 inline std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet);
-
-/******************************************************************************
- * @brief Literally only exists to give a unique_ptr a length.
- *
- *
- * @author OcelotEmpire (hobbz.pi@gmail.com)
- * @date 2024-01-14
- ******************************************************************************/
-struct RoveCommPacketBuffer
-{
-        std::unique_ptr<char> pData;
-        size_t siLength;
-};
 
 #endif    // ROVECOMM_PACKET_H

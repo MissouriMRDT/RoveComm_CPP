@@ -21,6 +21,7 @@
 #include <ctime>
 #include <iostream>
 #include <quill/Quill.h>
+#include <string>
 
 #ifndef ROVECOMM_LOGGING_H
 #define ROVECOMM_LOGGING_H
@@ -58,7 +59,7 @@ namespace logging
     extern quill::Logger* g_qConsoleLogger;
     extern quill::Logger* g_qSharedLogger;
 
-    void InitializeLoggers();
+    void InitializeLoggers(std::string szLoggingOutputPath);
 }    // namespace logging
 
 #endif    // ROVECOMM_GLOBALS_H

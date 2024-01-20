@@ -17,6 +17,7 @@
 #include "RoveCommServer.h"
 
 #include <list>
+#include <netinet/in.h>
 #include <sys/socket.h>
 
 /******************************************************************************
@@ -28,7 +29,7 @@
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-14
  ******************************************************************************/
-class RoveCommEthernetUdp : RoveCommServer
+class RoveCommEthernetUdp : public RoveCommServer
 {
     public:
         /******************************************************************************
@@ -46,9 +47,11 @@ class RoveCommEthernetUdp : RoveCommServer
 
         int Write(const RoveCommPacket& packet) override;
         int SendTo(const RoveCommPacket& packet, RoveCommAddress address) override;
-        std::vector<const RoveCommPacket> Read() override;
+        std::vector<RoveCommPacket> Read() override;
 
-        // void Subscribe()
+        // TODO: subscribe/unsubscribe functions
+        // void Subscribe(const RoveCommAddress& address);
+        // void Unsubscribe(const RoveCommAddress& address);
 
     private:
         RoveCommSocket m_nSocket;

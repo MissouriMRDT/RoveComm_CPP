@@ -12,10 +12,11 @@
 #define ROVECOMM_SERVER_H
 
 // #include <future>
+#include <deque>
+#include <future>
 #include <iostream>
 #include <map>
-// #include <queue>
-// #include <shared_mutex>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -34,6 +35,8 @@ class RoveCommServer
     public:
         // RoveCommServer(RoveCommPort unPort) : m_unPort(unPort) {}
         RoveCommServer(RoveCommPort unPort) : m_unPort(unPort) {}
+
+        RoveCommServer(RoveCommServer&& other) = delete;
 
         virtual ~RoveCommServer();
 
@@ -69,7 +72,7 @@ class RoveCommServer
          *
          * @param packet the RoveCommPacket to write
          * @param address the RoveCommAddress (IP, Port) to send to
-         * @return int the number of bytes written (0 if error)
+         * @return int the number of bytes written (0 if error or failure)
          *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
@@ -83,7 +86,7 @@ class RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual std::vector<const RoveCommPacket> Read();
+        virtual std::vector<RoveCommPacket> Read();
 
         // /******************************************************************************
         //  * @brief Synchronously await the next RoveCommPacket with the given data_id.
@@ -98,15 +101,16 @@ class RoveCommServer
         //  ******************************************************************************/
         // virtual std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY) const;
 
-        inline const RoveCommPort GetPort() const { return m_unPort; }
+        inline RoveCommPort GetPort() const { return m_unPort; }
 
     protected:
         const RoveCommPort m_unPort;
-        // std::map<RoveCommDataId, RoveCommCallback> m_fCallbacks;
-        // std::thread m_thNetworkThread;
-        // std::queue<RoveCommPacket> m_qPacketCopyQueue;
-        // std::shared_mutex m_muPoolScheduleMutex;
-        // std::mutex m_muPacketCopyMutex;
+};
+
+struct RoveCommCallback
+{
+        std::function<void(RoveCommPacket)> fInvoke;
+        bool bRemoveFromQueue;
 };
 
 /******************************************************************************
@@ -120,37 +124,73 @@ class RoveCommServerManager
 {
     public:
         static void Init();
-        static void OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol = RoveCommProtocol::UDP);
+        static void OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol = UDP);
         static void Shutdown();
-        static int Write(RoveCommPacket& packet, RoveCommProtocol protocol = RoveCommProtocol::UDP);
-        static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocol protocol = RoveCommProtocol::UDP);
-        static std::vector<RoveCommPacket> Read(RoveCommProtocol protocol = RoveCommProtocol::UDP);
+        static int Write(RoveCommPacket& packet, RoveCommProtocol protocol = UDP);
+        static int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocol protocol = UDP);
 
-        // static std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY);
-        static void SetCallback(RoveCommDataId unId, RoveCommCallback fCallback);
+        /******************************************************************************
+         * @brief Pop the oldest packet off the queue.
+         * Example usage:
+         * if(auto packet = RoveComm.Next()) {...}
+         *
+         * @return std::optional<const RoveCommPacket> - the potential packet
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-19
+         ******************************************************************************/
+        static std::optional<const RoveCommPacket> Next();
+
+        // static inline std::deque<RoveCommPacket>& GetPacketQueue() { return s_dqPacketQueue; }
+
+        // use Fetch() instead
+        //  static std::vector<RoveCommPacket> Read(RoveCommProtocol protocol = UDP);
+
+        /******************************************************************************
+         * @brief Wait for RoveCommPacket
+         *
+         * @param unId -
+         * @param address -
+         * @return std::future<RoveCommPacket> -
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-19
+         ******************************************************************************/
+        static std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY);
+
+        /******************************************************************************
+         * @brief Specify a function to invoke when a certain data id is received
+         *
+         * @param unId - Id to listen for, rovecomm::System::ANY will trigger for all packets.
+         * @param fCallback - The function to execute.
+         * @param bRemoveFromQueue - Whether to remove the packet from the queue after execution.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-20
+         ******************************************************************************/
+        static void SetCallback(RoveCommDataId unId, std::function<void(RoveCommPacket)> fCallback, bool bRemoveFromQueue = true);
+        static void ClearCallback(RoveCommDataId unId);
 
     private:
-        static std::map<RoveCommProtocol, std::vector<RoveCommServer*>> s_Servers;
-        static std::map<RoveCommDataId, RoveCommCallback> s_fCallbacks;
+        static void _read_all_to_queue();
+        static void _loop_func();
 
+    private:
+        // only one server per protocol type for now
+        static std::map<RoveCommProtocol, RoveCommServer*> s_mServers;
+        // only one callback per dataId
+        static std::map<RoveCommDataId, RoveCommCallback> s_mCallbacks;
+        static std::deque<RoveCommPacket> s_dqPacketQueue;
+
+        static bool bStopThread;
         static std::thread s_thNetworkThread;
+        static std::mutex s_muQueueMutex;
 };
 
 // This is the main singleton that we call static functions on
-// So we can get Java-style RoveComm.write(...);
-extern RoveCommServerManager RoveComm;    // TODO: make this a real singleton
+// So we can get Java-style RoveComm.write();
+extern RoveCommServerManager RoveComm;
+
+// TODO: make this a real singleton ^^^
 
 #endif
-
-// Old comments
-// // FIXME: Change parameter variables names to meet our style guide.
-// RoveComm(int udp_port, int tcp_addr);
-
-// // FIXME: Change function names and paramerter variable names to meet our style guide.
-// static void listen();
-// static void set_callback(int data_id, std::string& func);    // Find way to pass function as input
-// static void clear_callback(int data_id);
-// static void set_default_callback(std::string& func);         // Find way to pass function as input
-// static void clear_default_callback();
-// static int write(RoveCommPacket& packet, bool reliable = false);
-// static void close_thread();

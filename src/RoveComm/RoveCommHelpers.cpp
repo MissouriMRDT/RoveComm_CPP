@@ -12,14 +12,15 @@ std::string RoveCommIp::ToString() const
 std::ostream& operator<<(std::ostream& out, const RoveCommIp& ip)
 {
     out << ip.ToString();
+    return out;
 }
 
-bool operator==(RoveCommIp& ip, RoveCommIp& other)
+bool operator==(const RoveCommIp& ip, const RoveCommIp& other)
 {
     return ip.firstOctet == other.firstOctet && ip.secondOctet == other.secondOctet && ip.thirdOctet == other.thirdOctet && ip.fourthOctet == other.fourthOctet;
 }
 
-bool operator!=(RoveCommIp& ip, RoveCommIp& other)
+bool operator!=(const RoveCommIp& ip, const RoveCommIp& other)
 {
     return !(ip == other);
 }
@@ -38,12 +39,12 @@ std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address)
     return out;
 };
 
-bool operator==(RoveCommAddress& address, RoveCommAddress& other)
+bool operator==(const RoveCommAddress& address, const RoveCommAddress& other)
 {
     return address.m_unPort == other.m_unPort && address.m_sOctets == other.m_sOctets;
 }
 
-bool operator!=(RoveCommAddress& address, RoveCommAddress& other)
+bool operator!=(const RoveCommAddress& address, const RoveCommAddress& other)
 {
     return !(address == other);
 }
