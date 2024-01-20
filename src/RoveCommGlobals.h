@@ -18,9 +18,12 @@
 
 #ifndef ROVECOMM_GLOBALS_H
 #define ROVECOMM_GLOBALS_H
+#include "RoveComm/RoveComm.h"
 
 namespace globals
-{}
+{
+    extern RoveCommServerManager& RoveComm;
+}
 
 #endif    // ROVECOMM_GLOBALS_H
 

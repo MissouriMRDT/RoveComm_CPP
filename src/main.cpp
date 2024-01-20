@@ -49,8 +49,11 @@ int main()
     // Initialize Loggers
     logging::InitializeLoggers("./logs");
 
-    // TODO: Initialize RoveComm
+    globals::RoveComm.Init();
 
+    // idk what to do here
+
+    globals::RoveComm.Shutdown();
     return 0;
 }
 
