@@ -9,7 +9,7 @@
  ******************************************************************************/
 
 #include "RoveCommEthernetUdp.h"
-#include "../RoveCommLogging.h"
+#include "LogHack.h"
 
 #include <arpa/inet.h>
 #include <cstring>
