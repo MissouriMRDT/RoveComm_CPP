@@ -41,7 +41,7 @@ void RoveCommEthernetUdp::Init()
         return;
     }
 
-    addrinfo* p;
+    addrinfo* p = result;
     for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)    // getaddrinfo() returns a linked list of possible addresses
     {
         if (m_nSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
@@ -59,7 +59,7 @@ void RoveCommEthernetUdp::Init()
     freeaddrinfo(result);    // *result was allocated by getaddrinfo()
     if (p == NULL)
     {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to open TCP socket!");
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to open UDP socket!");
         return;
     }
 
@@ -79,6 +79,8 @@ void RoveCommEthernetUdp::Init()
     // Set up fd_set for reading
     FD_ZERO(&m_sReadSet);
     FD_SET(m_nSocket, &m_sReadSet);
+
+    LOG_INFO(logging::g_qSharedLogger, "Opened UDP socket on port {}", m_unPort);
 }
 
 void RoveCommEthernetUdp::Shutdown()
@@ -86,6 +88,8 @@ void RoveCommEthernetUdp::Shutdown()
     shutdown(m_nSocket, 1);
     FD_ZERO(&m_sReadSet);
     m_lSubscribers.clear();
+
+    LOG_INFO(logging::g_qSharedLogger, "Closed UDP socket on port {}", m_unPort);
 }
 
 int RoveCommEthernetUdp::Write(const RoveCommPacket& packet)

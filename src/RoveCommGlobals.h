@@ -23,11 +23,12 @@
 
 #ifndef ROVECOMM_GLOBALS_H
 #define ROVECOMM_GLOBALS_H
+#include "RoveComm/RoveComm.h"
 
-// Logging:
-extern quill::Logger* g_qFileLogger;
-extern quill::Logger* g_qConsoleLogger;
-extern quill::Logger* g_qSharedLogger;
+namespace globals
+{
+    extern RoveCommServerManager& RoveComm;
+}
 
 void InitializeLoggers();
 

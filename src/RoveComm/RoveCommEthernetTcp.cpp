@@ -41,7 +41,7 @@ void RoveCommEthernetTcp::Init()
         return;
     }
 
-    addrinfo* p;
+    addrinfo* p = result;
     for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)    // getaddrinfo() returns a linked list of possible addresses
     {
         if (m_nListeningSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
@@ -90,6 +90,8 @@ void RoveCommEthernetTcp::Init()
     // Set up fd_set for accepting
     FD_ZERO(&m_sAcceptSet);
     FD_SET(m_nListeningSocket, &m_sAcceptSet);
+
+    LOG_INFO(logging::g_qSharedLogger, "Opened TCP socket on port {}", m_unPort);
 }
 
 void RoveCommEthernetTcp::Shutdown()
@@ -103,6 +105,8 @@ void RoveCommEthernetTcp::Shutdown()
     shutdown(m_nListeningSocket, 1);
     FD_ZERO(&m_sReadSet);
     FD_ZERO(&m_sAcceptSet);
+
+    LOG_INFO(logging::g_qSharedLogger, "Closed TCP socket on port {}", m_unPort);
 }
 
 int RoveCommEthernetTcp::Write(const RoveCommPacket& packet)
@@ -257,7 +261,7 @@ bool RoveCommEthernetTcp::Connect(const RoveCommAddress& address)
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
         return false;
     }
-    addrinfo* p;
+    addrinfo* p = result;
     for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)
     {
         if (nTcpSocketFd = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
