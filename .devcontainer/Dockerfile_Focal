@@ -12,9 +12,10 @@ ARG UBUNTU_MAJOR="20"
 ARG CUDA_MAJOR="11"
 ARG CUDA_MINOR="7"
 ARG CUDA_PATCH="0"
-ARG CMAKE_VERSION="3.24.3"
-ARG QUILL_VERSION="v3.3.1"
+ARG CMAKE_VERSION="3.27.9"
+ARG QUILL_VERSION="v3.5.0"
 ARG GTEST_VERSION="v1.14.0"
+ARG TZ="America/Chicago"
 
 # Set Labels
 LABEL authors="Missouri S&T Mars Rover Design Team"
@@ -50,6 +51,10 @@ RUN rm /etc/apt/sources.list.d/cuda.list && apt-get update && \
 
 # Install Required Python Packages
 RUN python3 -m pip install numpy opencv-python pyopengl
+
+# Set Timezone
+RUN echo "${TZ}" > /etc/localtime && \
+    echo "${TZ}" > /etc/timezone
 
 # Install gcc/g++
 RUN apt-get install  --no-install-recommends -y \
