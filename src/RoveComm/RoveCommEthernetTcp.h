@@ -29,7 +29,7 @@
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-14
  ******************************************************************************/
-class RoveCommEthernetTcp : RoveCommServer
+class RoveCommEthernetTcp : public RoveCommServer
 
 {
     public:
@@ -48,7 +48,7 @@ class RoveCommEthernetTcp : RoveCommServer
 
         int Write(const RoveCommPacket& packet) override;
         int SendTo(const RoveCommPacket& packet, RoveCommAddress address) override;
-        std::vector<const RoveCommPacket> Read() override;
+        std::vector<RoveCommPacket> Read() override;
 
         /******************************************************************************
          * @brief Try to open a TCP connection with another device (acting as client)

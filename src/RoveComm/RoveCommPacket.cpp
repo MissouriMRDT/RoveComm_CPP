@@ -121,7 +121,7 @@ void RoveCommPacket::ReadData(char* pDest, const char* pSource, const RoveCommPa
 
 RoveCommPacketBuffer RoveCommPacket::Pack(const RoveCommPacket& packet)
 {
-    size_t siSize = packet.GetSize();
+    size_t siSize = packet.CalcSize();
     char* pData   = new char[siSize];
     try
     {
@@ -142,7 +142,7 @@ std::ostream& operator<<(std::ostream& out, const RoveCommPacket& packet)
     out << "ID: " << packet.GetDataId() << "\n";
     out << "Count: " << packet.GetDataCount() << "\n";
     out << "Type: " << packet.GetDataType() << "\n";
-    out << "Data: [ " << packet.GetDataCount() * rovecomm::DataTypeSize(packet.GetDataType()) << " bytes ]\n";
+    out << "Data: [ " << packet.CalcDataSize() << " bytes ]\n";
     out << "----------\n";
     return out;
 }

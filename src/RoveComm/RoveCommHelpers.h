@@ -34,7 +34,7 @@ enum RoveCommProtocol
 
 inline RoveCommProtocol operator|(RoveCommProtocol protocol, RoveCommProtocol other)
 {
-    return static_cast<RoveCommProtocol>(static_cast<unsigned int>(protocol) | static_cast<unsigned int>(protocol));
+    return static_cast<RoveCommProtocol>(static_cast<unsigned int>(protocol) | static_cast<unsigned int>(other));
 }
 
 using RoveCommPort = unsigned short;
@@ -51,15 +51,13 @@ struct RoveCommIp
 
         std::string ToString() const;
         friend inline std::ostream& operator<<(std::ostream& out, const RoveCommIp& ip);
-        friend inline bool operator==(RoveCommIp& ip, RoveCommIp& other);
-        friend inline bool operator!=(RoveCommIp& ip, RoveCommIp& other);
+        friend inline bool operator==(const RoveCommIp& ip, const RoveCommIp& other);
+        friend inline bool operator!=(const RoveCommIp& ip, const RoveCommIp& other);
 };
 
 inline std::ostream& operator<<(std::ostream& out, const RoveCommIp& ip);
-inline bool operator==(RoveCommIp& ip, RoveCommIp& other);
-inline bool operator!=(RoveCommIp& ip, RoveCommIp& other);
-
-using RoveCommCallback = void();
+inline bool operator==(const RoveCommIp& ip, const RoveCommIp& other);
+inline bool operator!=(const RoveCommIp& ip, const RoveCommIp& other);
 
 /******************************************************************************
  * @brief Contains the octets of an IPv4 address and a port number
@@ -90,11 +88,11 @@ class RoveCommAddress
 
         std::string ToString() const;
         friend inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
-        friend inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
-        friend inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
+        friend inline bool operator==(const RoveCommAddress& address, const RoveCommAddress& other);
+        friend inline bool operator!=(const RoveCommAddress& address, const RoveCommAddress& other);
 
         // for std::map lookups
-        inline bool operator<(RoveCommAddress& other) const { return this->m_unPort < other.m_unPort; }
+        friend inline bool operator<(const RoveCommAddress& address, const RoveCommAddress& other);
 
     private:
         RoveCommIp m_sOctets;
@@ -105,10 +103,15 @@ class RoveCommAddress
         const static RoveCommAddress ANY;
 };
 
-using RoveCommSocket = int;    // kind of stupid why is this a thing
+using RoveCommSocket = int;
 
 inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
-inline bool operator==(RoveCommAddress& address, RoveCommAddress& other);
-inline bool operator!=(RoveCommAddress& address, RoveCommAddress& other);
+inline bool operator==(const RoveCommAddress& address, const RoveCommAddress& other);
+inline bool operator!=(const RoveCommAddress& address, const RoveCommAddress& other);
+
+inline bool operator<(const RoveCommAddress& address, const RoveCommAddress& other)
+{
+    return address.m_unPort < other.m_unPort;
+}
 
 #endif
