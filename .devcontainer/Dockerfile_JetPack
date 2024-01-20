@@ -12,9 +12,10 @@ ARG L4T_MAJOR="35"
 ARG L4T_MINOR="3"
 ARG L4T_PATCH="1"
 ARG L4T_BASE="l4t-jetpack"
-ARG CMAKE_VERSION="3.24.3"
-ARG QUILL_VERSION="v3.3.1"
+ARG CMAKE_VERSION="3.27.9"
+ARG QUILL_VERSION="v3.5.0"
 ARG GTEST_VERSION="v1.14.0"
+ARG TZ="America/Chicago"
 
 # Set Labels
 LABEL authors="Missouri S&T Mars Rover Design Team"
@@ -49,6 +50,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 #This symbolic link is needed to use the streaming features on Jetson inside a container
 RUN ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
+
+# Set Timezone
+RUN echo "${TZ}" > /etc/localtime && \
+    echo "${TZ}" > /etc/timezone
 
 # Install gcc/g++
 RUN apt-get install  --no-install-recommends -y \
