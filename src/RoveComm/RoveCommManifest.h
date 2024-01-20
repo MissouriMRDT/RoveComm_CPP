@@ -48,10 +48,10 @@ namespace rovecomm
     struct AddressEntry
     {
         public:
-            char FIRST_OCTET;
-            char SECOND_OCTET;
-            char THIRD_OCTET;
-            char FOURTH_OCTET;
+            int FIRST_OCTET;
+            int SECOND_OCTET;
+            int THIRD_OCTET;
+            int FOURTH_OCTET;
     };
 
     /******************************************************************************

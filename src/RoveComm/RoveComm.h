@@ -18,4 +18,6 @@
 #include "RoveCommPacket.h"
 #include "RoveCommServer.h"
 
+extern RoveCommServerManager RoveComm;
+
 #endif    // ROVECOMM_H
