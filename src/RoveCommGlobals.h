@@ -16,11 +16,6 @@
 // Only worry about compiling if we are not in 'Library-Only Mode'.
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
-#include <chrono>
-#include <ctime>
-#include <iostream>
-#include <quill/Quill.h>
-
 #ifndef ROVECOMM_GLOBALS_H
 #define ROVECOMM_GLOBALS_H
 #include "RoveComm/RoveComm.h"
@@ -29,8 +24,6 @@ namespace globals
 {
     extern RoveCommServerManager& RoveComm;
 }
-
-void InitializeLoggers();
 
 #endif    // ROVECOMM_GLOBALS_H
 
