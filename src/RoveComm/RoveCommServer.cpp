@@ -13,13 +13,14 @@
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
 
-void RoveCommServerManager::Init()
+bool RoveCommServerManager::Init()
 {
     LOG_INFO(logging::g_qSharedLogger, "Initializing RoveComm...");
-    OpenServerOnPort(rovecomm::General::ETHERNET_TCP_PORT, TCP);
-    OpenServerOnPort(rovecomm::General::ETHERNET_UDP_PORT, UDP);
 
-    m_bStopThread     = false;
+    if (!(OpenServerOnPort(rovecomm::General::ETHERNET_TCP_PORT, TCP) &&    // init TCP
+          OpenServerOnPort(rovecomm::General::ETHERNET_UDP_PORT, UDP)))     // init UDP
+        return false;
+
     m_thNetworkThread = std::thread(
         [&]()
         {
@@ -45,27 +46,44 @@ void RoveCommServerManager::Shutdown()
 
 void RoveCommServerManager::_loop_func()
 {
-    reinterpret_cast<RoveCommEthernetTcp*>(m_mServers[TCP])->AcceptIncomingConnections();
+    {
+        const std::lock_guard lock(m_muQueueMutex);
+        for (auto& [protocol, server] : m_mServers)
+        {
+            server->OnRoveCommUpdate();
+        }
+    }
     _read_all_to_queue();
 }
 
-void RoveCommServerManager::OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol)
+bool RoveCommServerManager::OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol)
 {
     const std::lock_guard lock(m_muQueueMutex);
     if (m_mServers.contains(protocol))
     {
         LOG_ERROR(logging::g_qSharedLogger, "Server already open with that protocol.");
+        return false;
     }
     switch (protocol)
     {
         case TCP:
         {
-            (m_mServers[protocol] = new RoveCommEthernetTcp(port))->Init();
+            RoveCommEthernetTcp* server = new RoveCommEthernetTcp(port);
+            if (server->Init())
+            {
+                m_mServers[protocol] = server;
+                return true;
+            }
             break;
         }
         case UDP:
         {
-            (m_mServers[protocol] = new RoveCommEthernetUdp(port))->Init();
+            RoveCommEthernetUdp* server = new RoveCommEthernetUdp(port);
+            if (server->Init())
+            {
+                m_mServers[protocol] = server;
+                return true;
+            }
             break;
         }
         default:
@@ -73,6 +91,7 @@ void RoveCommServerManager::OpenServerOnPort(RoveCommPort port, RoveCommProtocol
             LOG_ERROR(logging::g_qSharedLogger, "Tried to open server with an unregistered protocol.");
         }
     }
+    return false;
 }
 
 int RoveCommServerManager::Write(RoveCommPacket& packet, RoveCommProtocol protocol)
@@ -105,6 +124,7 @@ int RoveCommServerManager::SendTo(RoveCommPacket& packet, RoveCommAddress addres
 
 void RoveCommServerManager::_read_all_to_queue()
 {
+    const std::lock_guard lock(m_muQueueMutex);
     for (auto& [serverProtocol, server] : m_mServers)
     {
         for (auto& packet : server->Read())
@@ -140,11 +160,13 @@ std::optional<const RoveCommPacket> RoveCommServerManager::Next()
 void RoveCommServerManager::SetCallback(RoveCommDataId unId, std::function<void(RoveCommPacket)> fCallback, bool bRemoveFromQueue)
 {
     const std::lock_guard lock(m_muQueueMutex);
+    const std::lock_guard lock(m_muQueueMutex);
     m_mCallbacks[unId] = {fCallback, bRemoveFromQueue};
 }
 
 void RoveCommServerManager::ClearCallback(RoveCommDataId unId)
 {
+    const std::lock_guard lock(m_muQueueMutex);
     const std::lock_guard lock(m_muQueueMutex);
     m_mCallbacks.erase(unId);
 }

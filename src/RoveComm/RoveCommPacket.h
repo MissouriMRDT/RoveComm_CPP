@@ -17,6 +17,7 @@
 #include <cstring>
 #include <memory>
 #include <ostream>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string>
 
@@ -93,13 +94,28 @@ class RoveCommPacket
 {
     public:
         RoveCommPacket() : RoveCommPacket(rovecomm::System::NO_DATA_DATA_ID, 0, rovecomm::DataTypes::INT8_T, nullptr){};
+
         RoveCommPacket(RoveCommDataId usDataId, RoveCommDataCount usDataCount, RoveCommDataType ucDataType, std::unique_ptr<char>&& pData) :
             RoveCommPacket({rovecomm::ROVECOMM_VERSION, usDataId, usDataCount, ucDataType}, std::move(pData)){};
 
-        RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) : m_sHeader(sHeader), m_pData(std::move(pData)) {}
+        RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) : m_sHeader(sHeader), m_pData(std::move(pData)){};
 
-        // RoveCommPacket(rovecomm::ManifestEntry sEntry, void* pData);
+        // convenience constructors:
 
+        RoveCommPacket(RoveCommDataId usDataId) : RoveCommPacket(usDataId, 0, rovecomm::DataTypes::UINT8_T, std::unique_ptr<char>{}){};
+
+        // example usage: RoveComm.SendTo(address, RoveCommPacket{rovecomm::AUTONOMY::REACHEDMARKER, 1})
+        // template<typename T>
+        // RoveCommPacket(rovecomm::ManifestEntry sEntry, T data...) :
+        //     RoveCommPacket(sEntry.DATA_ID, sEntry.DATA_COUNT, sEntry.DATA_TYPE, std::make_unique<char>(sEntry.DATA_COUNT * rovecomm::DataTypeSize(sEntry.DATA_TYPE)))
+        // {
+        //     va_list args;
+        //     va_start(args, data);
+        //     char* pRaw = m_pData.get();
+        //     for (int i = 0; i<)
+        // };
+
+        
         inline RoveCommVersionId GetVersionId() const { return m_sHeader.ucVersionId; }
 
         inline RoveCommDataId GetDataId() const { return m_sHeader.usDataId; }

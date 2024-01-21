@@ -43,7 +43,7 @@ class RoveCommEthernetTcp : public RoveCommServer
          ******************************************************************************/
         RoveCommEthernetTcp(RoveCommPort unPort) : RoveCommServer(unPort){};
 
-        void Init() override;
+        bool Init() override;
         void Shutdown() override;
 
         int Write(const RoveCommPacket& packet) override;
@@ -63,6 +63,17 @@ class RoveCommEthernetTcp : public RoveCommServer
         bool Connect(const RoveCommAddress& address);
 
         /******************************************************************************
+         * @brief Close a TCP connection with another device (acting as client)
+         *
+         * @param address - The address to disconnect from. If no prior connection exists,
+         * this function will do nothing.
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-20
+         ******************************************************************************/
+        void Disconnect(const RoveCommAddress& address);
+
+        /******************************************************************************
          * @brief Check for other devices trying to connect to this device (acting as server)
          * This will be private in a future iteration ;)
          *
@@ -76,6 +87,8 @@ class RoveCommEthernetTcp : public RoveCommServer
         void _unregister_socket(const RoveCommAddress& sAddress);
 
     private:
+        void OnRoveCommUpdate() override { AcceptIncomingConnections(); }
+
         // Socket for accepting connections from other devices
         RoveCommSocket m_nListeningSocket;
         // All open connections (outgoing and incoming)

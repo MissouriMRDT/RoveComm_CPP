@@ -38,8 +38,6 @@ size_t rovecomm::DataTypeSize(RoveCommDataType ucType)
     }
 }
 
-// RoveCommPacket::RoveCommPacket(rovecomm::ManifestEntry sEntry, void* pData): RoveCommPacket({rovecomm::ROVECOMM_VERSION, sEntry
-
 void RoveCommPacket::WriteHeader(char* pDest, const RoveCommPacketHeader& header)
 {
     pDest[0] = header.ucVersionId;

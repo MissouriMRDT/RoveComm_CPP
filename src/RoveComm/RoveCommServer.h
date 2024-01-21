@@ -43,10 +43,12 @@ class RoveCommServer
         /******************************************************************************
          * @brief Initialize listening socket and start thread
          *
+         * @return bool - Whether the server initialized successfully
+         *
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual void Init() = 0;
+        virtual bool Init() = 0;
         /******************************************************************************
          * @brief Close all open sockets and shut down thread
          *
@@ -103,6 +105,17 @@ class RoveCommServer
 
         inline RoveCommPort GetPort() const { return m_unPort; }
 
+        friend class RoveCommServerManager;
+
+    protected:
+        /******************************************************************************
+         * @brief Optional method that RoveCommServerManager calls before each Read()
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-01-20
+         ******************************************************************************/
+        virtual void OnRoveCommUpdate() {}
+
     protected:
         const RoveCommPort m_unPort;
 };
@@ -133,8 +146,8 @@ class RoveCommServerManager
         RoveCommServerManager() {}
 
     public:
-        void Init();
-        void OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol = UDP);
+        bool Init();
+        bool OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol = UDP);
         void Shutdown();
         int Write(RoveCommPacket& packet, RoveCommProtocol protocol = UDP);
         int SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocol protocol = UDP);
@@ -192,7 +205,7 @@ class RoveCommServerManager
         std::map<RoveCommDataId, RoveCommCallback> m_mCallbacks;
         std::deque<RoveCommPacket> m_dqPacketQueue;
 
-        bool m_bStopThread;
+        bool m_bStopThread = false;
         std::thread m_thNetworkThread;
         std::mutex m_muQueueMutex;
 };

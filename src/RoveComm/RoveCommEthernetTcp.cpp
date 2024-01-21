@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <vector>
 
-void RoveCommEthernetTcp::Init()
+bool RoveCommEthernetTcp::Init()
 {
     struct addrinfo hints, *result;
     std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
@@ -38,7 +38,7 @@ void RoveCommEthernetTcp::Init()
     if (int status = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result) != 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
-        return;
+        return false;
     }
 
     addrinfo* p = result;
@@ -69,7 +69,7 @@ void RoveCommEthernetTcp::Init()
     if (p == NULL)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to open TCP socket!");
-        return;
+        return false;
     }
 
     // not sure what nOptVal actually does?
@@ -91,7 +91,8 @@ void RoveCommEthernetTcp::Init()
     FD_ZERO(&m_sAcceptSet);
     FD_SET(m_nListeningSocket, &m_sAcceptSet);
 
-    LOG_INFO(logging::g_qSharedLogger, "Opened TCP socket on port {}", m_unPort);
+    LOG_INFO(logging::g_qSharedLogger, "Opened TCP server on port {}", m_unPort);
+    return true;
 }
 
 void RoveCommEthernetTcp::Shutdown()
@@ -284,6 +285,17 @@ bool RoveCommEthernetTcp::Connect(const RoveCommAddress& address)
     _register_socket(address, nTcpSocketFd, false);
     LOG_INFO(logging::g_qSharedLogger, "Successfully connected to: {}.", address.ToString());
     return true;
+}
+
+void RoveCommEthernetTcp::Disconnect(const RoveCommAddress& address)
+{
+    if (m_mOpenSockets.contains(address))
+    {
+        RoveCommSocket nSocket = m_mOpenSockets.at(address);
+        shutdown(nSocket, 1);
+        _unregister_socket(address);
+        LOG_INFO(logging::g_qSharedLogger, "Terminated connection with: {}.", address.ToString());
+    }
 }
 
 void RoveCommEthernetTcp::AcceptIncomingConnections()

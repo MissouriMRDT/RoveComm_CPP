@@ -42,16 +42,15 @@ class RoveCommEthernetUdp : public RoveCommServer
          ******************************************************************************/
         RoveCommEthernetUdp(RoveCommPort unPort) : RoveCommServer(unPort){};
 
-        void Init() override;
+        bool Init() override;
         void Shutdown() override;
 
         int Write(const RoveCommPacket& packet) override;
         int SendTo(const RoveCommPacket& packet, RoveCommAddress address) override;
         std::vector<RoveCommPacket> Read() override;
 
-        // TODO: subscribe/unsubscribe functions
-        // void Subscribe(const RoveCommAddress& address);
-        // void Unsubscribe(const RoveCommAddress& address);
+        void Subscribe(const RoveCommAddress& address);
+        void Unsubscribe(const RoveCommAddress& address);
 
     private:
         RoveCommSocket m_nSocket;

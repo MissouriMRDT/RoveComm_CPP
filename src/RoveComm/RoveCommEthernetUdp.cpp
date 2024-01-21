@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-void RoveCommEthernetUdp::Init()
+bool RoveCommEthernetUdp::Init()
 {
     struct addrinfo hints, *result;
     std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
@@ -38,7 +38,7 @@ void RoveCommEthernetUdp::Init()
     if (int status = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result) != 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
-        return;
+        return false;
     }
 
     addrinfo* p = result;
@@ -60,7 +60,7 @@ void RoveCommEthernetUdp::Init()
     if (p == NULL)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to open UDP socket!");
-        return;
+        return false;
     }
 
     // not sure what nOptVal actually does?
@@ -80,7 +80,8 @@ void RoveCommEthernetUdp::Init()
     FD_ZERO(&m_sReadSet);
     FD_SET(m_nSocket, &m_sReadSet);
 
-    LOG_INFO(logging::g_qSharedLogger, "Opened UDP socket on port {}", m_unPort);
+    LOG_INFO(logging::g_qSharedLogger, "Opened UDP server on port {}", m_unPort);
+    return true;
 }
 
 void RoveCommEthernetUdp::Shutdown()
@@ -197,7 +198,12 @@ std::vector<RoveCommPacket> RoveCommEthernetUdp::Read()
     return packets;
 }
 
-// void RoveCommEthernetUdp::Subscribe(const RoveCommAddress& address)
-// {
-//     SendTo(RoveCommPacket(rovecomm::System::SUBSCRIBE_DATA_ID, rovecomm::DataTypes), address);
-// }
+void RoveCommEthernetUdp::Subscribe(const RoveCommAddress& address)
+{
+    SendTo(RoveCommPacket(rovecomm::System::SUBSCRIBE_DATA_ID), address);
+}
+
+void RoveCommEthernetUdp::Unsubscribe(const RoveCommAddress& address)
+{
+    SendTo(RoveCommPacket(rovecomm::System::SUBSCRIBE_DATA_ID), address);
+}
