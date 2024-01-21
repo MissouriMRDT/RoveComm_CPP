@@ -11,10 +11,13 @@
 #ifndef ROVECOMM_ETHERNET_UDP_H
 #define ROVECOMM_ETHERNET_UDP_H
 
-#include "Consts.h"
+#include "RoveCommConstants.h"
+#include "RoveCommHelpers.h"
 #include "RoveCommPacket.h"
 #include "RoveCommServer.h"
 
+#include <list>
+#include <netinet/in.h>
 #include <sys/socket.h>
 
 /******************************************************************************
@@ -26,46 +29,37 @@
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-14
  ******************************************************************************/
-class RoveCommEthernetUdp : RoveCommServer
+class RoveCommEthernetUdp : public RoveCommServer
 {
     public:
-        void init() override;
-        void shutdown() override;
+        /******************************************************************************
+         * @brief Construct a new TCP server. Uses host IPv4 address
+         *
+         * @param unPort - port to listen on
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2023-12-21
+         ******************************************************************************/
+        RoveCommEthernetUdp(RoveCommPort unPort) : RoveCommServer(unPort){};
 
-        void write(RoveCommPacket& packet) const override;
-        RoveCommPacket& read() const override;
+        void Init() override;
+        void Shutdown() override;
 
-        // int m_nRoveCommPort;
-        // int m_nNumSubscribers;
-        // sockaddr* m_aSubscribers[10];
-        // int m_RoveCommSocketFd;
+        int Write(const RoveCommPacket& packet) override;
+        int SendTo(const RoveCommPacket& packet, RoveCommAddress address) override;
+        std::vector<RoveCommPacket> Read() override;
 
-        // RoveCommEthernetUdp(int nPort = rovecomm::ROVECOMM_UDP_PORT);
+        // TODO: subscribe/unsubscribe functions
+        // void Subscribe(const RoveCommAddress& address);
+        // void Unsubscribe(const RoveCommAddress& address);
 
-        // int Subscribe(std::string szSubToIp);
-        // int Write(const RoveCommPacket& Packet);
-        // RoveCommPacket* Read();
-        // void CloseSocket();
+    private:
+        RoveCommSocket m_nSocket;
+        fd_set m_sReadSet;
+        // these aren't meant to be read outside the class, so I'm being lazy and using the native struct type
+        std::list<sockaddr_in> m_lSubscribers;
+
+        // TODO: consider caching outgoing sendto()'s with connect() and a connections list?
 };
 
 #endif    // ROVECOMM_ETHERNET_UDP_H
-
-// old comments
-/*
-    The UDP implementation for RoveComm. UDP is a fast connectionless transport
-    protocol that guarantees no data corruption but does not guarantee delivery,
-    and if it delivers does not guarantee it being in the same order it was
-    sent.
-
-    Methods:
-    --------
-        write(packet):
-            Transmits a packet to the destination IP and all active subscribers.
-        read():
-            Unpacks the UDP packet and packs it into a RoveComm Packet for easy
-            parsing in other code.
-        subscribe(ip_octet):
-            Subscribes to UDP packets from the given ip
-        close_socket():
-            Closes the UDP socket
-*/
