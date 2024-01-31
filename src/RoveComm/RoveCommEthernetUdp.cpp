@@ -35,7 +35,8 @@ bool RoveCommEthernetUdp::Init()
     // format: getaddrinfo(char* ip, char* port, addrinfo* settings, addrinfo** linked list of results)
     // if ip is NULL and AI_PASSIVE flag is set, then the host's ip will be used
     // result will actually be a linked list but for now we just get the first entry
-    if (int status = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result) != 0)
+    int status = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result);
+    if (status != 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
         return false;
@@ -121,7 +122,8 @@ int RoveCommEthernetUdp::SendTo(const RoveCommPacket& packet, RoveCommAddress ad
                                               // do not specify AI_PASSIVE when using sendto()
     hints.ai_protocol = IPPROTO_UDP;          // idk i found this somewhere
 
-    if (int status = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_unPort).c_str(), &hints, &result) != 0)
+    int nStatus       = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_unPort).c_str(), &hints, &result);
+    if (nStatus != 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
         return 0;
