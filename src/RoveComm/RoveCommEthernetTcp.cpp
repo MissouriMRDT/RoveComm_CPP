@@ -150,8 +150,8 @@ std::vector<RoveCommPacket> RoveCommEthernetTcp::Read()
     std::vector<RoveCommPacket> packets;
     // determine which sockets have data waiting
     fd_set sReadSetCopy = m_sReadSet;
-    int nReady;
-    if (nReady = select(m_nMaxSocket, &sReadSetCopy, NULL, NULL, 0) == -1)
+    int nReady          = select(m_nMaxSocket, &sReadSetCopy, NULL, NULL, 0);
+    if (nReady == -1)
     {
         LOG_ERROR(logging::g_qSharedLogger, "something went wrong idk");
         return packets;
@@ -172,8 +172,8 @@ std::vector<RoveCommPacket> RoveCommEthernetTcp::Read()
         {
             int nPreviousSize = vBuffer.size();
             vBuffer.resize(nPreviousSize + nHeaderSize);    // this is probably UB but idc
-            int nReceived = 0;
-            if (nReceived = recv(nSocket, (void*) (&vBuffer.back() + 1), nHeaderSize, 0) <= 0)
+            int nReceived = recv(nSocket, (void*) (&vBuffer.back() + 1), nHeaderSize, 0);
+            if (nReceived <= 0)
             {
                 if (nReceived == 0)
                 {
@@ -214,8 +214,8 @@ std::vector<RoveCommPacket> RoveCommEthernetTcp::Read()
             int nExpectedBytes  = siPacketSize - vBuffer.size();
             int nPreviousSize   = vBuffer.size();
             vBuffer.resize(nHeaderSize + nExpectedBytes);
-            int nReceived = 0;
-            if (nReceived = recv(nSocket, (void*) (&vBuffer.back() + 1), nExpectedBytes, 0) <= 0)
+            int nReceived = recv(nSocket, (void*) (&vBuffer.back() + 1), nExpectedBytes, 0);
+            if (nReceived <= 0)
             {
                 if (nReceived == 0)
                 {
@@ -314,8 +314,8 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
     if (!FD_ISSET(m_nListeningSocket, &sAcceptSetCopy))
         return;
     // accept a connection request from another device, if one exists
-    RoveCommSocket nIncomingConnection;
-    if (nIncomingConnection = accept(m_nListeningSocket, (struct sockaddr*) &sIncomingAddress, &sAddressSize) == -1)
+    RoveCommSocket nIncomingConnection = accept(m_nListeningSocket, (struct sockaddr*) &sIncomingAddress, &sAddressSize);
+    if (nIncomingConnection == -1)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to accept connection!");
         return;

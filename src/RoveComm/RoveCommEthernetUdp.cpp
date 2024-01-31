@@ -45,7 +45,8 @@ bool RoveCommEthernetUdp::Init()
     addrinfo* p = result;
     for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)    // getaddrinfo() returns a linked list of possible addresses
     {
-        if (m_nSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
+        m_nSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+        if (m_nSocket == -1)
         {
             continue;
         }
@@ -143,8 +144,8 @@ std::vector<RoveCommPacket> RoveCommEthernetUdp::Read()
 {
     std::vector<RoveCommPacket> packets;
     fd_set sReadSetCopy = m_sReadSet;
-    int nReady;
-    if (nReady = select(m_nSocket, &sReadSetCopy, NULL, NULL, 0) == -1)
+    int nReady          = select(m_nSocket, &sReadSetCopy, NULL, NULL, 0);
+    if (nReady == -1)
     {
         LOG_ERROR(logging::g_qSharedLogger, "something went wrong idk");
         return packets;
@@ -157,8 +158,8 @@ std::vector<RoveCommPacket> RoveCommEthernetUdp::Read()
     char pBuf[rovecomm::ROVECOMM_PACKET_MAX_DATA_COUNT];
     sockaddr_in sFrom;
     socklen_t sFromLen;
-    int nReceived;
-    if (nReceived = recvfrom(m_nSocket, pBuf, sizeof(pBuf), 0, (sockaddr*) &sFrom, &sFromLen) <= 0)
+    int nReceived = recvfrom(m_nSocket, pBuf, sizeof(pBuf), 0, (sockaddr*) &sFrom, &sFromLen);
+    if (nReceived <= 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to receive data!");
         return packets;
