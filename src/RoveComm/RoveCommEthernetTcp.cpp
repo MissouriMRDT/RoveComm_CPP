@@ -38,7 +38,7 @@ bool RoveCommEthernetTcp::Init()
     int nStatus = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result);
     if (nStatus != 0)
     {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(nStatus));
         return false;
     }
 
@@ -255,7 +255,7 @@ bool RoveCommEthernetTcp::Connect(const RoveCommAddress& address)
     }
     struct addrinfo hints, *result;
     std::memset(&hints, 0, sizeof(hints));
-    RoveCommSocket nTcpSocketFd;
+    int nTcpSocketFd;
     hints.ai_family   = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     int status        = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_unPort).c_str(), &hints, &result);
@@ -293,7 +293,7 @@ void RoveCommEthernetTcp::Disconnect(const RoveCommAddress& address)
 {
     if (m_mOpenSockets.contains(address))
     {
-        RoveCommSocket nSocket = m_mOpenSockets.at(address);
+        int nSocket = m_mOpenSockets.at(address);
         shutdown(nSocket, 1);
         _unregister_socket(address);
         LOG_INFO(logging::g_qSharedLogger, "Terminated connection with: {}.", address.ToString());
@@ -314,7 +314,7 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
     if (!FD_ISSET(m_nListeningSocket, &sAcceptSetCopy))
         return;
     // accept a connection request from another device, if one exists
-    RoveCommSocket nIncomingConnection = accept(m_nListeningSocket, (struct sockaddr*) &sIncomingAddress, &sAddressSize);
+    int nIncomingConnection = accept(m_nListeningSocket, (struct sockaddr*) &sIncomingAddress, &sAddressSize);
     if (nIncomingConnection == -1)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to accept connection!");
@@ -330,8 +330,8 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
     // The following code is IPv4-specific. If you are a future developer switching to IPv6, use sockaddr_storage instead of sockaddr_in
 
     // Read back the address for storage in m_mIncomingSockets
-    RoveCommPort unIncomingPort = ntohs(sIncomingAddress.sin_port);                              // convert to host byte order
-    char* nReadIp               = reinterpret_cast<char*>(&sIncomingAddress.sin_addr.s_addr);    // network byte order (1.2.3.4)
+    uint16_t unIncomingPort = ntohs(sIncomingAddress.sin_port);                              // convert to host byte order
+    char* nReadIp           = reinterpret_cast<char*>(&sIncomingAddress.sin_addr.s_addr);    // network byte order (1.2.3.4)
     RoveCommIp sIncomingIp{nReadIp[0], nReadIp[1], nReadIp[2], nReadIp[3]};
     RoveCommAddress newRoveCommAddress(sIncomingIp, unIncomingPort);
 
@@ -345,7 +345,7 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
     LOG_INFO(logging::g_qSharedLogger, "Successfully accepted connection from: {}.", newRoveCommAddress.ToString());
 }
 
-void RoveCommEthernetTcp::_register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket, bool bIsIncoming)
+void RoveCommEthernetTcp::_register_socket(const RoveCommAddress& sAddress, int nSocket, bool bIsIncoming)
 {
     m_mOpenSockets[sAddress] = nSocket;
     if (bIsIncoming)
@@ -358,7 +358,7 @@ void RoveCommEthernetTcp::_register_socket(const RoveCommAddress& sAddress, Rove
 
 void RoveCommEthernetTcp::_unregister_socket(const RoveCommAddress& sAddress)
 {
-    RoveCommSocket nSocket = m_mOpenSockets.at(sAddress);
+    int nSocket = m_mOpenSockets.at(sAddress);
     m_mOpenSockets.erase(sAddress);
     m_mIncomingSockets.erase(sAddress);    // if it exists
     m_mReadBuffers.erase(nSocket);

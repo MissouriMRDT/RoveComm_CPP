@@ -21,7 +21,7 @@ bool RoveCommServerManager::Init()
           OpenServerOnPort(rovecomm::General::ETHERNET_UDP_PORT, UDP)))     // init UDP
         return false;
 
-    m_thNetworkThread = std::thread(
+    m_thNetworkThread = std::thread(    // init network thread
         [&]()
         {
             while (!m_bStopThread)
@@ -56,7 +56,7 @@ void RoveCommServerManager::_loop_func()
     _read_all_to_queue();
 }
 
-bool RoveCommServerManager::OpenServerOnPort(RoveCommPort port, RoveCommProtocol protocol)
+bool RoveCommServerManager::OpenServerOnPort(uint16_t port, RoveCommProtocol protocol)
 {
     const std::lock_guard lock(m_muQueueMutex);
     if (m_mServers.contains(protocol))
@@ -94,7 +94,7 @@ bool RoveCommServerManager::OpenServerOnPort(RoveCommPort port, RoveCommProtocol
     return false;
 }
 
-int RoveCommServerManager::Write(RoveCommPacket& packet, RoveCommProtocol protocol)
+int RoveCommServerManager::Write(const RoveCommPacket& packet, RoveCommProtocol protocol)
 {
     const std::lock_guard lock(m_muQueueMutex);
     int nSent = 0;
@@ -108,7 +108,7 @@ int RoveCommServerManager::Write(RoveCommPacket& packet, RoveCommProtocol protoc
     return nSent;
 }
 
-int RoveCommServerManager::SendTo(RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocol protocol)
+int RoveCommServerManager::SendTo(const RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocol protocol)
 {
     const std::lock_guard lock(m_muQueueMutex);
     int nSent = 0;
@@ -124,25 +124,25 @@ int RoveCommServerManager::SendTo(RoveCommPacket& packet, RoveCommAddress addres
 
 void RoveCommServerManager::_read_all_to_queue()
 {
-    const std::lock_guard lock(m_muQueueMutex);
+    // const std::lock_guard lock(m_muQueueMutex);
     for (auto& [serverProtocol, server] : m_mServers)
     {
-        for (auto& packet : server->Read())
+        for (auto& packet : server->Read())    // for each incoming packet in all servers
         {
             auto nDataId = packet.GetDataId();
-            if (m_mCallbacks.contains(nDataId))
+            if (m_mCallbacks.contains(nDataId))    // check if the dataId matches some callback and invoke it
             {
                 auto callback = m_mCallbacks.at(nDataId);
-                callback.fInvoke(packet);
+                callback.fInvoke(packet);    // TODO: use AutonomyThread to invoke callbacks asynchronously
                 if (callback.bRemoveFromQueue)
-                    continue;
+                    continue;                // do not propogate packet to queue
             }
             m_dqPacketQueue.push_back(packet);
         }
     }
 }
 
-std::optional<const RoveCommPacket> RoveCommServerManager::Next()
+std::optional<const RoveCommPacket> RoveCommServerManager::NextPacket()
 {
     const std::lock_guard lock(m_muQueueMutex);
     if (m_dqPacketQueue.empty())
@@ -157,16 +157,33 @@ std::optional<const RoveCommPacket> RoveCommServerManager::Next()
     }
 }
 
-void RoveCommServerManager::SetCallback(RoveCommDataId unId, std::function<void(RoveCommPacket)> fCallback, bool bRemoveFromQueue)
+// std::shared_future<RoveCommPacket> RoveCommServerManager::Fetch(RoveCommDataId unId          = rovecomm::System::ANY_DATA_ID,
+//                                                                 RoveCommAddress address      = RoveCommAddress::ANY_ADDRESS,
+//                                                                 unsigned long long ulTimeout = 0)
+// {
+//     Fetch([&](const RoveCommPacket& packet, const RoveCommAddress& address) -> bool { return true; }, ulTimeout);
+// }
+
+// std::shared_future<RoveCommPacket> RoveCommServerManager::Fetch(std::function<bool(const RoveCommPacket&, const RoveCommAddress&)> fFilter,
+//                                                                 unsigned long long ulTimeout = 0)
+// {
+//     const std::lock_guard lock(m_muQueueMutex);
+//     RoveCommFetchRequest request{.fPredicate = fFilter,
+//                                  .pmPromise  = std::promise<RoveCommPacket>{},
+//                                  .tmCreated  = std::chrono::system_clock::now(),
+//                                  .tmTimeout  = std::chrono::milliseconds(ulTimeout)};
+//     m_dqRequestQueue.push_back(request);
+//     return std::shared_future<RoveCommPacket>(request.pmPromise.get_future());
+// }
+
+void RoveCommServerManager::SetCallback(uint16_t unId, std::function<void(RoveCommPacket)> fCallback, bool bRemoveFromQueue)
 {
-    const std::lock_guard lock(m_muQueueMutex);
     const std::lock_guard lock(m_muQueueMutex);
     m_mCallbacks[unId] = {fCallback, bRemoveFromQueue};
 }
 
-void RoveCommServerManager::ClearCallback(RoveCommDataId unId)
+void RoveCommServerManager::ClearCallback(uint16_t unId)
 {
-    const std::lock_guard lock(m_muQueueMutex);
     const std::lock_guard lock(m_muQueueMutex);
     m_mCallbacks.erase(unId);
 }

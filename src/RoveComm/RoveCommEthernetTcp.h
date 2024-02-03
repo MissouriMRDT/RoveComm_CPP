@@ -41,7 +41,7 @@ class RoveCommEthernetTcp : public RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-12-21
          ******************************************************************************/
-        RoveCommEthernetTcp(RoveCommPort unPort) : RoveCommServer(unPort){};
+        RoveCommEthernetTcp(uint16_t unPort) : RoveCommServer(unPort){};
 
         bool Init() override;
         void Shutdown() override;
@@ -83,20 +83,20 @@ class RoveCommEthernetTcp : public RoveCommServer
         void AcceptIncomingConnections();
 
     private:
-        void _register_socket(const RoveCommAddress& sAddress, RoveCommSocket nSocket, bool bIsIncoming);
+        void _register_socket(const RoveCommAddress& sAddress, int nSocket, bool bIsIncoming);
         void _unregister_socket(const RoveCommAddress& sAddress);
 
     private:
         void OnRoveCommUpdate() override { AcceptIncomingConnections(); }
 
         // Socket for accepting connections from other devices
-        RoveCommSocket m_nListeningSocket;
+        int m_nListeningSocket;
         // All open connections (outgoing and incoming)
-        std::map<RoveCommAddress, RoveCommSocket> m_mOpenSockets;
+        std::map<RoveCommAddress, int> m_mOpenSockets;
         // The sockets that Write() will send() to
-        std::map<RoveCommAddress, RoveCommSocket> m_mIncomingSockets;
+        std::map<RoveCommAddress, int> m_mIncomingSockets;
         // Buffers to persist incomplete recv()'s
-        std::map<RoveCommSocket, std::vector<char>> m_mReadBuffers;
+        std::map<int, std::vector<char>> m_mReadBuffers;
 
         // fd_set's contain all sockets for interfacing with the c library
 

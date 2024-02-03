@@ -126,7 +126,7 @@ int RoveCommEthernetUdp::SendTo(const RoveCommPacket& packet, RoveCommAddress ad
     int nStatus       = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_unPort).c_str(), &hints, &result);
     if (nStatus != 0)
     {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(nStatus));
         return 0;
     }
     // I'll just be lazy so I won't do the for loop shenanigans and use the first value

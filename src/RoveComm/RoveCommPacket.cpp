@@ -17,7 +17,7 @@
 #include <memory>
 #include <netinet/in.h>
 
-size_t rovecomm::DataTypeSize(RoveCommDataType ucType)
+size_t rovecomm::DataTypeSize(uint8_t ucType)
 {
     switch (ucType)
     {

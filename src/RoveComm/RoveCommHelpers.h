@@ -37,7 +37,7 @@ inline RoveCommProtocol operator|(RoveCommProtocol protocol, RoveCommProtocol ot
     return static_cast<RoveCommProtocol>(static_cast<unsigned int>(protocol) | static_cast<unsigned int>(other));
 }
 
-using RoveCommPort = unsigned short;
+// using RoveCommPort = unsigned short;
 
 struct RoveCommIp
 {
@@ -72,9 +72,9 @@ inline bool operator!=(const RoveCommIp& ip, const RoveCommIp& other);
 class RoveCommAddress
 {
     public:
-        RoveCommAddress(RoveCommIp sOctets, RoveCommPort unPort) : m_sOctets(sOctets), m_unPort(unPort) {}
+        RoveCommAddress(RoveCommIp sOctets, uint16_t unPort) : m_sOctets(sOctets), m_unPort(unPort) {}
 
-        RoveCommAddress(char cFirstOctet, char cSecondOctet, char cThirdOctet, char cFourthOctet, RoveCommPort unPort) :
+        RoveCommAddress(char cFirstOctet, char cSecondOctet, char cThirdOctet, char cFourthOctet, uint16_t unPort) :
             RoveCommAddress({cFirstOctet, cSecondOctet, cThirdOctet, cFourthOctet}, unPort)
         {}
 
@@ -84,7 +84,7 @@ class RoveCommAddress
 
         inline RoveCommIp GetIp() const { return m_sOctets; }
 
-        inline RoveCommPort GetPort() const { return m_unPort; }
+        inline uint16_t GetPort() const { return m_unPort; }
 
         std::string ToString() const;
         friend inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
@@ -96,14 +96,14 @@ class RoveCommAddress
 
     private:
         RoveCommIp m_sOctets;
-        RoveCommPort m_unPort;
+        uint16_t m_unPort;
 
     public:
         // pass to RoveCommServer::Fetch() signifying any address. This is not a valid address.
-        const static RoveCommAddress ANY;
+        const static RoveCommAddress ANY_ADDRESS;
 };
 
-using RoveCommSocket = int;
+// using RoveCommSocket = int;
 
 inline std::ostream& operator<<(std::ostream& out, const RoveCommAddress& address);
 inline bool operator==(const RoveCommAddress& address, const RoveCommAddress& other);

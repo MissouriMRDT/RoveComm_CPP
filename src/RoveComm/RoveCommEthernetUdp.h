@@ -40,7 +40,7 @@ class RoveCommEthernetUdp : public RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-12-21
          ******************************************************************************/
-        RoveCommEthernetUdp(RoveCommPort unPort) : RoveCommServer(unPort){};
+        RoveCommEthernetUdp(uint16_t unPort) : RoveCommServer(unPort){};
 
         bool Init() override;
         void Shutdown() override;
@@ -53,7 +53,7 @@ class RoveCommEthernetUdp : public RoveCommServer
         void Unsubscribe(const RoveCommAddress& address);
 
     private:
-        RoveCommSocket m_nSocket;
+        int m_nSocket;
         fd_set m_sReadSet;
         // these aren't meant to be read outside the class, so I'm being lazy and using the native struct type
         std::list<sockaddr_in> m_lSubscribers;

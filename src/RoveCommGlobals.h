@@ -20,6 +20,13 @@
 #define ROVECOMM_GLOBALS_H
 #include "RoveComm/RoveComm.h"
 
+/******************************************************************************
+ * @brief Global variables used when RoveComm is not in library mode
+ *
+ *
+ * @author OcelotEmpire (hobbz.pi@gmail.com)
+ * @date 2024-01-24
+ ******************************************************************************/
 namespace globals
 {
     extern RoveCommServerManager& RoveComm;

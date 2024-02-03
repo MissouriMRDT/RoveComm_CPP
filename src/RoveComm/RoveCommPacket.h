@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string>
 
-using RoveCommVersionId = uint8_t;
-using RoveCommDataId    = uint16_t;
-using RoveCommDataCount = uint16_t;
-using RoveCommDataType  = uint8_t;
+// using RoveCommVersionId = uint8_t;
+// using RoveCommDataId    = uint16_t;
+// using RoveCommDataCount = uint16_t;
+// using RoveCommDataType  = uint8_t;
 
 namespace rovecomm
 {
@@ -37,7 +37,7 @@ namespace rovecomm
      * @author OcelotEmpire (hobbz.pi@gmail.com)
      * @date 2024-01-15
      ******************************************************************************/
-    size_t DataTypeSize(RoveCommDataType ucDataType);
+    size_t DataTypeSize(uint8_t ucDataType);
 }    // namespace rovecomm
 
 /*
@@ -63,10 +63,10 @@ namespace rovecomm
  ******************************************************************************/
 struct RoveCommPacketHeader
 {
-        RoveCommVersionId ucVersionId;
-        RoveCommDataId usDataId;
-        RoveCommDataCount usDataCount;
-        RoveCommDataType ucDataType;
+        uint8_t ucVersionId;
+        uint16_t usDataId;
+        uint16_t usDataCount;
+        uint8_t ucDataType;
 };
 
 /******************************************************************************
@@ -95,14 +95,14 @@ class RoveCommPacket
     public:
         RoveCommPacket() : RoveCommPacket(rovecomm::System::NO_DATA_DATA_ID, 0, rovecomm::DataTypes::INT8_T, nullptr){};
 
-        RoveCommPacket(RoveCommDataId usDataId, RoveCommDataCount usDataCount, RoveCommDataType ucDataType, std::unique_ptr<char>&& pData) :
+        RoveCommPacket(uint16_t usDataId, uint16_t usDataCount, uint8_t ucDataType, std::unique_ptr<char>&& pData) :
             RoveCommPacket({rovecomm::ROVECOMM_VERSION, usDataId, usDataCount, ucDataType}, std::move(pData)){};
 
         RoveCommPacket(RoveCommPacketHeader sHeader, std::unique_ptr<char>&& pData) : m_sHeader(sHeader), m_pData(std::move(pData)){};
 
         // convenience constructors:
 
-        RoveCommPacket(RoveCommDataId usDataId) : RoveCommPacket(usDataId, 0, rovecomm::DataTypes::UINT8_T, std::unique_ptr<char>{}){};
+        RoveCommPacket(uint16_t usDataId) : RoveCommPacket(usDataId, 0, rovecomm::DataTypes::UINT8_T, std::unique_ptr<char>{}){};
 
         // example usage: RoveComm.SendTo(address, RoveCommPacket{rovecomm::AUTONOMY::REACHEDMARKER, 1})
         // template<typename T>
@@ -115,14 +115,13 @@ class RoveCommPacket
         //     for (int i = 0; i<)
         // };
 
-        
-        inline RoveCommVersionId GetVersionId() const { return m_sHeader.ucVersionId; }
+        inline uint8_t GetVersionId() const { return m_sHeader.ucVersionId; }
 
-        inline RoveCommDataId GetDataId() const { return m_sHeader.usDataId; }
+        inline uint16_t GetDataId() const { return m_sHeader.usDataId; }
 
-        inline RoveCommDataCount GetDataCount() const { return m_sHeader.usDataCount; }
+        inline uint16_t GetDataCount() const { return m_sHeader.usDataCount; }
 
-        inline RoveCommDataType GetDataType() const { return m_sHeader.ucDataType; }
+        inline uint8_t GetDataType() const { return m_sHeader.ucDataType; }
 
         /******************************************************************************
          * @brief Get the size of the packet's data array (not including the header)

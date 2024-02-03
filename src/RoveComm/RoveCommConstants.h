@@ -9,8 +9,8 @@
  * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved
  ******************************************************************************/
 
-#ifndef CONSTS_H
-#define CONSTS_H
+#ifndef ROVECOMM_CONSTS_H
+#define ROVECOMM_CONSTS_H
 
 namespace rovecomm
 {
@@ -20,10 +20,19 @@ namespace rovecomm
     const int ROVECOMM_VERSION                      = 3;
     const int ROVECOMM_ETHERNET_TCP_MAX_CONNECTIONS = 5;
 
+    /******************************************************************************
+     * @brief RoveComm System Information
+     *
+     * @author Missouri S&T - Mars Rover Design Team
+     * @date 2023-10-21
+     ******************************************************************************/
     namespace System
     {
-        // pass to RoveCommServer::Fetch() signifying any data id. This is not a valid data id.
-        const int ANY = 0;
+        // pass this value to functions listening for data id's to signal to listen for all data id's
+        // this variable is in the rovecomm::System namespace to be with other values like SUBSCRIBE_DATA_ID
+        // this variable is not in RoveCommManifest.h because this constant is not present in the manifests
+        // of other RoveComm implementations
+        const int ANY_DATA_ID = 0;
     }    // namespace System
 }    // namespace rovecomm
-#endif    // CONSTS_H
+#endif    // ROVECOMM_CONSTS_H
