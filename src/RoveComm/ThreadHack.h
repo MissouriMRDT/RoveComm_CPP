@@ -1,5 +1,5 @@
 /******************************************************************************
- * @brief includes AutonomyLogging if in library mode, else RoveCommLogging
+ * @brief includes AutonomyThread if in library mode, else a local copy
  *
  * @file LogHack.h
  * @author OcelotEmpire (hobbz.pi@gmail.com)
@@ -8,8 +8,8 @@
  * @copyright Copyright Mars Rover Design Team 2024 - All Rights Reserved
  ******************************************************************************/
 
-#ifndef LOG_HACK_H
-#define LOG_HACK_H
+#ifndef THREAD_HACK_H
+#define THREAD_HACK_H
 
 /******************************************************************************
  * @brief Since this project is setup as a library sometimes we need to access
@@ -26,13 +26,11 @@
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-08-28
  ******************************************************************************/
+
 #ifdef __ROVECOMM_LIBRARY_MODE__
-#include "../../../../../src/AutonomyConstants.h"
-#include "../../../../../src/AutonomyGlobals.h"
-#include "../../../../../src/AutonomyLogger.h"
+#include "../../../../../src/interfaces/AutonomyThread.hpp"
 #else
-#include "../RoveCommGlobals.h"
-#include "../RoveCommLogging.h"
+#include "../AutonomyThread.hpp"
 #endif
 
-#endif    // LOCK_HACK_H
+#endif    // THREAD_HACK_H

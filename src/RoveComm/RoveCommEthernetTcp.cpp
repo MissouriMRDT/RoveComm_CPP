@@ -35,7 +35,7 @@ bool RoveCommEthernetTcp::Init()
     // format: getaddrinfo(char* ip, char* port, addrinfo* settings, addrinfo** linked list of results)
     // if ip is NULL and AI_PASSIVE flag is set, then the host's ip will be used
     // result will actually be a linked list but for now we just get the first entry
-    int nStatus = getaddrinfo(NULL, std::to_string(m_unPort).c_str(), &hints, &result);
+    int nStatus = getaddrinfo(NULL, std::to_string(m_usPort).c_str(), &hints, &result);
     if (nStatus != 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(nStatus));
@@ -92,7 +92,7 @@ bool RoveCommEthernetTcp::Init()
     FD_ZERO(&m_sAcceptSet);
     FD_SET(m_nListeningSocket, &m_sAcceptSet);
 
-    LOG_INFO(logging::g_qSharedLogger, "Opened TCP server on port {}", m_unPort);
+    LOG_INFO(logging::g_qSharedLogger, "Opened TCP server on port {}", m_usPort);
     return true;
 }
 
@@ -108,7 +108,7 @@ void RoveCommEthernetTcp::Shutdown()
     FD_ZERO(&m_sReadSet);
     FD_ZERO(&m_sAcceptSet);
 
-    LOG_INFO(logging::g_qSharedLogger, "Closed TCP socket on port {}", m_unPort);
+    LOG_INFO(logging::g_qSharedLogger, "Closed TCP socket on port {}", m_usPort);
 }
 
 int RoveCommEthernetTcp::Write(const RoveCommPacket& packet)
@@ -129,7 +129,7 @@ int RoveCommEthernetTcp::Write(const RoveCommPacket& packet)
     return nSuccessful;
 }
 
-int RoveCommEthernetTcp::SendTo(const RoveCommPacket& packet, RoveCommAddress address)
+int RoveCommEthernetTcp::SendTo(const RoveCommPacket& packet, const RoveCommAddress& address)
 {
     // Establish a new connection if the destination has not yet been connected to yet
     if (!Connect(address))
@@ -258,7 +258,7 @@ bool RoveCommEthernetTcp::Connect(const RoveCommAddress& address)
     int nTcpSocketFd;
     hints.ai_family   = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-    int status        = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_unPort).c_str(), &hints, &result);
+    int status        = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_usPort).c_str(), &hints, &result);
     if (status != 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));

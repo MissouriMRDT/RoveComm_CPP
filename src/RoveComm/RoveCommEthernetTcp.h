@@ -47,7 +47,7 @@ class RoveCommEthernetTcp : public RoveCommServer
         void Shutdown() override;
 
         int Write(const RoveCommPacket& packet) override;
-        int SendTo(const RoveCommPacket& packet, RoveCommAddress address) override;
+        int SendTo(const RoveCommPacket& packet, const RoveCommAddress& address) override;
         std::vector<RoveCommPacket> Read() override;
 
         /******************************************************************************
@@ -61,6 +61,8 @@ class RoveCommEthernetTcp : public RoveCommServer
          * @date 2023-12-21
          ******************************************************************************/
         bool Connect(const RoveCommAddress& address);
+
+        void SubscribeTo(const RoveCommAddress& address) override { Connect(address); }
 
         /******************************************************************************
          * @brief Close a TCP connection with another device (acting as client)

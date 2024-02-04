@@ -13,15 +13,17 @@
 
 #include <chrono>
 #include <deque>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <map>
 #include <mutex>
-#include <thread>
+#include <shared_mutex>
 #include <vector>
 
 #include "RoveCommHelpers.h"
 #include "RoveCommPacket.h"
+#include "ThreadHack.h"
 
 /******************************************************************************
  * @brief Base class that can be extended to add more protocols.
@@ -33,7 +35,7 @@
 class RoveCommServer
 {
     public:
-        RoveCommServer(uint16_t unPort) : m_unPort(unPort) {}
+        RoveCommServer(uint16_t unPort) : m_usPort(unPort) {}
 
         // RoveCommServer(RoveCommPort unPort);
 
@@ -80,7 +82,7 @@ class RoveCommServer
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2023-11-29
          ******************************************************************************/
-        virtual int SendTo(const RoveCommPacket& packet, RoveCommAddress address) = 0;
+        virtual int SendTo(const RoveCommPacket& packet, const RoveCommAddress& address) = 0;
         /******************************************************************************
          * @brief Read incoming packets and clear queue
          *
@@ -90,21 +92,17 @@ class RoveCommServer
          * @date 2023-11-29
          ******************************************************************************/
         virtual std::vector<RoveCommPacket> Read() = 0;
+        /******************************************************************************
+         * @brief Ensure that a copy of all packets sent from the given address are sent to this device.
+         *
+         * @param address Device from which to request packets
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-02-03
+         ******************************************************************************/
+        virtual void SubscribeTo(const RoveCommAddress& address) = 0;
 
-        // /******************************************************************************
-        //  * @brief Synchronously await the next RoveCommPacket with the given data_id.
-        //  * This packet is marked immediately as read and does not get queued for Read()
-        //  *
-        //  * @param unId the desired id
-        //  * @param address the desired address
-        //  * @return std::future<RoveCommPacket> the desired RoveCommPacket
-        //  *
-        //  * @author OcelotEmpire (hobbz.pi@gmail.com)
-        //  * @date 2023-12-01
-        //  ******************************************************************************/
-        // virtual std::future<RoveCommPacket> Fetch(RoveCommDataId unId = rovecomm::System::ANY, RoveCommAddress address = RoveCommAddress::ANY) const;
-
-        inline uint16_t GetPort() const { return m_unPort; }
+        inline uint16_t GetPort() const { return m_usPort; }
 
         friend class RoveCommServerManager;
 
@@ -118,7 +116,7 @@ class RoveCommServer
         virtual void OnRoveCommUpdate() {}
 
     protected:
-        const uint16_t m_unPort;
+        const uint16_t m_usPort;
 };
 
 /******************************************************************************
@@ -128,7 +126,7 @@ class RoveCommServer
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2023-11-14
  ******************************************************************************/
-class RoveCommServerManager
+class RoveCommServerManager : public AutonomyThread<void>
 {
     public:
         static RoveCommServerManager& GetInstance()
@@ -178,7 +176,7 @@ class RoveCommServerManager
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2024-01-24
          ******************************************************************************/
-        int Write(const RoveCommPacket& packet, RoveCommProtocol protocol = UDP);
+        void Write(const RoveCommPacket& packet, RoveCommProtocol protocol = UDP);
         /******************************************************************************
          * @brief Send a packet to a specific IP
          *
@@ -190,7 +188,7 @@ class RoveCommServerManager
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2024-01-24
          ******************************************************************************/
-        int SendTo(const RoveCommPacket& packet, RoveCommAddress address, RoveCommProtocol protocol = UDP);
+        void SendTo(const RoveCommPacket& packet, const RoveCommAddress& address, RoveCommProtocol protocol = UDP);
 
         /******************************************************************************
          * @brief Pop the oldest packet off the queue.
@@ -205,6 +203,16 @@ class RoveCommServerManager
         std::optional<const RoveCommPacket> NextPacket();
 
         // static inline std::deque<RoveCommPacket>& GetPacketQueue() { return m_dqPacketQueue; }
+
+        /******************************************************************************
+         * @brief Ensure that a copy of all packets sent from the given address are sent to this device.
+         *
+         * @param address Device from which to request packets
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-02-03
+         ******************************************************************************/
+        void SubscribeTo(const RoveCommAddress& address, RoveCommProtocol protocol = UDP);
 
         /******************************************************************************
          * @brief Wait for RoveCommPacket with specified data id and/or address
@@ -244,7 +252,7 @@ class RoveCommServerManager
          * @author OcelotEmpire (hobbz.pi@gmail.com)
          * @date 2024-01-20
          ******************************************************************************/
-        void SetCallback(uint16_t unId, std::function<void(RoveCommPacket)> fCallback, bool bRemoveFromQueue = true);
+        void SetCallback(uint16_t unId, std::function<void(const RoveCommPacket&)> fCallback, bool bRemoveFromQueue = true);
         /******************************************************************************
          * @brief Remove a callback function
          *
@@ -256,14 +264,10 @@ class RoveCommServerManager
         void ClearCallback(uint16_t unId);
 
     private:
-        void _read_all_to_queue();
-        void _loop_func();
-
-    private:
         struct RoveCommCallback
         {
-                std::function<void(RoveCommPacket)> fInvoke;    // function to invoke
-                bool bRemoveFromQueue;                          // whether to remove from packet queue after invocation
+                std::function<void(const RoveCommPacket&)> fInvoke;    // function to invoke
+                bool bRemoveFromQueue;                                 // whether to remove from packet queue after invocation
         };
 
         // struct RoveCommFetchRequest
@@ -276,14 +280,25 @@ class RoveCommServerManager
 
         // only one server per protocol type for now
         std::map<RoveCommProtocol, RoveCommServer*> m_mServers;
-        // only one callback per dataId
-        std::map<uint16_t, RoveCommCallback> m_mCallbacks;
-        std::deque<RoveCommPacket> m_dqPacketQueue;
+
+        std::map<uint16_t, RoveCommCallback> m_mCallbacks;            // data_id -> callback
+        std::deque<std::function<void()>> m_dqCallbackInvokeQueue;    // data_id's to process
+        static const int s_nMaxCallbackThreads = 4;                   // number of threads for PooledLinearCode()
+        std::deque<RoveCommPacket> m_dqPacketQueue;                   // packets
+        std::deque<std::function<void()>> m_dqCommandQueue;           // write, sendto, subscribeto
         // std::deque<RoveCommFetchRequest> m_dqRequestQueue;
 
-        bool m_bStopThread = false;
-        std::thread m_thNetworkThread;
-        std::mutex m_muQueueMutex;
+        std::mutex m_muServerStateMutex;    // TODO: make it so each server has its own lock
+        std::mutex m_muPacketQueueMutex;
+        std::mutex m_muCommandQueueMutex;
+        std::shared_mutex m_muCallbackListMutex;
+        std::mutex m_muCallbackInvokeMutex;
+
+        void ThreadedContinuousCode() override;
+        void PooledLinearCode() override;
+        void _write(const RoveCommPacket& packet, RoveCommProtocol protocol);
+        void _send_to(const RoveCommPacket& packet, const RoveCommAddress& address, RoveCommProtocol protocol);
+        void _subscribe_to(const RoveCommAddress& address, RoveCommProtocol protocol);
 };
 
 #endif
