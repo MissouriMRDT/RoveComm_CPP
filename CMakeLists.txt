@@ -106,19 +106,24 @@ endif()
 if(PROJECT_IS_TOP_LEVEL)
     ## Find all main source files
     file(GLOB Main_SRC  CONFIGURE_DEPENDS  "src/*.cpp")
+    file(GLOB Temp_SRC  CONFIGURE_DEPENDS  "temp/*.cpp")
     
     ## Create Executable
     add_executable(${PROJECT_NAME}_App ${Main_SRC})
+    add_executable(${PROJECT_NAME}_Temp ${Temp_SRC})
 
     ## Set Compile Options for Autonomy Software.
     if(MSVC) # True when compiler is Microsoft Visual C++/simulation of Visual C++ CL.
         target_compile_options(${PROJECT_NAME}_App PRIVATE /W4 /WX)
+        target_compile_options(${PROJECT_NAME}_Temp PRIVATE /W4 /WX)
     else()
         target_compile_options(${PROJECT_NAME}_App PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(${PROJECT_NAME}_Temp PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     ## Attach libraries to Executable
     target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill RoveComm_CPP)
+    target_link_libraries(${PROJECT_NAME}_Temp PRIVATE quill::quill RoveComm_CPP)
 
     ## Find all test source files
     file(GLOB UnitTests_SRC             CONFIGURE_DEPENDS  "tests/Unit/**/*.cc")
