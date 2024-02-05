@@ -22,46 +22,28 @@
 
 bool RoveCommEthernetUdp::Init()
 {
-    struct addrinfo hints, *result;
-    std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
-    hints.ai_family   = AF_INET;              // IPv4
-    hints.ai_socktype = SOCK_DGRAM;           // use UDP
-    hints.ai_protocol = IPPROTO_UDP;          // idk i found this somewhere
-    hints.ai_flags    = AI_PASSIVE;           // fill in  host IP automatically
+    sockaddr_in sAddress = {
+        .sin_family = AF_INET,            // IPv4
+        .sin_port   = htons(m_usPort),    // port
+        .sin_addr   = {INADDR_ANY}        // use local IP
+        // char sin_zero[8] is initialized to 0 for us (padding bytes)
+    };
 
-    // super magic function that lets us avoid packing a sockaddr_in struct manually
-    // and lets us avoid calling gethostbyname(gethostname())
-    // it also makes it easier to add IPv6 if we ever do which is unlikely
-    // format: getaddrinfo(char* ip, char* port, addrinfo* settings, addrinfo** linked list of results)
-    // if ip is NULL and AI_PASSIVE flag is set, then the host's ip will be used
-    // result will actually be a linked list but for now we just get the first entry
-    int status = getaddrinfo(NULL, std::to_string(m_usPort).c_str(), &hints, &result);
-    if (status != 0)
+    // open socket
+    int m_nSocket = socket(PF_INET,       // AF_INET, but with a PF for historical reasons
+                           SOCK_DGRAM,    // UDP
+                           0              // choose protocol automatically
+    );
+    if (m_nSocket == -1)
     {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to create UDP socket!");
         return false;
     }
-
-    addrinfo* p = result;
-    for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)    // getaddrinfo() returns a linked list of possible addresses
+    // bind the socket to the host ip and port
+    if (bind(m_nSocket, (sockaddr*) &sAddress, sizeof(sAddress)) == -1)
     {
-        m_nSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-        if (m_nSocket == -1)
-        {
-            continue;
-        }
-        // bind the socket to the host ip and port
-        if (bind(m_nSocket, result->ai_addr, result->ai_addrlen) == -1)
-        {
-            close(m_nSocket);
-            continue;
-        }
-        break;
-    }
-    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
-    if (p == NULL)
-    {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to open UDP socket!");
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to bind UDP socket!");
+        close(m_nSocket);
         return false;
     }
 
@@ -107,6 +89,11 @@ int RoveCommEthernetUdp::Write(const RoveCommPacket& packet)
             LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
             continue;
         }
+        else if (nSentBytes < packet.CalcSize())
+        {
+            LOG_ERROR(logging::g_qSharedLogger, "A message only sent partially!");
+            continue;
+        }
         nSuccessful++;
     }
     return nSuccessful;
@@ -116,25 +103,30 @@ int RoveCommEthernetUdp::SendTo(const RoveCommPacket& packet, const RoveCommAddr
 {
     auto [pData, siSize] = RoveCommPacket::Pack(packet);
 
-    struct addrinfo hints, *result;
-    std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
-    hints.ai_family   = AF_INET;              // IPv4
-    hints.ai_socktype = SOCK_DGRAM;           // use UDP
-                                              // do not specify AI_PASSIVE when using sendto()
-    hints.ai_protocol = IPPROTO_UDP;          // idk i found this somewhere
+    // pack the octets in address into a 32 bit integer
+    long lPackIp;
+    char* pPackIp  = reinterpret_cast<char*>(&lPackIp);
+    RoveCommIp sIp = address.GetIp();
+    pPackIp[0]     = sIp.firstOctet;
+    pPackIp[1]     = sIp.secondOctet;
+    pPackIp[2]     = sIp.thirdOctet;
+    pPackIp[3]     = sIp.fourthOctet;
+    // info for sendto
+    sockaddr_in sAddress = {
+        .sin_family = AF_INET,            // IPv4
+        .sin_port   = htons(m_usPort),    // port
+        .sin_addr   = {lPackIp}           // use local IP
+        // char sin_zero[8] is initialized to 0 for us (padding bytes)
+    };
 
-    int nStatus       = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_usPort).c_str(), &hints, &result);
-    if (nStatus != 0)
-    {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(nStatus));
-        return 0;
-    }
-    // I'll just be lazy so I won't do the for loop shenanigans and use the first value
-    int nSentBytes = sendto(m_nSocket, pData.get(), siSize, 0, result->ai_addr, result->ai_addrlen);
-    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
+    int nSentBytes = sendto(m_nSocket, pData.get(), siSize, 0, (sockaddr*) &sAddress, sizeof(sAddress));
     if (nSentBytes <= 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
+    }
+    else if (nSentBytes < packet.CalcSize())
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "A message only sent partially!");
     }
     return nSentBytes;
 }
@@ -155,9 +147,10 @@ std::vector<RoveCommPacket> RoveCommEthernetUdp::Read()
     // no fancy buffering here because UDP comes in discrete packets, not streams.
     // UDP is also physically constrained in how many bytes it can send in one go.
     // stack allocation is quick so this is fine hopefully
-    char pBuf[rovecomm::ROVECOMM_PACKET_MAX_DATA_COUNT];
+    char pBuf[rovecomm::ROVECOMM_PACKET_MAX_BYTES];
     sockaddr_in sFrom;
     socklen_t sFromLen;
+    // reads only one packet at a time, unline TCP recv()
     int nReceived = recvfrom(m_nSocket, pBuf, sizeof(pBuf), 0, (sockaddr*) &sFrom, &sFromLen);
     if (nReceived <= 0)
     {
@@ -208,5 +201,5 @@ void RoveCommEthernetUdp::Subscribe(const RoveCommAddress& address)
 
 void RoveCommEthernetUdp::Unsubscribe(const RoveCommAddress& address)
 {
-    SendTo(RoveCommPacket(rovecomm::System::SUBSCRIBE_DATA_ID), address);
+    SendTo(RoveCommPacket(rovecomm::System::UNSUBSCRIBE_DATA_ID), address);
 }

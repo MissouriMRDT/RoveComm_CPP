@@ -22,57 +22,40 @@
 
 bool RoveCommEthernetTcp::Init()
 {
-    struct addrinfo hints, *result;
-    std::memset(&hints, 0, sizeof(hints));    // don't use {0} because it does not set padding bytes
-    hints.ai_family   = AF_INET;              // IPv4
-    hints.ai_socktype = SOCK_STREAM;          // use TCP
-    hints.ai_protocol = IPPROTO_TCP;          // idk i found this somewhere
-    hints.ai_flags    = AI_PASSIVE;           // fill in  host IP automatically
+    sockaddr_in sAddress = {
+        .sin_family = AF_INET,            // IPv4
+        .sin_port   = htons(m_usPort),    // port
+        .sin_addr   = {INADDR_ANY}        // use local IP
+        // char sin_zero[8] is initialized to 0 for us (padding bytes)
+    };
 
-    // super magic function that lets us avoid packing a sockaddr_in struct manually
-    // and lets us avoid calling gethostbyname(gethostname())
-    // it also makes it easier to add IPv6 if we ever do which is unlikely
-    // format: getaddrinfo(char* ip, char* port, addrinfo* settings, addrinfo** linked list of results)
-    // if ip is NULL and AI_PASSIVE flag is set, then the host's ip will be used
-    // result will actually be a linked list but for now we just get the first entry
-    int nStatus = getaddrinfo(NULL, std::to_string(m_usPort).c_str(), &hints, &result);
-    if (nStatus != 0)
+    // open socket
+    m_nListeningSocket = socket(PF_INET,        // AF_INET, but with a PF for historical reasons
+                                SOCK_STREAM,    // TCP
+                                0               // choose protocol automatically
+    );
+    if (m_nListeningSocket == -1)
     {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(nStatus));
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to create TCP socket!");
         return false;
     }
-
-    addrinfo* p = result;
-    for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)    // getaddrinfo() returns a linked list of possible addresses
+    // bind the socket to the host ip and port
+    if (bind(m_nListeningSocket, (sockaddr*) &sAddress, sizeof(sAddress)) == -1)
     {
-        if (m_nListeningSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
-        {
-            continue;
-        }
-        // bind the socket to the host ip and port
-        if (bind(m_nListeningSocket, result->ai_addr, result->ai_addrlen) == -1)
-        {
-            close(m_nListeningSocket);
-            continue;
-        }
-        // Accept a backlog of 5 connections, before we start discarding them
-        // Why 5? No idea but that's what the Python limit is so best leave it be.
-        // According to an ancient webpage, most systems cap this number at 20, so 10 should be safe, but I digress.
-        if (listen(m_nListeningSocket, rovecomm::ROVECOMM_ETHERNET_TCP_MAX_CONNECTIONS) == -1)
-        {
-            close(m_nListeningSocket);
-            continue;
-        }
-        break;
-        // bind/listen failed for all sockets
-    }
-    freeaddrinfo(result);    // *result was allocated by getaddrinfo()
-    if (p == NULL)
-    {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to open TCP socket!");
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to bind TCP socket!");
+        close(m_nListeningSocket);
         return false;
     }
-
+    // Accept a backlog of 5 connections, before we start discarding them
+    // Why 5? No idea but that's what the Python limit is so best leave it be.
+    // IIRC in embedded rovecomm it is set to 8.
+    // According to an ancient webpage, most systems cap this number at 20, so 10 should be safe, but I digress.
+    if (listen(m_nListeningSocket, rovecomm::ROVECOMM_ETHERNET_TCP_MAX_CONNECTIONS) == -1)
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to listen on TCP socket!");
+        close(m_nListeningSocket);
+        return false;
+    }
     // not sure what nOptVal actually does?
     int nOptVal = 1;
     // Allows the socket address to be reused after being closed
@@ -118,10 +101,15 @@ int RoveCommEthernetTcp::Write(const RoveCommPacket& packet)
     int nSuccessful = 0;
     for (const auto& [sAddress, nSocket] : m_mIncomingSockets)
     {
-        int nSentBytes = send(nSocket, pData.get(), siSize, 0);    // TODO: write helper function
+        int nSentBytes = send(nSocket, pData.get(), siSize, 0);
         if (nSentBytes <= 0)
         {
             LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
+            continue;
+        }
+        else if (nSentBytes < packet.CalcSize())
+        {
+            LOG_ERROR(logging::g_qSharedLogger, "A message only sent partially!");
             continue;
         }
         nSuccessful++;
@@ -141,6 +129,10 @@ int RoveCommEthernetTcp::SendTo(const RoveCommPacket& packet, const RoveCommAddr
     if (nSentBytes <= 0)
     {
         LOG_ERROR(logging::g_qSharedLogger, "A message failed to send!");
+    }
+    else if (nSentBytes < packet.CalcSize())
+    {
+        LOG_ERROR(logging::g_qSharedLogger, "A message only sent partially!");
     }
     return nSentBytes;
 }
@@ -248,42 +240,43 @@ std::vector<RoveCommPacket> RoveCommEthernetTcp::Read()
 
 bool RoveCommEthernetTcp::Connect(const RoveCommAddress& address)
 {
-    if (m_mOpenSockets.contains(address))
+    if (m_mOpenSockets.contains(address))    // check if socket already open on this address
     {
-        // std::cout << "Host tried to connect to address " << address << ", but already had an open connection." << std::endl;
         return true;
     }
-    struct addrinfo hints, *result;
-    std::memset(&hints, 0, sizeof(hints));
-    int nTcpSocketFd;
-    hints.ai_family   = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    int status        = getaddrinfo(address.GetIp().ToString().c_str(), std::to_string(m_usPort).c_str(), &hints, &result);
-    if (status != 0)
+    // pack the octets in address into a 32 bit integer
+    long lPackIp;
+    char* pPackIp  = reinterpret_cast<char*>(&lPackIp);
+    RoveCommIp sIp = address.GetIp();
+    pPackIp[0]     = sIp.firstOctet;
+    pPackIp[1]     = sIp.secondOctet;
+    pPackIp[2]     = sIp.thirdOctet;
+    pPackIp[3]     = sIp.fourthOctet;
+    // connection info
+    sockaddr_in sAddress = {
+        .sin_family = AF_INET,            // IPv4
+        .sin_port   = htons(m_usPort),    // port
+        .sin_addr   = {lPackIp}           // ip address
+        // char sin_zero[8] is initialized to 0 for us (padding bytes)
+    };
+
+    // open socket
+    int nTcpSocketFd = socket(PF_INET,        // AF_INET, but with a PF for historical reasons
+                              SOCK_STREAM,    // TCP
+                              0               // choose protocol automatically
+    );
+    if (m_nListeningSocket == -1)
     {
-        LOG_ERROR(logging::g_qSharedLogger, "Failed to find IP! Error: {}", gai_strerror(status));
+        LOG_ERROR(logging::g_qSharedLogger, "Failed to create TCP socket!");
         return false;
     }
-    addrinfo* p = result;
-    for (p; p != NULL && p->ai_family == AF_INET; p = p->ai_next)
-    {
-        if (nTcpSocketFd = socket(result->ai_family, result->ai_socktype, result->ai_protocol) == -1)
-        {
-            continue;
-        }
-        if (connect(nTcpSocketFd, result->ai_addr, result->ai_addrlen) == -1)
-        {
-            close(nTcpSocketFd);
-            continue;
-        }
-        break;
-    }
-    freeaddrinfo(result);    // allocated by getaddrinfo()
-    if (p == NULL)
+    if (connect(nTcpSocketFd, (sockaddr*) &sAddress, sizeof(sAddress)) == -1)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to connect to address {}!", address.ToString());
+        close(nTcpSocketFd);
         return false;
     }
+
     _register_socket(address, nTcpSocketFd, false);
     LOG_INFO(logging::g_qSharedLogger, "Successfully connected to: {}.", address.ToString());
     return true;
@@ -314,7 +307,7 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
     if (!FD_ISSET(m_nListeningSocket, &sAcceptSetCopy))
         return;
     // accept a connection request from another device, if one exists
-    int nIncomingConnection = accept(m_nListeningSocket, (struct sockaddr*) &sIncomingAddress, &sAddressSize);
+    int nIncomingConnection = accept(m_nListeningSocket, (sockaddr*) &sIncomingAddress, &sAddressSize);
     if (nIncomingConnection == -1)
     {
         LOG_ERROR(logging::g_qSharedLogger, "Failed to accept connection!");
@@ -326,9 +319,6 @@ void RoveCommEthernetTcp::AcceptIncomingConnections()
         close(nIncomingConnection);
         return;
     }
-
-    // The following code is IPv4-specific. If you are a future developer switching to IPv6, use sockaddr_storage instead of sockaddr_in
-
     // Read back the address for storage in m_mIncomingSockets
     uint16_t unIncomingPort = ntohs(sIncomingAddress.sin_port);                              // convert to host byte order
     char* nReadIp           = reinterpret_cast<char*>(&sIncomingAddress.sin_addr.s_addr);    // network byte order (1.2.3.4)

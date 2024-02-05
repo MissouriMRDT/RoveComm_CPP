@@ -15,7 +15,7 @@
 namespace rovecomm
 {
     const int ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS = 10;
-    const int ROVECOMM_PACKET_MAX_DATA_COUNT        = 65535;    // this should be a smaller number
+    const int ROVECOMM_PACKET_MAX_BYTES             = 65535;    // this should be 65507 bytes because UDP and IPv4 add their own headers
     const int ROVECOMM_PACKET_HEADER_SIZE           = 6;
     const int ROVECOMM_VERSION                      = 3;
     const int ROVECOMM_ETHERNET_TCP_MAX_CONNECTIONS = 5;
