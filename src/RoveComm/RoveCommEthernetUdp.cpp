@@ -113,9 +113,9 @@ int RoveCommEthernetUdp::SendTo(const RoveCommPacket& packet, const RoveCommAddr
     pPackIp[3]     = sIp.fourthOctet;
     // info for sendto
     sockaddr_in sAddress = {
-        .sin_family = AF_INET,            // IPv4
-        .sin_port   = htons(m_usPort),    // port
-        .sin_addr   = {lPackIp}           // use local IP
+        .sin_family = AF_INET,                 // IPv4
+        .sin_port   = htons(m_usPort),         // port
+        .sin_addr   = {(in_addr_t) lPackIp}    // use local IP
         // char sin_zero[8] is initialized to 0 for us (padding bytes)
     };
 

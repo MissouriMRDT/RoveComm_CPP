@@ -60,6 +60,7 @@ namespace rovecomm
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2023-10-21
      ******************************************************************************/
+    // template<typename T, typename... Args>
     struct ManifestEntry
     {
         public:

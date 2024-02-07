@@ -40,12 +40,30 @@ void RoveCommServerManager::Shutdown()
 
 void RoveCommServerManager::ThreadedContinuousCode()    // AutonomyThread
 {
+    // allow servers to run some custom function each cycle
     for (auto& [protocol, server] : m_mServers)
     {
         std::unique_lock lkServerState(m_muServerStateMutex);
         server->OnRoveCommUpdate();
         lkServerState.unlock();
     }
+    // invoke all user requests in the command queue
+    for (;;)
+    {
+        std::unique_lock lkCommandQueue(m_muCommandQueueMutex);
+        if (!m_dqCommandQueue.empty())
+        {
+            auto func = m_dqCommandQueue.front();
+            m_dqCommandQueue.pop_front();
+            lkCommandQueue.unlock();
+            func();    // invoke request
+        }
+        else
+        {
+            break;    // there were no requests to process
+        }
+    }
+
     // read all incoming packets to queue
     int nCallbackCount = 0;
     for (auto& [serverProtocol, server] : m_mServers)
@@ -72,6 +90,7 @@ void RoveCommServerManager::ThreadedContinuousCode()    // AutonomyThread
             m_dqPacketQueue.push_back(packet);
         }
     }
+    // invoke all callbacks in a thread pool in Magic Thread Land
     this->RunDetachedPool(nCallbackCount, s_nMaxCallbackThreads);    // AutonomyThread
 }
 

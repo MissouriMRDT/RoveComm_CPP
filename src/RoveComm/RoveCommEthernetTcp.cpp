@@ -254,9 +254,9 @@ bool RoveCommEthernetTcp::Connect(const RoveCommAddress& address)
     pPackIp[3]     = sIp.fourthOctet;
     // connection info
     sockaddr_in sAddress = {
-        .sin_family = AF_INET,            // IPv4
-        .sin_port   = htons(m_usPort),    // port
-        .sin_addr   = {lPackIp}           // ip address
+        .sin_family = AF_INET,                 // IPv4
+        .sin_port   = htons(m_usPort),         // port
+        .sin_addr   = {(in_addr_t) lPackIp}    // ip address
         // char sin_zero[8] is initialized to 0 for us (padding bytes)
     };
 

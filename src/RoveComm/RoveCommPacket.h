@@ -199,6 +199,21 @@ class RoveCommPacket
          ******************************************************************************/
         const char* GetRawData() const { return m_pData.get(); }
 
+        /******************************************************************************
+         * @brief utility method for checking if a packet's header matches a rovecomm::ManifestEntry.
+         * Example: if (packet.MatchesManifestEntry(rovecomm::AUTONOMY::REACHEDMARKER)) { ... }
+         *
+         * @param entry - the rovecomm::ManifestEntry to compare to
+         * @return bool - whether the packet is safe to read in the format described by entry
+         *
+         * @author OcelotEmpire (hobbz.pi@gmail.com)
+         * @date 2024-02-05
+         ******************************************************************************/
+        bool MatchesManifestEntry(const rovecomm::ManifestEntry& entry)
+        {
+            return m_sHeader.usDataId == entry.DATA_ID && m_sHeader.usDataCount == entry.DATA_COUNT && m_sHeader.ucDataType == entry.DATA_TYPE;
+        }
+
     private:
         const RoveCommPacketHeader m_sHeader;
 
