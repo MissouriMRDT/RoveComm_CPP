@@ -9,7 +9,7 @@
  ******************************************************************************/
 
 #include "RoveCommEthernetTcp.h"
-#include "LogHack.h"
+#include "LibraryImports.h"
 
 #include <cstring>
 #include <iostream>

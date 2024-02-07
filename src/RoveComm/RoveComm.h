@@ -1,5 +1,5 @@
 /******************************************************************************
- * @brief Main Header for RoveComm C++. Look at RoveCommServer.h for the main singleton.
+ * @brief Main Header for RoveComm C++.
  *
  * @file RoveComm.h
  * @author Eli Byrd (edbgkk@mst.edu)

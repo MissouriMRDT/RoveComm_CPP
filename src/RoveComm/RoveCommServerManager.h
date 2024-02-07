@@ -21,10 +21,10 @@
 #include <shared_mutex>
 #include <vector>
 
+#include "LibraryImports.h"
 #include "RoveCommHelpers.h"
 #include "RoveCommPacket.h"
 #include "RoveCommServer.h"
-#include "ThreadHack.h"
 
 /******************************************************************************
  * @brief Handles lifetimes of RoveCommServer's and defer work to them in a thread-safe manner.

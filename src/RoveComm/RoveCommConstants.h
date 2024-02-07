@@ -2,7 +2,7 @@
  * @brief Defines Global Constants within RoveComm C++ that aren't already defined
  * in RoveCommManifest.h
  *
- * @file Consts.h
+ * @file RoveCommConstants.h
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-07-29
  *

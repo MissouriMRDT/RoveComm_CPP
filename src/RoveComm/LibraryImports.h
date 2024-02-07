@@ -1,15 +1,16 @@
 /******************************************************************************
- * @brief includes AutonomyLogging if in library mode, else RoveCommLogging
+ * @brief includes AutonomyLogging and AutonomyThread if in library mode,
+ * otherwise includes local versions found in ../
  *
- * @file LogHack.h
+ * @file LibraryImports.h
  * @author OcelotEmpire (hobbz.pi@gmail.com)
  * @date 2024-01-20
  *
  * @copyright Copyright Mars Rover Design Team 2024 - All Rights Reserved
  ******************************************************************************/
 
-#ifndef LOG_HACK_H
-#define LOG_HACK_H
+#ifndef LIBRARY_IMPORT_H
+#define LIBRARY_IMPORT_H
 
 /******************************************************************************
  * @brief Since this project is setup as a library sometimes we need to access
@@ -30,9 +31,11 @@
 #include "../../../../../src/AutonomyConstants.h"
 #include "../../../../../src/AutonomyGlobals.h"
 #include "../../../../../src/AutonomyLogger.h"
+#include "../../../../../src/interfaces/AutonomyThread.hpp"
 #else
-#include "../RoveCommGlobals.h"
+#include "../AutonomyThread.hpp"
+// #include "../RoveCommGlobals.h" // results in a circular include error
 #include "../RoveCommLogging.h"
 #endif
 
-#endif    // LOCK_HACK_H
+#endif    // LIBRARY_IMPORT_H
