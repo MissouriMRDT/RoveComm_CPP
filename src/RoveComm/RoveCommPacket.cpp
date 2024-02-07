@@ -1,5 +1,5 @@
 /******************************************************************************
- * @brief
+ * @brief RoveComm Packet Implementation.
  *
  * @file RoveCommPacket.cpp
  * @author Eli Byrd (edbgkk@mst.edu)
@@ -11,80 +11,101 @@
 #include "RoveCommPacket.h"
 #include <iostream>
 
-// Default Constructor
-RoveCommPacket::RoveCommPacket()
+/******************************************************************************
+ * @brief The RoveComm namespace contains all of the functionality for the
+ *        RoveComm library. This includes the packet structure and the
+ *        functions for packing and unpacking data.
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2024-02-07
+ ******************************************************************************/
+namespace rovecomm
 {
-    data_id    = 0;
-    data_count = 0;
-    data_type  = manifest::DataTypes::UINT8_T;
-}
-
-// Constructor for creating a packet
-RoveCommPacket::RoveCommPacket(uint16_t id, uint16_t count, manifest::DataTypes type, const std::vector<uint8_t>& payload) :
-    data_id(id), data_count(count), data_type(type), data(payload)
-{}
-
-// Display packet information
-void RoveCommPacket::displayPacket() const
-{
-    std::cout << "Data ID: " << data_id << std::endl;
-    std::cout << "Data Count: " << data_count << std::endl;
-    std::cout << "Data Type: " << static_cast<uint8_t>(data_type) << std::endl;
-    std::cout << "Data Content: ";
-    for (const auto& byte : data)
+    /******************************************************************************
+     * @brief Create a RoveCommData structure from a RoveCommPacket structure.
+     *
+     * @tparam T - The type of data that is to be sent or received. This can be
+     *             any of the types defined in the manifest.
+     * @param stPacket - The packet to be packed into a RoveCommData structure.
+     * @return RoveCommData - The packed data.
+     *
+     * @note The accepted versions of the Pack Packet function are templated and
+     *       are explicitly instantiated at the end of this file.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
+    template<typename T>
+    RoveCommData PackPacket(const RoveCommPacket<T>& stPacket)
     {
-        std::cout << static_cast<int>(byte) << " ";
+        RoveCommData stData;
+
+        stData.unBytes[0] = ROVECOMM_VERSION;
+        stData.unBytes[1] = stPacket.unDataId >> 8;
+        stData.unBytes[2] = stPacket.unDataId;
+        stData.unBytes[3] = stPacket.unDataCount >> 8;
+        stData.unBytes[4] = stPacket.unDataCount;
+        stData.unBytes[5] = static_cast<uint8_t>(stPacket.eDataType);
+
+        size_t siDataSize = sizeof(T) * stPacket.unDataCount;
+        memcpy(&stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE], stPacket.vData.data(), siDataSize);
+
+        return stData;
     }
-    std::cout << std::endl;
-}
 
-// Pack data into the packet
-template<typename T>
-RoveCommPacket RoveCommPacket::pack(const uint16_t data_id, const std::vector<T>& data)
-{
-    // Calculate the size of the payload
-    size_t payloadSize = data.size() * sizeof(T);
+    // Explicit instantiation of the template for supported types
+    template RoveCommData PackPacket<uint8_t>(const RoveCommPacket<uint8_t>& stPacket);
+    template RoveCommData PackPacket<uint16_t>(const RoveCommPacket<uint16_t>& stPacket);
+    template RoveCommData PackPacket<uint32_t>(const RoveCommPacket<uint32_t>& stPacket);
+    template RoveCommData PackPacket<int8_t>(const RoveCommPacket<int8_t>& stPacket);
+    template RoveCommData PackPacket<int16_t>(const RoveCommPacket<int16_t>& stPacket);
+    template RoveCommData PackPacket<int32_t>(const RoveCommPacket<int32_t>& stPacket);
+    template RoveCommData PackPacket<float>(const RoveCommPacket<float>& stPacket);
+    template RoveCommData PackPacket<double>(const RoveCommPacket<double>& stPacket);
+    template RoveCommData PackPacket<char>(const RoveCommPacket<char>& stPacket);
 
-    // Create a packet with the correct size
-    RoveCommPacket packet(data_id, static_cast<uint16_t>(data.size()), manifest::DataTypes::UINT8_T, std::vector<uint8_t>(payloadSize));
+    /******************************************************************************
+     * @brief Create a RoveCommPacket structure from a RoveCommData structure.
+     *
+     * @tparam T - The type of data that is to be sent or received. This can be
+     *             any of the types defined in the manifest.
+     * @param stData - The data to be unpacked into a RoveCommPacket structure.
+     * @return RoveCommPacket<T> - The unpacked packet.
+     *
+     * @note The accepted versions of the Unpack Data function are templated and
+     *       are explicitly instantiated at the end of this file.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
+    template<typename T>
+    RoveCommPacket<T> UnpackData(const RoveCommData& stData)
+    {
+        RoveCommPacket<T> stPacket;
 
-    // Copy the data into the packet's payload
-    std::memcpy(packet.data.data(), data.data(), payloadSize);
+        // Extract data from stData and fill stPacket
+        stPacket.unDataId    = (stData.unBytes[1] << 8) | stData.unBytes[2];
+        stPacket.unDataCount = (stData.unBytes[3] << 8) | stData.unBytes[4];
+        stPacket.eDataType   = static_cast<manifest::DataTypes>(stData.unBytes[5]);
 
-    return packet;
-}
+        // Calculate the size of the data payload
+        size_t siDataSize = sizeof(T) * stPacket.unDataCount;
 
-// Unpack data from the packet
-template<typename T>
-std::vector<T> RoveCommPacket::unpack() const
-{
-    // Calculate the size of the payload
-    size_t payloadSize = data.size();
+        // Copy the data payload from stData to stPacket's vData vector
+        stPacket.vData.resize(stPacket.unDataCount);
+        memcpy(stPacket.vData.data(), &stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE], siDataSize);
 
-    // Calculate the number of elements in the payload
-    size_t numElements = payloadSize / sizeof(T);
+        return stPacket;
+    }
 
-    // Create a vector to hold the unpacked data
-    std::vector<T> unpackedData(numElements);
-
-    // Copy the data from the packet's payload
-    std::memcpy(unpackedData.data(), data.data(), payloadSize);
-
-    return unpackedData;
-}
-
-// Explicit instantiation of the template for supported types
-template RoveCommPacket RoveCommPacket::pack(const uint16_t data_id, const std::vector<uint8_t>& data);
-template RoveCommPacket RoveCommPacket::pack(const uint16_t data_id, const std::vector<uint16_t>& data);
-template RoveCommPacket RoveCommPacket::pack(const uint16_t data_id, const std::vector<uint32_t>& data);
-template RoveCommPacket RoveCommPacket::pack(const uint16_t data_id, const std::vector<float>& data);
-template RoveCommPacket RoveCommPacket::pack(const uint16_t data_id, const std::vector<double>& data);
-template RoveCommPacket RoveCommPacket::pack(const uint16_t data_id, const std::vector<char>& data);
-
-// Explicit instantiation of the template for supported types
-template std::vector<uint8_t> RoveCommPacket::unpack<uint8_t>() const;
-template std::vector<uint16_t> RoveCommPacket::unpack<uint16_t>() const;
-template std::vector<uint32_t> RoveCommPacket::unpack<uint32_t>() const;
-template std::vector<float> RoveCommPacket::unpack<float>() const;
-template std::vector<double> RoveCommPacket::unpack<double>() const;
-template std::vector<char> RoveCommPacket::unpack<char>() const;
+    // Explicit instantiation of the template for supported types
+    template RoveCommPacket<uint8_t> UnpackData<uint8_t>(const RoveCommData& stData);
+    template RoveCommPacket<uint16_t> UnpackData<uint16_t>(const RoveCommData& stData);
+    template RoveCommPacket<uint32_t> UnpackData<uint32_t>(const RoveCommData& stData);
+    template RoveCommPacket<int8_t> UnpackData<int8_t>(const RoveCommData& stData);
+    template RoveCommPacket<int16_t> UnpackData<int16_t>(const RoveCommData& stData);
+    template RoveCommPacket<int32_t> UnpackData<int32_t>(const RoveCommData& stData);
+    template RoveCommPacket<float> UnpackData<float>(const RoveCommData& stData);
+    template RoveCommPacket<double> UnpackData<double>(const RoveCommData& stData);
+    template RoveCommPacket<char> UnpackData<char>(const RoveCommData& stData);
+}    // namespace rovecomm

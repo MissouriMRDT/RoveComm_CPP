@@ -1,15 +1,23 @@
+/******************************************************************************
+ * @brief Main program file. Sets up classes and runs main program functions.
+ *
+ * @file main.cpp
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2023-07-25
+ *
+ * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved
+ ******************************************************************************/
+
+// Only worry about compiling if we are not in 'Library-Only Mode'.
+#ifndef __ROVECOMM_LIBRARY_MODE__
+
 #include <fstream>
 #include <iostream>
-#include <mutex>
 #include <sstream>
 #include <string>
-#include <thread>
 
 #include "RoveComm/RoveComm.h"
 #include "RoveCommGlobals.h"
-
-// Global mutex for synchronization
-std::mutex gMutex;
 
 /******************************************************************************
  * @brief RoveComm C++ main function.
@@ -37,56 +45,31 @@ int main()
     // Initialize Loggers
     InitializeLoggers();
 
-    // Initialize RoveComm
-    RoveComm roveComm;
+    rovecomm::RoveCommTCP pRoveCommTCP;
 
-    // Initialize and set up the UDP socket
-    if (roveComm.initUDPSocket("127.0.0.1", 5000))
+    if (pRoveCommTCP.InitTCPSocket("127.0.0.1", 12000))
     {
-        std::cout << "UDP socket initialized successfully\n";
+        std::cout << "TCP Node Initialized." << std::endl;
+        pRoveCommTCP.Start();
 
-        // Add UDP callback function
-        roveComm.addUDPCallback(
-            [](const RoveCommPacket& packet, const sockaddr_in& clientAddr)
-            {
-                (void) clientAddr;    // Suppress "unused parameter" warning
-                std::cout << "Received UDP packet with Data ID: " << packet.data_id << std::endl;
-                // Add your processing logic here
-            },
-            1001);    // Change '1' to the desired condition
+        rovecomm::RoveCommPacket<uint16_t> pTestPacket;
+        pTestPacket.unDataId    = 11000;
+        pTestPacket.unDataCount = 1;
+        pTestPacket.eDataType   = manifest::DataTypes::UINT16_T;
+        pTestPacket.vData.push_back(1);
 
-        // Start a new thread for sending UDP packets
-        std::thread senderThread(
-            [&]()
-            {
-                while (true)
-                {
-                    {
-                        std::lock_guard<std::mutex> lock(gMutex);    // Lock the mutex
-                        // Perform any necessary setup or data preparation before sending
-                        roveComm.sendUDPPacket(RoveCommPacket(1001, 1, manifest::DataTypes::UINT8_T, {14}), "127.0.0.1", 5000);
-                    }
-                    std::this_thread::sleep_for(std::chrono::seconds(1));    // Adjust the sleep duration
-                }
-            });
+        // pRoveCommTCP.AddTCPCallback<uint16_t>([](const rovecomm::RoveCommPacket<uint8_t>& pPacket, int nSocket)
+        //                                      { std::cout << "Received Packet: " << pPacket.unDataId << std::endl; },
+        //                                      11000);
 
-        // Main thread: Receive UDP packets and invoke callbacks
-        while (true)
-        {
-            roveComm.receiveUDPPacketAndCallback();
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));    // Add a small delay to prevent busy-waiting
-        }
-
-        // Join the sender thread to the main thread
-        senderThread.join();
+        pRoveCommTCP.SendTCPPacket(0, pTestPacket);
     }
     else
     {
-        std::cerr << "Failed to initialize UDP socket\n";
-        return 1;
+        std::cout << "TCP Node Failed to Initialize." << std::endl;
     }
-
-    // Note: You may similarly set up the TCP socket and callbacks.
 
     return 0;
 }
+
+#endif    // __ROVECOMM_LIBRARY_MODE__

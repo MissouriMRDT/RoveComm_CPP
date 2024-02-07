@@ -18,30 +18,37 @@
 #include <cstring>
 #include <vector>
 
-class RoveCommPacket
+/******************************************************************************
+ * @brief The RoveComm namespace contains all of the functionality for the
+ *        RoveComm library. This includes the packet structure and the
+ *        functions for packing and unpacking data.
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2024-02-07
+ ******************************************************************************/
+namespace rovecomm
 {
-    public:
-        uint16_t data_id;
-        uint16_t data_count;
-        manifest::DataTypes data_type;
-        std::vector<uint8_t> data;
+    template<typename T>
+    struct RoveCommPacket
+    {
+        public:
+            uint16_t unDataId;
+            uint16_t unDataCount;
+            manifest::DataTypes eDataType;
+            std::vector<T> vData;
+    };
 
-        // Default Constructor
-        RoveCommPacket();
+    struct RoveCommData
+    {
+        public:
+            uint8_t unBytes[ROVECOMM_PACKET_HEADER_SIZE + sizeof(uint8_t) * ROVECOMM_PACKET_MAX_DATA_COUNT / 2];
+    };
 
-        // Constructor for creating a packet
-        RoveCommPacket(uint16_t id, uint16_t count, manifest::DataTypes type, const std::vector<uint8_t>& payload);
+    template<typename T>
+    RoveCommData PackPacket(const RoveCommPacket<T>& stPacket);
 
-        // Display packet information
-        void displayPacket() const;
-
-        // Pack data into the packet
-        template<typename T>
-        static RoveCommPacket pack(const uint16_t data_id, const std::vector<T>& data);
-
-        // Unpack data from the packet
-        template<typename T>
-        std::vector<T> unpack() const;
-};
+    template<typename T>
+    RoveCommPacket<T> UnpackData(const RoveCommData& stData);
+}    // namespace rovecomm
 
 #endif    // ROVECOMM_PACKET_H
