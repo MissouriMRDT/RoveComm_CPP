@@ -19,6 +19,7 @@
 #include <list>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <vector>
 
 /******************************************************************************
  * @brief Extends RoveCommServer to use the UDP protocol. UDP is a fast connectionless transport

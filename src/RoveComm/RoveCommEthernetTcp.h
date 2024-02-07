@@ -12,6 +12,7 @@
 #define ROVECOMM_ETHERNET_TCP_H
 
 #include "RoveCommConstants.h"
+#include "RoveCommHelpers.h"
 #include "RoveCommPacket.h"
 #include "RoveCommServer.h"
 

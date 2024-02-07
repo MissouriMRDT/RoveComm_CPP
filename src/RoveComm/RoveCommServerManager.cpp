@@ -8,10 +8,11 @@
  * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved
  ******************************************************************************/
 
-#include "RoveCommServer.h"
+#include "RoveCommServerManager.h"
 #include "LogHack.h"
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
+#include "RoveCommServer.h"
 
 bool RoveCommServerManager::Init()
 {
@@ -83,11 +84,11 @@ void RoveCommServerManager::ThreadedContinuousCode()    // AutonomyThread
                 std::unique_lock lkCallbackInvoke(m_muCallbackInvokeMutex);
                 m_dqCallbackInvokeQueue.emplace_back(std::bind(callback.fInvoke, std::ref(packet)));
                 lkCallbackInvoke.unlock();
-                if (callback.bRemoveFromQueue)
-                    continue;    // do not propogate packet to queue
+                // if (callback.bRemoveFromQueue)
+                //     continue;    // do not propogate packet to queue
             }
-            std::lock_guard lkPacket(m_muPacketQueueMutex);
-            m_dqPacketQueue.push_back(packet);
+            // std::lock_guard lkPacket(m_muPacketQueueMutex);
+            // m_dqPacketQueue.push_back(packet);
         }
     }
     // invoke all callbacks in a thread pool in Magic Thread Land
@@ -106,7 +107,7 @@ void RoveCommServerManager::PooledLinearCode()    // AutonomyThread
     }
 }
 
-bool RoveCommServerManager::OpenServerOnPort(uint16_t port, RoveCommProtocol protocol)
+bool RoveCommServerManager::OpenServerOnPort(uint16_t unPort, RoveCommProtocol protocol)
 {
     if (m_mServers.contains(protocol))
     {
@@ -117,7 +118,7 @@ bool RoveCommServerManager::OpenServerOnPort(uint16_t port, RoveCommProtocol pro
     {
         case TCP:
         {
-            RoveCommEthernetTcp* server = new RoveCommEthernetTcp(port);
+            RoveCommEthernetTcp* server = new RoveCommEthernetTcp(unPort);
             if (server->Init())
             {
                 m_mServers[protocol] = server;
@@ -127,7 +128,7 @@ bool RoveCommServerManager::OpenServerOnPort(uint16_t port, RoveCommProtocol pro
         }
         case UDP:
         {
-            RoveCommEthernetUdp* server = new RoveCommEthernetUdp(port);
+            RoveCommEthernetUdp* server = new RoveCommEthernetUdp(unPort);
             if (server->Init())
             {
                 m_mServers[protocol] = server;
@@ -185,20 +186,20 @@ void RoveCommServerManager::_send_to(const RoveCommPacket& packet, const RoveCom
     // return nSent;
 }
 
-std::optional<const RoveCommPacket> RoveCommServerManager::NextPacket()
-{
-    std::lock_guard lock(m_muPacketQueueMutex);
-    if (m_dqPacketQueue.empty())
-    {
-        return std::nullopt;
-    }
-    else
-    {
-        auto packet = m_dqPacketQueue.front();    // copy
-        m_dqPacketQueue.pop_front();              // remove
-        return std::optional<const RoveCommPacket>{packet};
-    }
-}
+// std::optional<const RoveCommPacket> RoveCommServerManager::NextPacket()
+// {
+//     std::lock_guard lock(m_muPacketQueueMutex);
+//     if (m_dqPacketQueue.empty())
+//     {
+//         return std::nullopt;
+//     }
+//     else
+//     {
+//         auto packet = m_dqPacketQueue.front();    // copy
+//         m_dqPacketQueue.pop_front();              // remove
+//         return std::optional<const RoveCommPacket>{packet};
+//     }
+// }
 
 void RoveCommServerManager::SubscribeTo(const RoveCommAddress& address, RoveCommProtocol protocol)
 {
@@ -238,10 +239,10 @@ void RoveCommServerManager::_subscribe_to(const RoveCommAddress& address, RoveCo
 //     return std::shared_future<RoveCommPacket>(request.pmPromise.get_future());
 // }
 
-void RoveCommServerManager::SetCallback(uint16_t unId, std::function<void(const RoveCommPacket&)> fCallback, bool bRemoveFromQueue)
+void RoveCommServerManager::SetCallback(uint16_t unId, std::function<void(const RoveCommPacket&)> fCallback /*, bool bRemoveFromQueue*/)
 {
     const std::unique_lock lock(m_muCallbackListMutex);
-    m_mCallbacks[unId] = {fCallback, bRemoveFromQueue};
+    // m_mCallbacks[unId] = {fCallback, bRemoveFromQueue};
 }
 
 void RoveCommServerManager::ClearCallback(uint16_t unId)

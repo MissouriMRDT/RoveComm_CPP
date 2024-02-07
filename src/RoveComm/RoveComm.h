@@ -14,10 +14,10 @@
 #include "RoveCommConstants.h"
 #include "RoveCommEthernetTcp.h"
 #include "RoveCommEthernetUdp.h"
+#include "RoveCommHelpers.h"
 #include "RoveCommManifest.h"
 #include "RoveCommPacket.h"
 #include "RoveCommServer.h"
-
-extern RoveCommServerManager RoveComm;
+#include "RoveCommServerManager.h"
 
 #endif    // ROVECOMM_H
