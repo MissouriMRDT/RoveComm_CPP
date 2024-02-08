@@ -16,10 +16,13 @@
 // Only worry about compiling if we are not in 'Library-Only Mode'.
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
+/// \cond
 #include <chrono>
 #include <ctime>
 #include <iostream>
 #include <quill/Quill.h>
+
+/// \endcond
 
 #ifndef ROVECOMM_LOGGER_H
 #define ROVECOMM_LOGGER_H

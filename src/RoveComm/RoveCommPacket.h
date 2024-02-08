@@ -14,9 +14,12 @@
 #include "./RoveCommConsts.h"
 #include "./RoveCommManifest.h"
 
+/// \cond
 #include <cstdint>
 #include <cstring>
 #include <vector>
+
+/// \endcond
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the

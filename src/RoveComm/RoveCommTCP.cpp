@@ -10,6 +10,8 @@
 
 #include "RoveCommTCP.h"
 #include "RoveCommPacket.h"
+
+/// \cond
 #include <arpa/inet.h>
 #include <cstring>
 #include <functional>
@@ -18,6 +20,16 @@
 #include <sys/socket.h>
 #include <thread>
 
+/// \endcond
+
+/******************************************************************************
+ * @brief The RoveComm namespace contains all of the functionality for the
+ *        RoveComm library. This includes the packet structure and the
+ *        functions for packing and unpacking data.
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2024-02-07
+ ******************************************************************************/
 namespace rovecomm
 {
     /******************************************************************************
@@ -37,32 +49,32 @@ namespace rovecomm
     bool RoveCommTCP::InitTCPSocket(const char* cIPAddress, int nPort)
     {
         // Create a TCP socket
-        nTCPSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (nTCPSocket == -1)
+        m_nTCPSocket = socket(AF_INET, SOCK_STREAM, 0);
+        if (m_nTCPSocket == -1)
         {
             perror("Failed to create TCP socket");
             return false;
         }
 
         // Configure the server address
-        memset(&saTCPServerAddr, 0, sizeof(saTCPServerAddr));
-        saTCPServerAddr.sin_family      = AF_INET;
-        saTCPServerAddr.sin_addr.s_addr = inet_addr(cIPAddress);
-        saTCPServerAddr.sin_port        = htons(nPort);
+        memset(&m_saTCPServerAddr, 0, sizeof(m_saTCPServerAddr));
+        m_saTCPServerAddr.sin_family      = AF_INET;
+        m_saTCPServerAddr.sin_addr.s_addr = inet_addr(cIPAddress);
+        m_saTCPServerAddr.sin_port        = htons(nPort);
 
         // Bind the socket to the server address
-        if (bind(nTCPSocket, (struct sockaddr*) &saTCPServerAddr, sizeof(saTCPServerAddr)) == -1)
+        if (bind(m_nTCPSocket, (struct sockaddr*) &m_saTCPServerAddr, sizeof(m_saTCPServerAddr)) == -1)
         {
             perror("Failed to bind TCP socket");
-            close(nTCPSocket);
+            close(m_nTCPSocket);
             return false;
         }
 
         // Listen for incoming connections
-        if (listen(nTCPSocket, 5) == -1)
+        if (listen(m_nTCPSocket, 5) == -1)
         {
             perror("Failed to listen on TCP socket");
-            close(nTCPSocket);
+            close(m_nTCPSocket);
             return false;
         }
 
@@ -302,11 +314,11 @@ namespace rovecomm
      * @tparam T - The data type of the RoveCommPacket. Must be one of the
      *             following: uint8_t, int8_t, uint16_t, int16_t, uint32_t,
      *             int32_t, float, double, or char.
-     * @param data - The received RoveCommData to process and invoke the
-     *               appropriate callback function.
-     * @param callbacks - The vector of TCP callbacks for the specified data type.
-     *                    The callback function will be invoked based on the data id
-     *                    of the received packet.
+     * @param stData - The received RoveCommData to process and invoke the
+     *                 appropriate callback function.
+     * @param vCallbacks - The vector of TCP callbacks for the specified data type.
+     *                     The callback function will be invoked based on the data id
+     *                     of the received packet.
      *
      * @note This method is not intended to be called directly. It is called by
      *       the ReceiveTCPPacketAndCallback method to process a received packet
@@ -353,35 +365,35 @@ namespace rovecomm
     {
         // Accept a client connection
         struct sockaddr_in saClientAddr;
-        socklen_t clientAddrLen = sizeof(saClientAddr);
-        int clientSocket        = accept(nTCPSocket, (struct sockaddr*) &saClientAddr, &clientAddrLen);
-        if (clientSocket == -1)
+        socklen_t sklClientAddrLen = sizeof(saClientAddr);
+        int nClientSocket          = accept(m_nTCPSocket, (struct sockaddr*) &saClientAddr, &sklClientAddrLen);
+        if (nClientSocket == -1)
         {
             perror("Failed to accept client connection");
             return;
         }
 
         // Receive data from the client
-        RoveCommData data;
-        ssize_t bytesReceived = recv(clientSocket, &data, sizeof(data), 0);
-        if (bytesReceived < 0)
+        RoveCommData stData;
+        ssize_t siBytesReceived = recv(nClientSocket, &stData, sizeof(stData), 0);
+        if (siBytesReceived < 0)
         {
             perror("Error receiving data from client");
-            close(clientSocket);
+            close(nClientSocket);
             return;
         }
-        else if (bytesReceived == 0)
+        else if (siBytesReceived == 0)
         {
             // Connection closed by client
-            close(clientSocket);
+            close(nClientSocket);
             return;
         }
 
         // Process the received packet and invoke the appropriate callback
-        if (bytesReceived == sizeof(RoveCommData))
+        if (siBytesReceived == sizeof(RoveCommData))
         {
             // Extract the data id from the received data
-            uint16_t unDataId = (static_cast<uint16_t>(data.unBytes[1]) << 8) | static_cast<uint16_t>(data.unBytes[2]);
+            uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
 
             // Determine the data type from the received data
             manifest::DataTypes eDataType = manifest::Helpers::getDataTypeFromId(unDataId);
@@ -389,20 +401,20 @@ namespace rovecomm
             // Convert RoveCommData to appropriate RoveCommPacket based on data type
             switch (eDataType)
             {
-                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(data, tcp::vUInt8Callbacks); break;
-                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(data, tcp::vInt8Callbacks); break;
-                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(data, tcp::vUInt16Callbacks); break;
-                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(data, tcp::vInt16Callbacks); break;
-                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(data, tcp::vUInt32Callbacks); break;
-                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(data, tcp::vInt32Callbacks); break;
-                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(data, tcp::vFloatCallbacks); break;
-                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(data, tcp::vDoubleCallbacks); break;
-                case manifest::DataTypes::CHAR: ProcessPacket<char>(data, tcp::vCharCallbacks); break;
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(stData, tcp::vUInt8Callbacks); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(stData, tcp::vInt8Callbacks); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(stData, tcp::vUInt16Callbacks); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(stData, tcp::vInt16Callbacks); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(stData, tcp::vUInt32Callbacks); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(stData, tcp::vInt32Callbacks); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(stData, tcp::vFloatCallbacks); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(stData, tcp::vDoubleCallbacks); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, tcp::vCharCallbacks); break;
             }
         }
 
         // Close the client socket
-        close(clientSocket);
+        close(nClientSocket);
     }
 
     /******************************************************************************
@@ -442,9 +454,13 @@ namespace rovecomm
     void RoveCommTCP::CloseTCPSocket()
     {
         // Check if the TCP socket is open
-        if (nTCPSocket != -1)
+        if (m_nTCPSocket != -1)
         {
-            close(nTCPSocket);
+            // Stop the threaded continuous code
+            RequestStop();
+
+            // Close the TCP socket
+            close(m_nTCPSocket);
         }
     }
 

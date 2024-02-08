@@ -85,10 +85,10 @@ TEST(RoveCommUDP, SendUDPPacket)
     stPacket.vData.push_back(1);
 
     // Send the packet to the localhost
-    ssize_t bytesSent = pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11001);
+    ssize_t siBytesSent = pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11001);
 
     // Check if the packet successfully sent
-    EXPECT_EQ(bytesSent, sizeof(rovecomm::PackPacket<uint8_t>(stPacket)));
+    EXPECT_EQ(siBytesSent, sizeof(rovecomm::PackPacket<uint8_t>(stPacket)));
 
     // Close the socket
     pRoveCommUDP_Node.CloseUDPSocket();
@@ -120,7 +120,7 @@ TEST(RoveCommUDP, CallbackInvoked)
     }
 
     // Flag to check if the callback was invoked
-    bool callbackInvoked               = false;
+    bool bCallbackInvoked              = false;
 
     std::vector<uint8_t> vExpectedData = {1};
 
@@ -129,7 +129,7 @@ TEST(RoveCommUDP, CallbackInvoked)
         [&](const rovecomm::RoveCommPacket<uint8_t>& packet, const sockaddr_in& address)
         {
             // Set the flag to true to indicate that the callback was invoked
-            callbackInvoked = true;
+            bCallbackInvoked = true;
 
             // Assertions to verify the behavior of the callback function
             EXPECT_EQ(packet.unDataId, 1100);                             // Check the data ID
@@ -150,19 +150,19 @@ TEST(RoveCommUDP, CallbackInvoked)
     stPacket.unDataCount = 1;                               // Sample data count
     stPacket.eDataType   = manifest::DataTypes::UINT8_T;    // Sample data type
 
-    for (auto data : vExpectedData)
+    for (uint8_t data : vExpectedData)
     {
         stPacket.vData.push_back(data);    // Sample data
     }
 
     // Pack the packet
-    rovecomm::RoveCommData data = rovecomm::PackPacket(stPacket);
+    rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
 
     // Process the received packet (simulate callback invocation)
-    pRoveCommUDP_Node.CallProcessPacket<uint8_t>(data, rovecomm::udp::vUInt8Callbacks, sockaddr_in{});    // Provide a dummy address
+    pRoveCommUDP_Node.CallProcessPacket<uint8_t>(stData, rovecomm::udp::vUInt8Callbacks, sockaddr_in{});    // Provide a dummy address
 
     // Check if the callback was invoked
-    EXPECT_TRUE(callbackInvoked);
+    EXPECT_TRUE(bCallbackInvoked);
 
     // Close the socket
     pRoveCommUDP_Node.CloseUDPSocket();

@@ -1,5 +1,6 @@
 /******************************************************************************
- * @brief
+ * @brief ExternalIncludes.h is a file that is included in the RoveComm library
+ *        to include external dependencies that are not part of the library.
  *
  * @file ExternalIncludes.h
  * @author Eli Byrd (edbgkk@mst.edu)

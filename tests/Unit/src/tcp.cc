@@ -85,10 +85,10 @@ TEST(RoveCommTCP, SendTCPPacket)
     stPacket.vData.push_back(1);
 
     // Send the packet to the localhost
-    ssize_t bytesSent = pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12000);
+    ssize_t siBytesSent = pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12000);
 
     // Check if the packet successfully sent
-    EXPECT_EQ(bytesSent, sizeof(rovecomm::PackPacket<uint8_t>(stPacket)));
+    EXPECT_EQ(siBytesSent, sizeof(rovecomm::PackPacket<uint8_t>(stPacket)));
 
     // Close the socket
     pRoveCommTCP_Node.CloseTCPSocket();
@@ -120,7 +120,7 @@ TEST(RoveCommTCP, CallbackInvoked)
     }
 
     // Flag to check if the callback was invoked
-    bool callbackInvoked               = false;
+    bool bCallbackInvoked              = false;
 
     std::vector<uint8_t> vExpectedData = {1};
 
@@ -129,7 +129,7 @@ TEST(RoveCommTCP, CallbackInvoked)
         [&](const rovecomm::RoveCommPacket<uint8_t>& packet)
         {
             // Set the flag to true to indicate that the callback was invoked
-            callbackInvoked = true;
+            bCallbackInvoked = true;
 
             // Assertions to verify the behavior of the callback function
             EXPECT_EQ(packet.unDataId, 1100);                             // Check the data ID
@@ -150,19 +150,19 @@ TEST(RoveCommTCP, CallbackInvoked)
     stPacket.unDataCount = 1;                               // Sample data count
     stPacket.eDataType   = manifest::DataTypes::UINT8_T;    // Sample data type
 
-    for (auto data : vExpectedData)
+    for (uint8_t unData : vExpectedData)
     {
-        stPacket.vData.push_back(data);    // Sample data
+        stPacket.vData.push_back(unData);    // Sample data
     }
 
     // Pack the packet
-    rovecomm::RoveCommData data = rovecomm::PackPacket(stPacket);
+    rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
 
     // Process the received packet (simulate callback invocation)
-    pRoveCommTCP_Node.CallProcessPacket<uint8_t>(data, rovecomm::tcp::vUInt8Callbacks);
+    pRoveCommTCP_Node.CallProcessPacket<uint8_t>(stData, rovecomm::tcp::vUInt8Callbacks);
 
     // Check if the callback was invoked
-    EXPECT_TRUE(callbackInvoked);
+    EXPECT_TRUE(bCallbackInvoked);
 
     // Close the socket
     pRoveCommTCP_Node.CloseTCPSocket();

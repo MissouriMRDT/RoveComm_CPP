@@ -11,13 +11,16 @@
 // Only worry about compiling if we are not in 'Library-Only Mode'.
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
+#include "RoveComm/RoveComm.h"
+#include "RoveCommLoggers.h"
+
+/// \cond
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 
-#include "RoveComm/RoveComm.h"
-#include "RoveCommLoggers.h"
+/// \endcond
 
 using namespace rovecomm;
 

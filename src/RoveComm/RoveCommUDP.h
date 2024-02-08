@@ -12,6 +12,13 @@
 #ifndef ROVECOMM_UDP_H
 #define ROVECOMM_UDP_H
 
+#include "ExternalIncludes.h"
+#include "RoveCommConsts.h"
+#include "RoveCommGlobals.h"
+#include "RoveCommManifest.h"
+#include "RoveCommPacket.h"
+
+/// \cond
 #include <arpa/inet.h>
 #include <csignal>
 #include <cstring>
@@ -23,11 +30,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "ExternalIncludes.h"
-#include "RoveCommConsts.h"
-#include "RoveCommGlobals.h"
-#include "RoveCommManifest.h"
-#include "RoveCommPacket.h"
+/// \endcond
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
@@ -49,39 +52,48 @@ namespace rovecomm
     class RoveCommUDP : AutonomyThread<void>
     {
         private:
-            int nUDPSocket;
-            struct sockaddr_in saUDPServerAddr;
+            // Private member variables
+            int m_nUDPSocket;
+            struct sockaddr_in m_saUDPServerAddr;
             std::vector<SubscriberInfo> vSubscribers;
 
+            // Packet processing functions
             template<typename T>
             void ProcessPacket(const RoveCommData& stData,
                                const std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>>& vCallbacks,
                                const sockaddr_in& saClientAddr);
-
             void ReceiveUDPPacketAndCallback();
 
+            // Subscriber management functions
             void AddSubscriber(const std::string& szIPAddress, const int& nPort);
             void RemoveSubscriber(const std::string& szIPAddress, const int& nPort);
 
+            // AutonomyThread member functions
             void ThreadedContinuousCode() override;
             void PooledLinearCode() override;
 
         public:
-            RoveCommUDP() : nUDPSocket(-1) {}
+            // Constructor
+            RoveCommUDP() : m_nUDPSocket(-1) {}
 
+            // Initialization
             bool InitUDPSocket(int nPort);
 
+            // Data transmission functions
             template<typename T>
             ssize_t SendUDPPacket(const RoveCommPacket<T>& stData, const char* cIPAddress, int nPort);
 
+            // Callback management functions
             template<typename T>
             void AddUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback, const uint16_t& unCondition);
 
             template<typename T>
             void RemoveUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback);
 
+            // Deinitialization
             void CloseUDPSocket();
 
+            // Destructor
             ~RoveCommUDP();
 
             // NOTE: These functions are for testing purposes only and should not be used in production code!

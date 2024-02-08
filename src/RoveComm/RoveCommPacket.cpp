@@ -9,7 +9,11 @@
  ******************************************************************************/
 
 #include "RoveCommPacket.h"
+
+/// \cond
 #include <iostream>
+
+/// \endcond
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
@@ -40,13 +44,21 @@ namespace rovecomm
     {
         RoveCommData stData;
 
+        // The first byte of the data is the version number
         stData.unBytes[0] = ROVECOMM_VERSION;
+
+        // The next two bytes are the data ID
         stData.unBytes[1] = stPacket.unDataId >> 8;
         stData.unBytes[2] = stPacket.unDataId;
+
+        // The next two bytes are the data count
         stData.unBytes[3] = stPacket.unDataCount >> 8;
         stData.unBytes[4] = stPacket.unDataCount;
+
+        // The next byte is the data type
         stData.unBytes[5] = static_cast<uint8_t>(stPacket.eDataType);
 
+        // The rest of the data is the data payload
         size_t siDataSize = sizeof(T) * stPacket.unDataCount;
         memcpy(&stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE], stPacket.vData.data(), siDataSize);
 

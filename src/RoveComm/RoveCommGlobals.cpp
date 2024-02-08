@@ -21,6 +21,14 @@
  ******************************************************************************/
 namespace rovecomm
 {
+    /******************************************************************************
+     * @brief The RoveComm::UDP namespace contains all of the functionality for the
+     *        RoveComm library's UDP functionality. This includes the vectors of
+     *        callbacks for each data type.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
     namespace udp
     {
         // The vectors of UDP callbacks for each data type.
@@ -35,6 +43,14 @@ namespace rovecomm
         std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<char>&, const sockaddr_in&)>, unsigned int>> vCharCallbacks;
     }    // namespace udp
 
+    /******************************************************************************
+     * @brief The RoveComm::TCP namespace contains all of the functionality for the
+     *        RoveComm library's TCP functionality. This includes the vectors of
+     *        callbacks for each data type.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
     namespace tcp
     {
         // The vectors of TCP callbacks for each data type.

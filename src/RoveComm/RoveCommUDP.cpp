@@ -11,6 +11,8 @@
 
 #include "RoveCommUDP.h"
 #include "RoveCommPacket.h"
+
+/// \cond
 #include <arpa/inet.h>
 #include <cstring>
 #include <functional>
@@ -18,6 +20,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <thread>
+
+/// \endcond
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
@@ -46,8 +50,8 @@ namespace rovecomm
     bool RoveCommUDP::InitUDPSocket(int nPort)
     {
         // Create a UDP socket
-        nUDPSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-        if (nUDPSocket == -1)
+        m_nUDPSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (m_nUDPSocket == -1)
         {
             perror("Failed to create UDP socket");
             return false;
@@ -61,10 +65,10 @@ namespace rovecomm
         saServerAddr.sin_port        = htons(nPort);
 
         // Bind the socket
-        if (bind(nUDPSocket, (struct sockaddr*) &saServerAddr, sizeof(saServerAddr)) == -1)
+        if (bind(m_nUDPSocket, (struct sockaddr*) &saServerAddr, sizeof(saServerAddr)) == -1)
         {
             perror("Failed to bind UDP socket");
-            close(nUDPSocket);
+            close(m_nUDPSocket);
             return false;
         }
 
@@ -106,7 +110,7 @@ namespace rovecomm
         {
             saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
             inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
-            sendto(nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+            sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
         }
 
         // Send the packet to the specified IP address and port
@@ -115,7 +119,7 @@ namespace rovecomm
             saUDPClientAddr.sin_port = htons(nPort);
             inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
 
-            return sendto(nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+            return sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
         }
 
         return -1;
@@ -304,12 +308,15 @@ namespace rovecomm
                                     const std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>>& vCallbacks,
                                     const sockaddr_in& saClientAddr)
     {
+        // Unpack the received data into a RoveCommPacket
         RoveCommPacket<T> stPacket = UnpackData<T>(stData);
 
+        // Create a SubscriberInfo struct to store the client address
         SubscriberInfo stSubscriber;
         stSubscriber.szIPAddress = inet_ntoa(saClientAddr.sin_addr);
         stSubscriber.nPort       = ntohs(saClientAddr.sin_port);
 
+        // Check if the received packet is a subscribe or unsubscribe packet
         if (stPacket.unDataId == manifest::System::SUBSCRIBE_DATA_ID)
         {
             AddSubscriber(stSubscriber.szIPAddress, stSubscriber.nPort);
@@ -351,7 +358,7 @@ namespace rovecomm
         sockaddr_in saClientAddr;
         socklen_t addrLen          = sizeof(saClientAddr);
 
-        ssize_t siUDPBytesReceived = recvfrom(nUDPSocket, &stData, sizeof(stData), 0, (struct sockaddr*) &saClientAddr, &addrLen);
+        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, &stData, sizeof(stData), 0, (struct sockaddr*) &saClientAddr, &addrLen);
 
         if (siUDPBytesReceived == sizeof(RoveCommData))
         {
@@ -377,6 +384,16 @@ namespace rovecomm
         }
     }
 
+    /******************************************************************************
+     * @brief Add a subscriber to the list of subscribers. The subscriber will
+     *        receive all packets that are sent to the specified IP address and port.
+     *
+     * @param szIPAddress - The IP address of the subscriber.
+     * @param nPort - The port that the subscriber is listening on.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-08
+     ******************************************************************************/
     void RoveCommUDP::AddSubscriber(const std::string& szIPAddress, const int& nPort)
     {
         if (vSubscribers.size() < ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS)
@@ -395,6 +412,17 @@ namespace rovecomm
         }
     }
 
+    /******************************************************************************
+     * @brief Remove a subscriber from the list of subscribers. The subscriber will
+     *        no longer receive packets that are sent to the specified IP address and
+     *        port.
+     *
+     * @param szIPAddress - The IP address of the subscriber.
+     * @param nPort - The port that the subscriber is listening on.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-08
+     ******************************************************************************/
     void RoveCommUDP::RemoveSubscriber(const std::string& szIPAddress, const int& nPort)
     {
         // Find and remove the subscriber
@@ -441,9 +469,14 @@ namespace rovecomm
      ******************************************************************************/
     void RoveCommUDP::CloseUDPSocket()
     {
-        if (nUDPSocket != -1)
+        // Check if the socket is open
+        if (m_nUDPSocket != -1)
         {
-            close(nUDPSocket);
+            // Stop the thread
+            RequestStop();
+
+            // Close the socket
+            close(m_nUDPSocket);
         }
     }
 

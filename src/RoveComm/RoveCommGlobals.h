@@ -1,5 +1,7 @@
 /******************************************************************************
- * @brief
+ * @brief The RoveCommGlobals.h file is used to define functions and objects used
+ *        at the global scope for the RoveComm library. This includes the
+ *        SubscriberInfo struct and the vectors of callbacks for each data type.
  *
  * @file RoveCommGlobals.h
  * @author Eli Byrd (edbgkk@mst.edu)
@@ -13,6 +15,7 @@
 
 #include "./RoveCommPacket.h"
 
+// \cond
 #include <arpa/inet.h>
 #include <csignal>
 #include <cstring>
@@ -22,6 +25,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+
+/// \endcond
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
