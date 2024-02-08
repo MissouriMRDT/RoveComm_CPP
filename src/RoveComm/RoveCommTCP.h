@@ -78,6 +78,14 @@ namespace rovecomm
             void CloseTCPSocket();
 
             ~RoveCommTCP();
+
+            // NOTE: These functions are for testing purposes only and should not be used in production code!
+            template<typename T>
+            void CallProcessPacket(const RoveCommData& stData,
+                                   const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<T>&)>, uint16_t>>& vCallbacks)
+            {
+                ProcessPacket(stData, vCallbacks);
+            }
     };
 }    // namespace rovecomm
 

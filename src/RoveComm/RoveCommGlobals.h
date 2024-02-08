@@ -34,6 +34,21 @@
 namespace rovecomm
 {
     /******************************************************************************
+     * @brief The SubscriberInfo struct is used to store the IP address and port of
+     *        a subscriber.
+     *
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-08
+     ******************************************************************************/
+    struct SubscriberInfo
+    {
+        public:
+            std::string szIPAddress;
+            int nPort;
+    };
+
+    /******************************************************************************
      * @brief The RoveComm::UDP namespace contains all of the functionality for the
      *        RoveComm library's UDP functionality. This includes the vectors of
      *        callbacks for each data type.

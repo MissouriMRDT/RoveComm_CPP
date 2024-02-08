@@ -93,15 +93,32 @@ namespace rovecomm
     template<typename T>
     ssize_t RoveCommUDP::SendUDPPacket(const RoveCommPacket<T>& stData, const char* cIPAddress, int nPort)
     {
+        // Pack the RoveCommPacket into a RoveCommData structure
         RoveCommData data = PackPacket(stData);
 
+        // Setup the base UDP client address
         struct sockaddr_in saUDPClientAddr;
         memset(&saUDPClientAddr, 0, sizeof(saUDPClientAddr));
         saUDPClientAddr.sin_family = AF_INET;
-        saUDPClientAddr.sin_port   = htons(nPort);
-        inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
 
-        return sendto(nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+        // Send the packet to all subscribers
+        for (const SubscriberInfo& stSubscriber : vSubscribers)
+        {
+            saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
+            inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
+            sendto(nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+        }
+
+        // Send the packet to the specified IP address and port
+        if (cIPAddress != "0.0.0.0" && nPort != 0)
+        {
+            saUDPClientAddr.sin_port = htons(nPort);
+            inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
+
+            return sendto(nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+        }
+
+        return -1;
     }
 
     /******************************************************************************
@@ -289,6 +306,19 @@ namespace rovecomm
     {
         RoveCommPacket<T> stPacket = UnpackData<T>(stData);
 
+        SubscriberInfo stSubscriber;
+        stSubscriber.szIPAddress = inet_ntoa(saClientAddr.sin_addr);
+        stSubscriber.nPort       = ntohs(saClientAddr.sin_port);
+
+        if (stPacket.unDataId == manifest::System::SUBSCRIBE_DATA_ID)
+        {
+            AddSubscriber(stSubscriber.szIPAddress, stSubscriber.nPort);
+        }
+        else if (stPacket.unDataId == manifest::System::UNSUBSCRIBE_DATA_ID)
+        {
+            RemoveSubscriber(stSubscriber.szIPAddress, stSubscriber.nPort);
+        }
+
         // Invoke registered callbacks
         for (const std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>& tpCallbackInfo : vCallbacks)
         {
@@ -345,6 +375,32 @@ namespace rovecomm
                 case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, udp::vCharCallbacks, saClientAddr); break;
             }
         }
+    }
+
+    void RoveCommUDP::AddSubscriber(const std::string& szIPAddress, const int& nPort)
+    {
+        if (vSubscribers.size() < ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS)
+        {
+            // Check if the subscriber is already in the list
+            for (const auto& subscriber : vSubscribers)
+            {
+                if (subscriber.szIPAddress == szIPAddress && subscriber.nPort == nPort)
+                {
+                    return;    // Subscriber already exists, no need to add again
+                }
+            }
+
+            // Add new subscriber
+            vSubscribers.push_back({szIPAddress, nPort});
+        }
+    }
+
+    void RoveCommUDP::RemoveSubscriber(const std::string& szIPAddress, const int& nPort)
+    {
+        // Find and remove the subscriber
+        vSubscribers.erase(
+            std::remove_if(vSubscribers.begin(), vSubscribers.end(), [&](const SubscriberInfo& info) { return info.szIPAddress == szIPAddress && info.nPort == nPort; }),
+            vSubscribers.end());
     }
 
     /******************************************************************************

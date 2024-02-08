@@ -20,6 +20,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <unordered_set>
 #include <vector>
 
 #include "../interfaces/AutonomyThread.hpp"
@@ -51,8 +52,7 @@ namespace rovecomm
         private:
             int nUDPSocket;
             struct sockaddr_in saUDPServerAddr;
-            std::vector<std::tuple<std::function<void(const RoveCommPacket<int>&, sockaddr_in)>, uint16_t>> vUDPCallbacks;
-            std::thread listener_thread_;
+            std::vector<SubscriberInfo> vSubscribers;
 
             template<typename T>
             void ProcessPacket(const RoveCommData& stData,
@@ -60,6 +60,9 @@ namespace rovecomm
                                const sockaddr_in& saClientAddr);
 
             void ReceiveUDPPacketAndCallback();
+
+            void AddSubscriber(const std::string& szIPAddress, const int& nPort);
+            void RemoveSubscriber(const std::string& szIPAddress, const int& nPort);
 
             void ThreadedContinuousCode() override;
             void PooledLinearCode() override;
@@ -81,6 +84,15 @@ namespace rovecomm
             void CloseUDPSocket();
 
             ~RoveCommUDP();
+
+            // NOTE: These functions are for testing purposes only and should not be used in production code!
+            template<typename T>
+            void CallProcessPacket(const RoveCommData& stData,
+                                   const std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>>& vCallbacks,
+                                   const sockaddr_in& saClientAddr)
+            {
+                ProcessPacket(stData, vCallbacks, saClientAddr);
+            }
     };
 
 }    // namespace rovecomm
