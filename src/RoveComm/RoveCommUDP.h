@@ -23,7 +23,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "../interfaces/AutonomyThread.hpp"
 #include "ExternalIncludes.h"
 #include "RoveCommConsts.h"
 #include "RoveCommGlobals.h"

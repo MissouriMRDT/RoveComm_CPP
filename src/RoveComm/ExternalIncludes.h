@@ -15,7 +15,7 @@
 // our multithreading functionality.
 #ifdef __ROVECOMM_LIBRARY_MODE__
 #include "../../../../../src/interfaces/AutonomyThread.hpp"
-else
+#else
 #include "../interfaces/AutonomyThread.hpp"
 #endif
 
