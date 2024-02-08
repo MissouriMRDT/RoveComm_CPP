@@ -1,69 +1,88 @@
-// /******************************************************************************
-//  * @brief
-//  *
-//  * @file RoveCommUDP.h
-//  * @author Eli Byrd (edbgkk@mst.edu)
-//  * @date 2024-02-06
-//  *
-//  * @copyright Copyright Mars Rover Design Team 2024 - All Rights Reserved
-//  ******************************************************************************/
+/******************************************************************************
+ * @brief The RoveCommUDP class is used to send and receive data over a UDP
+ *        connection.
+ *
+ * @file RoveCommUDP.h
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2024-02-06
+ *
+ * @copyright Copyright Mars Rover Design Team 2024 - All Rights Reserved
+ ******************************************************************************/
 
-// #ifndef ROVECOMM_UDP_H
-// #define ROVECOMM_UDP_H
+#ifndef ROVECOMM_UDP_H
+#define ROVECOMM_UDP_H
 
-// #include <arpa/inet.h>
-// #include <csignal>
-// #include <cstring>
-// #include <functional>
-// #include <iostream>
-// #include <netinet/in.h>
-// #include <sys/socket.h>
-// #include <unistd.h>
-// #include <vector>
+#include <arpa/inet.h>
+#include <csignal>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <vector>
 
-// #include "RoveCommConsts.h"
-// #include "RoveCommManifest.h"
-// #include "RoveCommPacket.h"
+#include "../interfaces/AutonomyThread.hpp"
+#include "ExternalIncludes.h"
+#include "RoveCommConsts.h"
+#include "RoveCommGlobals.h"
+#include "RoveCommManifest.h"
+#include "RoveCommPacket.h"
 
-// #include "../interfaces/AutonomyThread.hpp"
+/******************************************************************************
+ * @brief The RoveComm namespace contains all of the functionality for the
+ *        RoveComm library. This includes the packet structure and the
+ *        functions for packing and unpacking data.
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2024-02-07
+ ******************************************************************************/
+namespace rovecomm
+{
+    /******************************************************************************
+     * @brief The RoveCommUDP class is used to send and receive data over a UDP
+     *        connection.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
+    class RoveCommUDP : AutonomyThread<void>
+    {
+        private:
+            int nUDPSocket;
+            struct sockaddr_in saUDPServerAddr;
+            std::vector<std::tuple<std::function<void(const RoveCommPacket<int>&, sockaddr_in)>, uint16_t>> vUDPCallbacks;
+            std::thread listener_thread_;
 
-// class RoveCommUDP : public AutonomyThread<void>
-// {
-//     private:
-//         int udpSocket;
+            template<typename T>
+            void ProcessPacket(const RoveCommData& stData,
+                               const std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>>& vCallbacks,
+                               const sockaddr_in& saClientAddr);
 
-//         struct sockaddr_in udpServerAddr;
+            void ReceiveUDPPacketAndCallback();
 
-//         std::vector<std::tuple<std::function<void(const RoveCommPacket&, const sockaddr_in&)>, uint16_t>> udpCallbacks;
+            void ThreadedContinuousCode() override;
+            void PooledLinearCode() override;
 
-//     public:
-//         // Constructor
-//         RoveCommUDP() : udpSocket(-1) {}
+        public:
+            RoveCommUDP() : nUDPSocket(-1) {}
 
-//         // Destructor
-//         ~RoveCommUDP();
+            bool InitUDPSocket(int nPort);
 
-//         // Initialize the UDP TCP sockets
-//         bool InitUDPSocket(const char* ipAddress, int port);
+            template<typename T>
+            ssize_t SendUDPPacket(const RoveCommPacket<T>& stData, const char* cIPAddress, int nPort);
 
-//         // Add a UDP callback
-//         void AddUDPCallback(std::function<void(const RoveCommPacket&, const sockaddr_in&)> callback, const uint16_t& condition);
+            template<typename T>
+            void AddUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback, const uint16_t& unCondition);
 
-//         // Receive a UDP packet and call the appropriate callback
-//         void ReceiveUDPPacketAndCallback();
+            template<typename T>
+            void RemoveUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback);
 
-//         // Send a UDP packet
-//         ssize_t SendUDPPacket(const RoveCommPacket& data, const char* ipAddress, int port);
+            void CloseUDPSocket();
 
-//         // Receive a UDP packet
-//         ssize_t ReceiveUDPPacket(char* buffer, size_t bufferSize, sockaddr_in& clientAddr);
+            ~RoveCommUDP();
+    };
 
-//         // Close the UDP socket
-//         void CloseUDPSocket();
+}    // namespace rovecomm
 
-//         // AutonomyThread methods
-//         void ThreadedContinuousCode() override;
-//         void PooledLinearCode() override;
-// };
-
-// #endif    // ROVECOMM_UDP_H
+#endif    // ROVECOMM_UDP_H

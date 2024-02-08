@@ -11,9 +11,19 @@
 #ifndef ROVECOMM_CONSTS_H
 #define ROVECOMM_CONSTS_H
 
+/******************************************************************************
+ * @brief The RoveComm namespace contains all of the functionality for the
+ *        RoveComm library. This includes the packet structure and the
+ *        functions for packing and unpacking data.
+ *
+ * @author Eli Byrd (edbgkk@mst.edu)
+ * @date 2024-02-07
+ ******************************************************************************/
+namespace rovecomm
+{
 #define ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS 10
 #define ROVECOMM_PACKET_MAX_DATA_COUNT        65535
 #define ROVECOMM_PACKET_HEADER_SIZE           6
 #define ROVECOMM_VERSION                      3
-
+}    // namespace rovecomm
 #endif    // ROVECOMM_CONSTS_H

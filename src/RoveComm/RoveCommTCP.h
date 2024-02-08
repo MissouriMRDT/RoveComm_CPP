@@ -1,5 +1,7 @@
 /******************************************************************************
- * @brief
+ * @brief The RoveCommTCP class is used to send and receive data over a TCP
+ *        connection. This class is a subclass of AutonomyThread, so it can be
+ *        run in its own thread.
  *
  * @file RoveCommTCP.h
  * @author Eli Byrd (edbgkk@mst.edu)
@@ -21,11 +23,12 @@
 #include <unistd.h>
 #include <vector>
 
+#include "../interfaces/AutonomyThread.hpp"
+#include "ExternalIncludes.h"
 #include "RoveCommConsts.h"
+#include "RoveCommGlobals.h"
 #include "RoveCommManifest.h"
 #include "RoveCommPacket.h"
-
-#include "../interfaces/AutonomyThread.hpp"
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
@@ -38,64 +41,43 @@
 namespace rovecomm
 {
     /******************************************************************************
-     * @brief The vector of TCP callbacks.
-     *
-     * @tparam T - The type of data that is to be sent or received. This can be
-     *             any of the types defined in the manifest.
+     * @brief The RoveCommTCP class is used to send and receive data over a TCP
+     *        connection.
      *
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    template<typename T>
-    std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, int)>, uint16_t>> vTCPCallbacks;
-
-    /******************************************************************************
-     * @brief
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-07
-     ******************************************************************************/
-    class RoveCommTCP : public AutonomyThread<void>
+    class RoveCommTCP : AutonomyThread<void>
     {
         private:
             int nTCPSocket;
-
             struct sockaddr_in saTCPServerAddr;
 
-            // AutonomyThread methods
+            template<typename T>
+            void ProcessPacket(const RoveCommData& stData, const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<T>&)>, uint16_t>>& vCallbacks);
+
+            void ReceiveTCPPacketAndCallback();
+
             void ThreadedContinuousCode() override;
             void PooledLinearCode() override;
 
         public:
-            // Constructor
             RoveCommTCP() : nTCPSocket(-1) {}
 
-            // Destructor
-            ~RoveCommTCP();
-
-            // Initialize the TCP sockets
             bool InitTCPSocket(const char* cIPAddress, int nPort);
 
-            // Add a TCP callback
             template<typename T>
-            void AddTCPCallback(std::function<void(const RoveCommPacket<T>&, int)> fnCallback, const uint16_t& unCondition);
+            ssize_t SendTCPPacket(const RoveCommPacket<T>& stData, const char* cClientIPAddress, int nClientPort);
 
-            // Receive a TCP packet and call the appropriate callback
             template<typename T>
-            void ReceiveTCPPacketAndCallback(int nClientSocket);
+            void AddTCPCallback(std::function<void(const RoveCommPacket<T>&)> fnCallback, const uint16_t& unCondition);
 
-            // Send a TCP packet
             template<typename T>
-            ssize_t SendTCPPacket(int nClientSocket, const RoveCommPacket<T>& stData);
+            void RemoveTCPCallback(std::function<void(const RoveCommPacket<T>&)> fnCallback);
 
-            // Receive a TCP packet
-            ssize_t ReceiveTCPPacket(int nClientSocket, char* cBuffer, size_t siBufferSize);
-
-            // Accept a TCP connection
-            int AcceptTCPConnection();
-
-            // Close the TCP socket
             void CloseTCPSocket();
+
+            ~RoveCommTCP();
     };
 }    // namespace rovecomm
 
