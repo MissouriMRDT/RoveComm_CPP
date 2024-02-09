@@ -458,6 +458,7 @@ namespace rovecomm
         {
             // Stop the threaded continuous code
             RequestStop();
+            Join();
 
             // Close the TCP socket
             close(m_nTCPSocket);

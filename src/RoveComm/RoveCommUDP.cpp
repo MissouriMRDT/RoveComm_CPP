@@ -474,6 +474,7 @@ namespace rovecomm
         {
             // Stop the thread
             RequestStop();
+            Join();
 
             // Close the socket
             close(m_nUDPSocket);
