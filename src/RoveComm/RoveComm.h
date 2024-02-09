@@ -5,10 +5,13 @@
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-07-29
  *
- * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved
+ * @copyright Copyright Mars Rover Design Team 2024 - All Rights Reserved
  ******************************************************************************/
 
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
+
+#include "./RoveCommTCP.h"
+#include "./RoveCommUDP.h"
 
 #endif    // ROVECOMM_H

@@ -6,7 +6,7 @@
  *              distributed into other projects.
  *
  *
- * @file RoveCommGlobals.cpp
+ * @file RoveCommLoggers.cpp
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-07-29
  *
@@ -16,7 +16,7 @@
 // Only worry about compiling if we are not in 'Library-Only Mode'.
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
-#include "RoveCommGlobals.h"
+#include "RoveCommLoggers.h"
 
 // Forward Declarations
 quill::Logger* g_qFileLogger;

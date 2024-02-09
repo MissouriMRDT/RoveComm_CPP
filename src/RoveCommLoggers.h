@@ -6,7 +6,7 @@
  *              distributed into other projects.
  *
  *
- * @file RoveCommGlobals.cpp
+ * @file RoveCommLoggers.h
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-07-29
  *
@@ -16,13 +16,16 @@
 // Only worry about compiling if we are not in 'Library-Only Mode'.
 #ifndef __ROVECOMM_LIBRARY_MODE__
 
+/// \cond
 #include <chrono>
 #include <ctime>
 #include <iostream>
 #include <quill/Quill.h>
 
-#ifndef ROVECOMM_GLOBALS_H
-#define ROVECOMM_GLOBALS_H
+/// \endcond
+
+#ifndef ROVECOMM_LOGGER_H
+#define ROVECOMM_LOGGER_H
 
 // Logging:
 extern quill::Logger* g_qFileLogger;
@@ -31,6 +34,6 @@ extern quill::Logger* g_qSharedLogger;
 
 void InitializeLoggers();
 
-#endif    // ROVECOMM_GLOBALS_H
+#endif    // ROVECOMM_LOGGER_H
 
 #endif    // __ROVECOMM_LIBRARY_MODE__
