@@ -130,14 +130,14 @@ if(PROJECT_IS_TOP_LEVEL)
 
     ## Create Unit Tests if found
     if (UnitTests_LEN GREATER 0)
-        add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" ${UnitTests_SRC})
+        add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
         target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main RoveComm_CPP)
         add_test(Unit_Tests ${PROJECT_NAME}_UnitTests)
     endif()
 
     ## Create Integration Tests if found
     if (IntegrationTests_LEN GREATER 0)
-        add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" ${IntegrationTests_SRC})
+        add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${IntegrationTests_SRC})
         target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main RoveComm_CPP)
         add_test(Integration_Tests ${PROJECT_NAME}_IntegrationTests)
     endif()
