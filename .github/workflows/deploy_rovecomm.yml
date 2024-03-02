@@ -1,0 +1,60 @@
+name: Build and Create RoveComm Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+  packages: read
+  id-token: write
+
+concurrency:
+  group: "create-release"
+  cancel-in-progress: false
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fix Dubious Ownership
+        run: git config --global --add safe.directory /opt/RoveComm_CPP
+
+      - name: Checkout Tag
+        run: |
+          cd /opt/RoveComm_CPP/
+          git fetch --tags --force
+          tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo $tag
+          git checkout $tag
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: build-and-upload
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fix Dubious Ownership
+        run: git config --global --add safe.directory /opt/RoveComm_CPP
+
+      - name: Determine Version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          name: "${{ steps.version.outputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
