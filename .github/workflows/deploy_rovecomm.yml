@@ -56,6 +56,5 @@ jobs:
           draft: false
           prerelease: false
           name: "${{ steps.version.outputs.version }}"
-          files: "/opt/RoveComm_CPP/build/**"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
