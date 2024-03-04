@@ -37,6 +37,7 @@ jobs:
         run: |
           git add -f src/RoveComm/RoveCommManifest.h
           git commit -m "** Automated - Manifest Update **"
+          git branch
 
       - name: Push changes
         uses: ad-m/github-push-action@master
