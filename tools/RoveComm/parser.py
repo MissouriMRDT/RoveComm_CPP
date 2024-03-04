@@ -174,6 +174,7 @@ def insert_address_struct():
     out += generate_indent(3) + "int SECOND_OCTET;\n"
     out += generate_indent(3) + "int THIRD_OCTET;\n"
     out += generate_indent(3) + "int FOURTH_OCTET;\n"
+    out += generate_indent(3) + "std::string IP_STR = std::to_string(FIRST_OCTET) + \".\" + std::to_string(SECOND_OCTET) + \".\" + std::to_string(THIRD_OCTET) + \".\" + std::to_string(FOURTH_OCTET);\n"
     out += generate_indent(1) + "};\n"
     out += "\n"
 
