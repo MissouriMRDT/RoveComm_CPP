@@ -53,6 +53,7 @@ namespace manifest
             int SECOND_OCTET;
             int THIRD_OCTET;
             int FOURTH_OCTET;
+            std::string IP_STR = std::to_string(FIRST_OCTET) + "." + std::to_string(SECOND_OCTET) + "." + std::to_string(THIRD_OCTET) + "." + std::to_string(FOURTH_OCTET);
     };
 
     /******************************************************************************
