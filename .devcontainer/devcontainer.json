@@ -9,8 +9,7 @@
         "-e DISPLAY" // Makes DISPLAY environment variable available in the container.
         // "-v /tmp/.X11-unix:/tmp/.X11-unix" // Required for container to access display.
     ],
-    // "image": "ghcr.io/missourimrdt/rovecomm-jammy:latest",
-    "image": "ghcr.io/missourimrdt/rovecomm-focal:latest",
+    "image": "ghcr.io/missourimrdt/rovecomm-jammy:latest",
     // "image": "ghcr.io/missourimrdt/rovecomm-jetpack:latest",
     // "build": {
     //     "dockerfile": "Dockerfile_Jammy"
