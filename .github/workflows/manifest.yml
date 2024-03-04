@@ -3,6 +3,7 @@ name: Update Manifest Header
 on:
   pull_request:
     - files:
+        - "data/RoveComm/manifest.json"
         - "tools/RoveComm/parser.py"
         - "src/RoveComm/RoveCommManifest.h"
         - ".github/workflows/manifest.yml"
