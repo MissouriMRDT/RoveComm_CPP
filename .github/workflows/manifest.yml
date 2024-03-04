@@ -13,25 +13,25 @@ jobs:
     if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/update-manifest') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Extract branch name
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
+      - name: Pull Repo
+        uses: actions/checkout@v4
 
-      - name: Update Branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ github.token }}
-          ref: ${{ steps.extract_branch.outputs.branch }}
-
-      - name: Generate Manifest and Commit
+      - name: Generate Manifest
         run: |
           git branch
           cd tools/RoveComm
           python parser.py
+
+      - name: Setup Git
           git config user.name "MissouriMRDT"
           git config user.email "marsrover@mst.edu"
+
+      - name: Commit Manifest
           git add -f ../../src/RoveComm/Manifest.h
           git commit -m "** Automated - Manifest Update **"
-          git push
+          -
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
