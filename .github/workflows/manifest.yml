@@ -23,10 +23,12 @@ jobs:
           python parser.py
 
       - name: Setup Git
+        run: |
           git config user.name "MissouriMRDT"
           git config user.email "marsrover@mst.edu"
 
       - name: Commit Manifest
+        run: |
           git add -f ../../src/RoveComm/Manifest.h
           git commit -m "** Automated - Manifest Update **"
 
