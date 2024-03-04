@@ -70,6 +70,25 @@ namespace manifest
     };
 
     /******************************************************************************
+     * @brief Drive Board IP Address, Commands, Telemetry, and Error Packet 
+     *
+     * @author Missouri S&T - Mars Rover Design Team
+     * @date 2024-03-04
+     ******************************************************************************/
+    namespace Drive
+    {
+        // IP Address
+        const AddressEntry IP_ADDRESS(192, 168, 2, 103);
+
+        // Commands
+        const std::map<std::string, ManifestEntry> COMMANDS = {};
+        // Telemetry
+        const std::map<std::string, ManifestEntry> TELEMETRY = {};
+        // Error
+        const std::map<std::string, ManifestEntry> ERROR = {};
+    }    // namespace Drive
+
+    /******************************************************************************
      * @brief BMS Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
@@ -82,25 +101,23 @@ namespace manifest
 
         // Commands
         const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"ESTOP", ManifestEntry(1000, 1, DataTypes::UINT8_T)},
-            {"SUICIDE", ManifestEntry(1001, 1, DataTypes::UINT8_T)},
-            {"REBOOT", ManifestEntry(1002, 1, DataTypes::UINT8_T)},
+            {"BMSSTOP", ManifestEntry(2000, 1, DataTypes::UINT8_T)},
         };
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"PACKCURRENT", ManifestEntry(1100, 1, DataTypes::FLOAT_T)},
-            {"PACKVOLTAGE", ManifestEntry(1101, 1, DataTypes::FLOAT_T)},
-            {"CELLVOLTAGE", ManifestEntry(1102, 8, DataTypes::FLOAT_T)},
-            {"PACKTEMP", ManifestEntry(1103, 1, DataTypes::FLOAT_T)},
+            {"PACKI_MEAS", ManifestEntry(2100, 1, DataTypes::FLOAT_T)},
+            {"PACKV_MEAS", ManifestEntry(2101, 1, DataTypes::FLOAT_T)},
+            {"CELLV_MEAS", ManifestEntry(2102, 8, DataTypes::FLOAT_T)},
+            {"TEMP_MEAS", ManifestEntry(2103, 1, DataTypes::FLOAT_T)},
         };
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {
-            {"OVERCURRENT", ManifestEntry(1200, 1, DataTypes::UINT8_T)},
-            {"CELLUNDERVOLTAGE", ManifestEntry(1201, 1, DataTypes::UINT8_T)},
-            {"CELLCRITICAL", ManifestEntry(1202, 1, DataTypes::UINT8_T)},
-            {"PACKOVERHEAT", ManifestEntry(1203, 1, DataTypes::UINT8_T)},
+            {"PACKOVERCURRENT", ManifestEntry(2200, 1, DataTypes::UINT8_T)},
+            {"CELLUNDERVOLTAGE", ManifestEntry(2201, 1, DataTypes::UINT8_T)},
+            {"PACKUNDERVOLTAGE", ManifestEntry(2202, 1, DataTypes::UINT8_T)},
+            {"PACKSUPERHOT", ManifestEntry(2203, 1, DataTypes::UINT8_T)},
         };
     }    // namespace BMS
 
@@ -117,78 +134,53 @@ namespace manifest
 
         // Commands
         const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"ENABLEBUS", ManifestEntry(2000, 1, DataTypes::UINT16_T)},
-            {"DISABLEBUS", ManifestEntry(2001, 1, DataTypes::UINT16_T)},
-            {"SETBUS", ManifestEntry(2002, 1, DataTypes::UINT16_T)},
+            {"MOTORBUSENABLE", ManifestEntry(3000, 1, DataTypes::UINT8_T)},
+            {"HIGHBUSENABLE", ManifestEntry(3001, 1, DataTypes::UINT8_T)},
+            {"LOWBUSENABLE", ManifestEntry(3002, 1, DataTypes::UINT8_T)},
+            {"TWELVEVBUSENABLE", ManifestEntry(3003, 1, DataTypes::UINT8_T)},
         };
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"BUSSTATUS", ManifestEntry(2100, 1, DataTypes::UINT16_T)},
-            {"BUSCURRENT", ManifestEntry(2101, 18, DataTypes::FLOAT_T)},
+            {"MOTORBUSENABLED", ManifestEntry(3100, 1, DataTypes::UINT8_T)},
+            {"HIGHBUSENABLED", ManifestEntry(3101, 1, DataTypes::UINT8_T)},
+            {"LOWBUSENABLED", ManifestEntry(3102, 1, DataTypes::UINT8_T)},
+            {"TWELVEVBUSENABLED", ManifestEntry(3103, 1, DataTypes::UINT8_T)},
+            {"MOTORBUSCURRENT", ManifestEntry(3104, 7, DataTypes::FLOAT_T)},
+            {"HIGHBUSCURRENT", ManifestEntry(3105, 2, DataTypes::FLOAT_T)},
+            {"LOWBUSCURRENT", ManifestEntry(3106, 5, DataTypes::FLOAT_T)},
+            {"TWELVEVBUSCURRENT", ManifestEntry(3107, 4, DataTypes::FLOAT_T)},
         };
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {
-            {"BUSOVERCURRENT", ManifestEntry(2200, 1, DataTypes::UINT32_T)},
+            {"MOTORBUSOVERCURRENT", ManifestEntry(3200, 1, DataTypes::UINT8_T)},
+            {"HIGHBUSOVERCURRENT", ManifestEntry(3201, 1, DataTypes::UINT8_T)},
+            {"LOWBUSOVERCURRENT", ManifestEntry(3202, 1, DataTypes::UINT8_T)},
         };
     }    // namespace Power
 
     /******************************************************************************
-     * @brief Core Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Blackbox Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2024-03-04
      ******************************************************************************/
-    namespace Core
+    namespace Blackbox
     {
         // IP Address
-        const AddressEntry IP_ADDRESS(192, 168, 2, 110);
+        const AddressEntry IP_ADDRESS(192, 168, 2, 102);
 
         // Commands
-        const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"DRIVELEFTRIGHT", ManifestEntry(3000, 2, DataTypes::FLOAT_T)},
-            {"DRIVEINDIVIDUAL", ManifestEntry(3001, 6, DataTypes::FLOAT_T)},
-            {"WATCHDOGOVERRIDE", ManifestEntry(3002, 1, DataTypes::UINT8_T)},
-            {"LEFTDRIVEGIMBALINCREMENT", ManifestEntry(3003, 1, DataTypes::INT16_T)},
-            {"RIGHTDRIVEGIMBALINCREMENT", ManifestEntry(3004, 1, DataTypes::INT16_T)},
-            {"LEFTMAINGIMBALINCREMENT", ManifestEntry(3005, 2, DataTypes::INT16_T)},
-            {"RIGHTMAINGIMBALINCREMENT", ManifestEntry(3006, 2, DataTypes::INT16_T)},
-            {"BACKDRIVEGIMBALINCREMENT", ManifestEntry(3007, 1, DataTypes::INT16_T)},
-            {"LEDRGB", ManifestEntry(3008, 3, DataTypes::UINT8_T)},
-            {"LEDPATTERNS", ManifestEntry(3009, 1, DataTypes::UINT8_T)},
-            {"STATEDISPLAY", ManifestEntry(3010, 1, DataTypes::UINT8_T)},
-            {"BRIGHTNESS", ManifestEntry(3011, 1, DataTypes::UINT8_T)},
-            {"SETWATCHDOGMODE", ManifestEntry(3012, 1, DataTypes::UINT8_T)},
-        };
-
+        const std::map<std::string, ManifestEntry> COMMANDS = {};
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"DRIVESPEEDS", ManifestEntry(3100, 6, DataTypes::FLOAT_T)},
+            {"BLACKBOXLISTENING", ManifestEntry(4100, 1, DataTypes::UINT8_T)},
         };
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {};
-        // Enums
-        enum DISPLAYSTATE
-        {
-            TELEOP,
-            AUTONOMY,
-            REACHED_GOAL
-        }; 
-
-        enum PATTERNS
-        {
-            MRDT,
-            BELGIUM,
-            MERICA,
-            DIRT,
-            DOTA,
-            MCD,
-            WINDOWS
-        }; 
-
-    }    // namespace Core
+    }    // namespace Blackbox
 
     /******************************************************************************
      * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet 
@@ -205,49 +197,59 @@ namespace manifest
         const std::map<std::string, ManifestEntry> COMMANDS = {};
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"GPSLATLONALT", ManifestEntry(6100, 3, DataTypes::DOUBLE_T)},
-            {"IMUDATA", ManifestEntry(6101, 3, DataTypes::FLOAT_T)},
-            {"COMPASSDATA", ManifestEntry(6102, 1, DataTypes::FLOAT_T)},
-            {"SATELLITECOUNTDATA", ManifestEntry(6103, 1, DataTypes::UINT8_T)},
-            {"ACCELEROMETERDATA", ManifestEntry(6104, 3, DataTypes::FLOAT_T)},
-            {"ACCURACYDATA", ManifestEntry(6105, 3, DataTypes::FLOAT_T)},
+            {"GPSLATLON", ManifestEntry(5100, 2, DataTypes::DOUBLE_T)},
+            {"IMUDATA", ManifestEntry(5101, 3, DataTypes::FLOAT_T)},
+            {"COMPASSDATA", ManifestEntry(5102, 1, DataTypes::FLOAT_T)},
+            {"SATELLITECOUNTDATA", ManifestEntry(5103, 1, DataTypes::UINT8_T)},
+            {"ACCELEROMETERDATA", ManifestEntry(5104, 3, DataTypes::FLOAT_T)},
+            {"ACCURACYDATA", ManifestEntry(5105, 3, DataTypes::FLOAT_T)},
         };
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {
-            {"GPSLOCKERROR", ManifestEntry(6200, 1, DataTypes::UINT8_T)},
+            {"GPSLOCKERROR", ManifestEntry(5200, 1, DataTypes::UINT8_T)},
         };
     }    // namespace Nav
 
     /******************************************************************************
-     * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Gimbal Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2024-03-04
      ******************************************************************************/
-    namespace SignalStack
+    namespace Gimbal
     {
         // IP Address
-        const AddressEntry IP_ADDRESS(192, 168, 3, 101);
+        const AddressEntry IP_ADDRESS(192, 168, 2, 106);
 
         // Commands
-        const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"OPENLOOP", ManifestEntry(7000, 1, DataTypes::INT16_T)},
-            {"SETANGLETARGET", ManifestEntry(7001, 1, DataTypes::FLOAT_T)},
-            {"SETGPSTARGET", ManifestEntry(7002, 4, DataTypes::DOUBLE_T)},
-            {"WATCHDOGOVERRIDE", ManifestEntry(7003, 1, DataTypes::UINT8_T)},
-        };
-
+        const std::map<std::string, ManifestEntry> COMMANDS = {};
         // Telemetry
-        const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"COMPASSANGLE", ManifestEntry(7100, 1, DataTypes::FLOAT_T)},
-        };
-
+        const std::map<std::string, ManifestEntry> TELEMETRY = {};
         // Error
-        const std::map<std::string, ManifestEntry> ERROR = {
-            {"WATCHDOGSTATUS", ManifestEntry(7200, 1, DataTypes::UINT8_T)},
-        };
-    }    // namespace SignalStack
+        const std::map<std::string, ManifestEntry> ERROR = {};
+    }    // namespace Gimbal
+
+    /******************************************************************************
+     * @brief Multimedia Board IP Address, Commands, Telemetry, and Error Packet 
+     *
+     * @author Missouri S&T - Mars Rover Design Team
+     * @date 2024-03-04
+     ******************************************************************************/
+    namespace Multimedia
+    {
+        // IP Address
+        const AddressEntry IP_ADDRESS(192, 168, 2, 105);
+
+        // Commands
+        const std::map<std::string, ManifestEntry> COMMANDS = {};
+        // Telemetry
+        const std::map<std::string, ManifestEntry> TELEMETRY = {};
+        // Error
+        const std::map<std::string, ManifestEntry> ERROR = {};
+        
+        // Enums
+    }    // namespace Multimedia
 
     /******************************************************************************
      * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet 
@@ -262,27 +264,27 @@ namespace manifest
 
         // Commands
         const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"OPENLOOP", ManifestEntry(8000, 7, DataTypes::INT16_T)},
-            {"SETPOSITION", ManifestEntry(8001, 6, DataTypes::FLOAT_T)},
-            {"INCREMENTPOSITION", ManifestEntry(8002, 6, DataTypes::FLOAT_T)},
-            {"SETIK", ManifestEntry(8003, 5, DataTypes::FLOAT_T)},
-            {"INCREMENTIK_ROVERRELATIVE", ManifestEntry(8004, 5, DataTypes::FLOAT_T)},
-            {"INCREMENTIK_WRISTRELATIVE", ManifestEntry(8005, 5, DataTypes::FLOAT_T)},
-            {"LASER", ManifestEntry(8006, 1, DataTypes::UINT8_T)},
-            {"SOLENOID", ManifestEntry(8007, 1, DataTypes::UINT8_T)},
-            {"GRIPPER", ManifestEntry(8008, 1, DataTypes::INT16_T)},
+            {"ARMVELOCITYCONTROL", ManifestEntry(8000, 6, DataTypes::INT16_T)},
+            {"ARMMOVETOPOSITION", ManifestEntry(8001, 6, DataTypes::FLOAT_T)},
+            {"ARMINCREMENTPOSITION", ManifestEntry(8002, 6, DataTypes::FLOAT_T)},
+            {"ARMMOVEIK", ManifestEntry(8003, 6, DataTypes::FLOAT_T)},
+            {"ARMINCREMENTIKROVER", ManifestEntry(8004, 6, DataTypes::FLOAT_T)},
+            {"ARMINCREMENTIKWRIST", ManifestEntry(8005, 6, DataTypes::FLOAT_T)},
+            {"LASERS", ManifestEntry(8006, 1, DataTypes::UINT8_T)},
+            {"ENDEFFECTOR", ManifestEntry(8007, 1, DataTypes::UINT8_T)},
+            {"GRIPPERMOVE", ManifestEntry(8008, 2, DataTypes::INT16_T)},
             {"WATCHDOGOVERRIDE", ManifestEntry(8009, 1, DataTypes::UINT8_T)},
-            {"LIMITSWITCHOVERRIDE", ManifestEntry(8010, 1, DataTypes::UINT8_T)},
-            {"CALIBRATEENCODER", ManifestEntry(8011, 1, DataTypes::UINT8_T)},
-            {"SELECTGRIPPER", ManifestEntry(8012, 1, DataTypes::UINT8_T)},
-            {"CAMERATILT", ManifestEntry(8013, 1, DataTypes::UINT8_T)},
+            {"LIMITSWITCHOVERRIDE", ManifestEntry(8010, 1, DataTypes::UINT16_T)},
+            {"REQUESTJOINTPOSITIONS", ManifestEntry(8011, 1, DataTypes::UINT8_T)},
+            {"TOGGLEPOSITIONTELEM", ManifestEntry(8012, 1, DataTypes::UINT8_T)},
+            {"REQUESTAXESPOSITIONS", ManifestEntry(8013, 1, DataTypes::UINT8_T)},
         };
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"POSITIONS", ManifestEntry(8100, 7, DataTypes::FLOAT_T)},
-            {"COORDINATES", ManifestEntry(8101, 5, DataTypes::FLOAT_T)},
-            {"LIMITSWITCHTRIGGERED", ManifestEntry(8102, 1, DataTypes::UINT8_T)},
+            {"JOINTANGLES", ManifestEntry(8101, 6, DataTypes::FLOAT_T)},
+            {"MOTORVELOCITIES", ManifestEntry(8102, 6, DataTypes::FLOAT_T)},
+            {"IKCOORDINATES", ManifestEntry(8103, 6, DataTypes::FLOAT_T)},
         };
 
         // Error
@@ -304,32 +306,56 @@ namespace manifest
 
         // Commands
         const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"SCOOPAXIS_OPENLOOP", ManifestEntry(9000, 1, DataTypes::INT16_T)},
-            {"SENSORAXIS_OPENLOOP", ManifestEntry(9001, 1, DataTypes::INT16_T)},
-            {"SCOOPAXIS_SETPOSITION", ManifestEntry(9002, 1, DataTypes::FLOAT_T)},
-            {"SENSORAXIS_SETPOSITION", ManifestEntry(9003, 1, DataTypes::FLOAT_T)},
-            {"SCOOPAXIS_INCREMENTPOSITION", ManifestEntry(9004, 1, DataTypes::FLOAT_T)},
-            {"SENSORAXIS_INCREMENTPOSITION", ManifestEntry(9005, 1, DataTypes::FLOAT_T)},
-            {"LIMITSWITCHOVERRIDE", ManifestEntry(9006, 1, DataTypes::UINT8_T)},
-            {"AUGER", ManifestEntry(9007, 1, DataTypes::INT16_T)},
-            {"MICROSCOPE", ManifestEntry(9008, 1, DataTypes::UINT8_T)},
-            {"PROBOSCIS", ManifestEntry(9009, 1, DataTypes::INT16_T)},
-            {"WATCHDOGOVERRIDE", ManifestEntry(9010, 1, DataTypes::UINT8_T)},
-            {"CALIBRATEENCODER", ManifestEntry(9011, 1, DataTypes::UINT8_T)},
+            {"SENSORAXIS", ManifestEntry(9000, 1, DataTypes::INT16_T)},
+            {"WATERSELECTOR", ManifestEntry(9001, 1, DataTypes::INT8_T)},
+            {"WATERPUMP", ManifestEntry(9002, 1, DataTypes::UINT8_T)},
+            {"LIMITSWITCHOVERRIDE", ManifestEntry(9003, 1, DataTypes::UINT8_T)},
+            {"XOOPAXIS", ManifestEntry(9004, 1, DataTypes::INT16_T)},
+            {"ZOOPAXIS", ManifestEntry(9005, 1, DataTypes::INT16_T)},
+            {"SCOOPGRABBER", ManifestEntry(9006, 1, DataTypes::UINT8_T)},
+            {"GOTOPOSITION", ManifestEntry(9007, 1, DataTypes::UINT8_T)},
+            {"INCREMENTALSCOOP", ManifestEntry(9008, 1, DataTypes::INT8_T)},
+            {"BUMPSCOOP", ManifestEntry(9009, 1, DataTypes::UINT8_T)},
+            {"MICROSCOPEFOCUS", ManifestEntry(9010, 1, DataTypes::INT16_T)},
+            {"WATERPOSITION", ManifestEntry(9011, 1, DataTypes::UINT8_T)},
         };
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"POSITIONS", ManifestEntry(9100, 3, DataTypes::FLOAT_T)},
-            {"LIMITSWITCHTRIGGERED", ManifestEntry(9101, 1, DataTypes::UINT8_T)},
-            {"ENVIRONMENTALDATA", ManifestEntry(9102, 2, DataTypes::FLOAT_T)},
+            {"ENCODERPOSITIONS", ManifestEntry(9100, 3, DataTypes::FLOAT_T)},
         };
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {
-            {"WATCHDOGSTATUS", ManifestEntry(9200, 1, DataTypes::UINT8_T)},
+            {"LIMITSWITCHTRIGGERED", ManifestEntry(9200, 1, DataTypes::UINT8_T)},
         };
     }    // namespace ScienceActuation
+
+    /******************************************************************************
+     * @brief ScienceSensors Board IP Address, Commands, Telemetry, and Error 
+     *
+     * @author Missouri S&T - Mars Rover Design Team
+     * @date 2024-03-04
+     ******************************************************************************/
+    namespace ScienceSensors
+    {
+        // IP Address
+        const AddressEntry IP_ADDRESS(192, 168, 3, 101);
+
+        // Commands
+        const std::map<std::string, ManifestEntry> COMMANDS = {
+            {"FLUOROMETERLEDS", ManifestEntry(10000, 1, DataTypes::UINT8_T)},
+            {"REQFLUOROMETER", ManifestEntry(10001, 1, DataTypes::UINT8_T)},
+        };
+
+        // Telemetry
+        const std::map<std::string, ManifestEntry> TELEMETRY = {
+            {"FLUOROMETERDATA", ManifestEntry(10100, 215, DataTypes::UINT16_T)},
+        };
+
+        // Error
+        const std::map<std::string, ManifestEntry> ERROR = {};
+    }    // namespace ScienceSensors
 
     /******************************************************************************
      * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet 
@@ -362,6 +388,7 @@ namespace manifest
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {};
+        
         // Enums
         enum AUTONOMYSTATE
         {
@@ -425,79 +452,117 @@ namespace manifest
     }    // namespace Camera2
 
     /******************************************************************************
-     * @brief RamanSpectrometer Board IP Address, Commands, Telemetry, and Error 
+     * @brief Heater Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2024-03-04
      ******************************************************************************/
-    namespace RamanSpectrometer
+    namespace Heater
+    {
+        // IP Address
+        const AddressEntry IP_ADDRESS(192, 168, 2, 109);
+
+        // Commands
+        const std::map<std::string, ManifestEntry> COMMANDS = {
+            {"HEATERTOGGLE", ManifestEntry(15000, 1, DataTypes::UINT16_T)},
+            {"HEATERSETTEMP", ManifestEntry(15001, 12, DataTypes::FLOAT_T)},
+        };
+
+        // Telemetry
+        const std::map<std::string, ManifestEntry> TELEMETRY = {
+            {"THERMOVALUES", ManifestEntry(15100, 12, DataTypes::FLOAT_T)},
+            {"HEATERENABLED", ManifestEntry(15101, 1, DataTypes::UINT16_T)},
+        };
+
+        // Error
+        const std::map<std::string, ManifestEntry> ERROR = {
+            {"OVERHEAT", ManifestEntry(15200, 1, DataTypes::UINT16_T)},
+        };
+    }    // namespace Heater
+
+    /******************************************************************************
+     * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet 
+     *
+     * @author Missouri S&T - Mars Rover Design Team
+     * @date 2024-03-04
+     ******************************************************************************/
+    namespace SignalStack
     {
         // IP Address
         const AddressEntry IP_ADDRESS(192, 168, 3, 102);
 
         // Commands
         const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"ENABLELEDS", ManifestEntry(13000, 1, DataTypes::UINT8_T)},
-            {"REQUESTREADING", ManifestEntry(13001, 1, DataTypes::UINT8_T)},
+            {"SIGNALSROTATE", ManifestEntry(16000, 1, DataTypes::INT16_T)},
         };
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"CCDREADING_PART1", ManifestEntry(13100, 500, DataTypes::UINT16_T)},
-            {"CCDREADING_PART2", ManifestEntry(13101, 500, DataTypes::UINT16_T)},
-            {"CCDREADING_PART3", ManifestEntry(13102, 500, DataTypes::UINT16_T)},
-            {"CCDREADING_PART4", ManifestEntry(13103, 500, DataTypes::UINT16_T)},
-            {"CCDREADING_PART5", ManifestEntry(13104, 48, DataTypes::UINT16_T)},
+            {"SIGNALSPOSITION", ManifestEntry(16100, 2, DataTypes::DOUBLE_T)},
+            {"SIGNALSDIRECTION", ManifestEntry(16101, 1, DataTypes::FLOAT_T)},
         };
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {};
-    }    // namespace RamanSpectrometer
+    }    // namespace SignalStack
 
     /******************************************************************************
-     * @brief Fluorometer Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Core Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2024-03-04
      ******************************************************************************/
-    namespace Fluorometer
+    namespace Core
     {
         // IP Address
-        const AddressEntry IP_ADDRESS(192, 168, 3, 103);
+        const AddressEntry IP_ADDRESS(192, 168, 2, 110);
 
         // Commands
         const std::map<std::string, ManifestEntry> COMMANDS = {
-            {"ENABLELEDS", ManifestEntry(14000, 1, DataTypes::UINT8_T)},
-            {"REQUESTREADING", ManifestEntry(14001, 1, DataTypes::UINT8_T)},
+            {"DRIVELEFTRIGHT", ManifestEntry(17000, 2, DataTypes::FLOAT_T)},
+            {"DRIVEINDIVIDUAL", ManifestEntry(17001, 6, DataTypes::FLOAT_T)},
+            {"WATCHDOGOVERRIDE", ManifestEntry(17002, 1, DataTypes::UINT8_T)},
+            {"LEFTDRIVEGIMBALINCREMENT", ManifestEntry(17003, 1, DataTypes::INT16_T)},
+            {"RIGHTDRIVEGIMBALINCREMENT", ManifestEntry(17004, 1, DataTypes::INT16_T)},
+            {"LEFTMAINGIMBALINCREMENT", ManifestEntry(17005, 2, DataTypes::INT16_T)},
+            {"RIGHTMAINGIMBALINCREMENT", ManifestEntry(17006, 2, DataTypes::INT16_T)},
+            {"BACKDRIVEGIMBALINCREMENT", ManifestEntry(17007, 1, DataTypes::INT16_T)},
+            {"INITIATETESTROUTINE", ManifestEntry(17008, 1, DataTypes::UINT8_T)},
+            {"LEDRGB", ManifestEntry(17009, 3, DataTypes::UINT8_T)},
+            {"LEDPATTERNS", ManifestEntry(17010, 1, DataTypes::UINT8_T)},
+            {"STATEDISPLAY", ManifestEntry(17011, 1, DataTypes::UINT8_T)},
+            {"BRIGHTNESS", ManifestEntry(17012, 1, DataTypes::UINT8_T)},
+            {"SETWATCHDOGMODE", ManifestEntry(17013, 1, DataTypes::UINT8_T)},
         };
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"READING", ManifestEntry(14100, 288, DataTypes::UINT8_T)},
+            {"DRIVESPEEDS", ManifestEntry(17100, 6, DataTypes::INT16_T)},
         };
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {};
-    }    // namespace Fluorometer
+        
+        // Enums
+        enum DISPLAYSTATE
+        {
+            TELEOP,
+            AUTONOMY,
+            REACHED_GOAL
+        }; 
 
-    /******************************************************************************
-     * @brief IRSpectrometer Board IP Address, Commands, Telemetry, and Error 
-     *
-     * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-04
-     ******************************************************************************/
-    namespace IRSpectrometer
-    {
-        // IP Address
-        const AddressEntry IP_ADDRESS(192, 168, 3, 104);
+        enum PATTERNS
+        {
+            MRDT,
+            BELGIUM,
+            MERICA,
+            DIRT,
+            DOTA,
+            MCD,
+            WINDOWS
+        }; 
 
-        // Commands
-        const std::map<std::string, ManifestEntry> COMMANDS = {};
-        // Telemetry
-        const std::map<std::string, ManifestEntry> TELEMETRY = {};
-        // Error
-        const std::map<std::string, ManifestEntry> ERROR = {};
-    }    // namespace IRSpectrometer
+    }    // namespace Core
 
     /******************************************************************************
      * @brief RoveComm General Information
@@ -558,7 +623,7 @@ namespace manifest
             // Determine the board namespace based on boardId
             switch (boardId)
             {
-                case 1:    // BMS Board
+                case 2:    // BMS Board
                     if (dataTypeCode == 0)
                     {
                         return GetDataTypeFromMap(BMS::COMMANDS, dataId);
@@ -572,7 +637,7 @@ namespace manifest
                         return GetDataTypeFromMap(BMS::ERROR, dataId);
                     }
                     break;
-                case 2:    // Power Board
+                case 3:    // Power Board
                     if (dataTypeCode == 0)
                     {
                         return GetDataTypeFromMap(Power::COMMANDS, dataId);
@@ -584,34 +649,6 @@ namespace manifest
                     else if (dataTypeCode == 2)
                     {
                         return GetDataTypeFromMap(Power::ERROR, dataId);
-                    }
-                    break;
-                case 3:    // Core Board
-                    if (dataTypeCode == 0)
-                    {
-                        return GetDataTypeFromMap(Core::COMMANDS, dataId);
-                    }
-                    else if (dataTypeCode == 1)
-                    {
-                        return GetDataTypeFromMap(Core::TELEMETRY, dataId);
-                    }
-                    else if (dataTypeCode == 2)
-                    {
-                        return GetDataTypeFromMap(Core::ERROR, dataId);
-                    }
-                    break;
-                case 7:    // SignalStack Board
-                    if (dataTypeCode == 0)
-                    {
-                        return GetDataTypeFromMap(SignalStack::COMMANDS, dataId);
-                    }
-                    else if (dataTypeCode == 1)
-                    {
-                        return GetDataTypeFromMap(SignalStack::TELEMETRY, dataId);
-                    }
-                    else if (dataTypeCode == 2)
-                    {
-                        return GetDataTypeFromMap(SignalStack::ERROR, dataId);
                     }
                     break;
                 case 8:    // Arm Board
@@ -642,6 +679,20 @@ namespace manifest
                         return GetDataTypeFromMap(ScienceActuation::ERROR, dataId);
                     }
                     break;
+                case 10:    // ScienceSensors Board
+                    if (dataTypeCode == 0)
+                    {
+                        return GetDataTypeFromMap(ScienceSensors::COMMANDS, dataId);
+                    }
+                    else if (dataTypeCode == 1)
+                    {
+                        return GetDataTypeFromMap(ScienceSensors::TELEMETRY, dataId);
+                    }
+                    else if (dataTypeCode == 2)
+                    {
+                        return GetDataTypeFromMap(ScienceSensors::ERROR, dataId);
+                    }
+                    break;
                 case 11:    // Autonomy Board
                     if (dataTypeCode == 0)
                     {
@@ -670,32 +721,46 @@ namespace manifest
                         return GetDataTypeFromMap(Camera1::ERROR, dataId);
                     }
                     break;
-                case 13:    // RamanSpectrometer Board
+                case 15:    // Heater Board
                     if (dataTypeCode == 0)
                     {
-                        return GetDataTypeFromMap(RamanSpectrometer::COMMANDS, dataId);
+                        return GetDataTypeFromMap(Heater::COMMANDS, dataId);
                     }
                     else if (dataTypeCode == 1)
                     {
-                        return GetDataTypeFromMap(RamanSpectrometer::TELEMETRY, dataId);
+                        return GetDataTypeFromMap(Heater::TELEMETRY, dataId);
                     }
                     else if (dataTypeCode == 2)
                     {
-                        return GetDataTypeFromMap(RamanSpectrometer::ERROR, dataId);
+                        return GetDataTypeFromMap(Heater::ERROR, dataId);
                     }
                     break;
-                case 14:    // Fluorometer Board
+                case 16:    // SignalStack Board
                     if (dataTypeCode == 0)
                     {
-                        return GetDataTypeFromMap(Fluorometer::COMMANDS, dataId);
+                        return GetDataTypeFromMap(SignalStack::COMMANDS, dataId);
                     }
                     else if (dataTypeCode == 1)
                     {
-                        return GetDataTypeFromMap(Fluorometer::TELEMETRY, dataId);
+                        return GetDataTypeFromMap(SignalStack::TELEMETRY, dataId);
                     }
                     else if (dataTypeCode == 2)
                     {
-                        return GetDataTypeFromMap(Fluorometer::ERROR, dataId);
+                        return GetDataTypeFromMap(SignalStack::ERROR, dataId);
+                    }
+                    break;
+                case 17:    // Core Board
+                    if (dataTypeCode == 0)
+                    {
+                        return GetDataTypeFromMap(Core::COMMANDS, dataId);
+                    }
+                    else if (dataTypeCode == 1)
+                    {
+                        return GetDataTypeFromMap(Core::TELEMETRY, dataId);
+                    }
+                    else if (dataTypeCode == 2)
+                    {
+                        return GetDataTypeFromMap(Core::ERROR, dataId);
                     }
                     break;
                 default:
