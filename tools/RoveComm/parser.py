@@ -97,6 +97,7 @@ def insert_enums(board):
     """
     if ("Enums" in this.manifest[board]):
         enums = this.manifest[board]["Enums"]
+        this.header_file.write(f"{generate_indent(2)}\n")
         this.header_file.write(f"{generate_indent(2)}// Enums\n")
         for enum in enums:
             this.header_file.write(f"{generate_indent(2) + 'enum ' + enum.upper()}\n")
