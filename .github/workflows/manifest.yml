@@ -1,8 +1,13 @@
 name: Update Manifest Header
 
 on:
-  issue_comment:
-    types: [created, edited, deleted]
+  pull_request:
+    branches: ["development"]
+    paths:
+      - "data/RoveComm/manifest.json"
+      - "tools/RoveComm/parser.py"
+      - "src/RoveComm/RoveCommManifest.h"
+      - ".github/workflows/manifest.yml"
 
 concurrency:
   group: "manifest-generator"
@@ -10,28 +15,34 @@ concurrency:
 
 jobs:
   update-manifest:
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/update-manifest') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Extract branch name
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
-
-      - name: Update Branch
-        uses: actions/checkout@v3
+      - name: Pull Repo
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          token: ${{ github.token }}
-          ref: ${{ steps.extract_branch.outputs.branch }}
+          submodules: "recursive"
 
-      - name: Generate Manifest and Commit
+      - name: Setup Git
+        run: |
+          git config user.name "MissouriMRDT"
+          git config user.email "marsrover@mst.edu"
+
+      - name: Rebase Changes
+        run: |
+          git fetch origin ${{ github.head_ref }}
+          git rebase origin/${{ github.head_ref }}
+
+      - name: Generate Manifest
         run: |
           git branch
           cd tools/RoveComm
           python parser.py
-          git config user.name "MissouriMRDT"
-          git config user.email "marsrover@mst.edu"
-          git add -f ../../src/RoveComm/Manifest.h
-          git commit -m "** Automated - Manifest Update **"
-          git push
+
+      - name: Commit Manifest
+        run: |
+          git add -f src/RoveComm/RoveCommManifest.h
+          git commit -m "** Automated - Manifest Update **" || echo "No changes to commit"
+
+      - name: Push Changes
+        run: |
+          git push origin HEAD:${{ github.head_ref }} --force-with-lease || echo "Failed to push changes"

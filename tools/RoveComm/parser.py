@@ -1,44 +1,27 @@
 import json
 import sys
 from datetime import date
+import subprocess
 
-# Define some c specific #defines and file header
-define_prefix = "#define"
-today = date.today()
-header = [
-    "/******************************************************************************\n",
-    " * @brief RoveComm Manifest\n",
-    " *\n",
-    " *        NOTICE! This file is auto generated and will be overwritten if edited\n",
-    " *                and committed. To make changes edit the manifest.json file or\n",
-    " *                edit parser.py if it is a formatting issue.\n",
-    " *\n",
-    " * @file Manifest.h\n",
-    " * @author Missouri S&T - Mars Rover Design Team\n",
-    " * @date <date>\n",
-    " *\n",
-    " * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved\n",
-    " ******************************************************************************/\n",
-    "\n",
-    "#ifndef MANIFEST_H\n",
-    "#define MANIFEST_H\n",
-    "\n",
-    "#include <stdint.h>\n",
-    "#include \"Packet.h\"\n",
-    "\n",
-]
+# Configuration
+rovecomm_version = 3
+filename = "RoveCommManifest.h"
+json_path = "../../data/RoveComm/manifest.json"
+header_path = "../../src/RoveComm/" + filename
+author = "Missouri S&T - Mars Rover Design Team"
+organization = "Mars Rover Design Team"
 
-# Maps types from json to c types
-type_to_ctype = {
-    "INT8_T"    : "int8_t",
-    "UINT8_T"   : "uint8_t",
-    "INT16_T"   : "int16_t",
-    "UINT16_T"  : "uint16_t",
-    "INT32_T"   : "int32_t",
-    "UINT32_T"  : "uint32_t",
-    "FLOAT_T"   : "float",
-    "DOUBLE_T"  : "double",
-    "CHAR"      : "char",
+# Maps types from json to struct types
+type_to_struct = {
+    "INT8_T"    : "DataTypes::INT8_T",
+    "UINT8_T"   : "DataTypes::UINT8_T",
+    "INT16_T"   : "DataTypes::INT16_T",
+    "UINT16_T"  : "DataTypes::UINT16_T",
+    "INT32_T"   : "DataTypes::INT32_T",
+    "UINT32_T"  : "DataTypes::UINT32_T",
+    "FLOAT_T"   : "DataTypes::FLOAT_T",
+    "DOUBLE_T"  : "DataTypes::DOUBLE_T",
+    "CHAR"      : "DataTypes::CHAR",
 }
 
 this = sys.modules[__name__]
@@ -47,6 +30,18 @@ this.manifest = None
 this.manifest_file = None
 this.header_file = None
 
+def insert_address(board):
+    """
+    This inserts IP Address for board
+    """
+    if (len(this.manifest[board]["Ip"]) > 0):
+        ip = this.manifest[board]["Ip"]
+        ip_octs = ip.split(".")
+
+        this.header_file.write(f"{generate_indent(2)}// IP Address\n")
+        this.header_file.write(f"{generate_indent(2)}const AddressEntry IP_ADDRESS({ip_octs[0]}, {ip_octs[1]}, {ip_octs[2]}, {ip_octs[3]});\n")
+
+        this.header_file.write("\n")
 
 def insert_packets(board, type):
     """
@@ -55,127 +50,466 @@ def insert_packets(board, type):
     """
     if (len(this.manifest[board][type]) > 0):
         messages = this.manifest[board][type]
-        this.header_file.write(f"////////////////////{type}\n")
+
+        if (type == "Commands"):
+            this.header_file.write(f"{generate_indent(2)}// Commands\n")
+            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> COMMANDS = {{\n")
+
+        elif (type == "Telemetry"):
+            this.header_file.write(f"{generate_indent(2)}// Telemetry\n")
+            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> TELEMETRY = {{\n")
+        elif (type == "Error"):
+            this.header_file.write(f"{generate_indent(2)}// Error\n")
+            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> ERROR = {{\n")
 
         for message in messages:
-            print(message)
+            ### print(message)
             dataId = this.manifest[board][type][message]["dataId"]
             dataCount = this.manifest[board][type][message]["dataCount"]
             comments = this.manifest[board][type][message]["comments"]
 
-            # Data type doesn't exactly match the c type
+            # Data type doesn't exactly match the struct type
             dataType = this.manifest[board][type][message]["dataType"]
-            dataType = type_to_ctype[dataType]
+            dataType = type_to_struct[dataType]
 
-            this.header_file.write(f"//{comments}\n")
-            this.header_file.write(
-                f"{define_prefix + ' RC_'+board.upper()+'BOARD'+'_'+message.upper()+'_DATA_ID':<70}{dataId:<10}\n"
-            )
-            this.header_file.write(
-                f"{define_prefix + ' RC_'+board.upper()+'BOARD'+'_'+message.upper()+'_DATA_COUNT':<70}{dataCount:<10}\n"
-            )
-            this.header_file.write(
-                f"{define_prefix + ' RC_'+board.upper()+'BOARD'+'_'+message.upper()+'_DATA_TYPE':<70}{dataType:<10}\n"
-            )
+
+            this.header_file.write(f"{generate_indent(3)}{{\"{message.upper()}\", ManifestEntry({dataId}, {dataCount}, {dataType})}},\n")
+
+        this.header_file.write(f"{generate_indent(2)}}};\n")
+
+        if (type != "Error"):
             this.header_file.write("\n")
+    else:
+        if (type == "Commands"):
+            this.header_file.write(f"{generate_indent(2)}// Commands\n")
+            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> COMMANDS = {{}};\n")
+
+        elif (type == "Telemetry"):
+            this.header_file.write(f"{generate_indent(2)}// Telemetry\n")
+            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> TELEMETRY = {{}};\n")
+        elif (type == "Error"):
+            this.header_file.write(f"{generate_indent(2)}// Error\n")
+            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> ERROR = {{}};\n")
 
 def insert_enums(board):
+    """
+    This inserts all Enums for a given type
+    """
     if ("Enums" in this.manifest[board]):
         enums = this.manifest[board]["Enums"]
-        this.header_file.write(f"////////////////////Enums\n")
+        this.header_file.write(f"{generate_indent(2)}\n")
+        this.header_file.write(f"{generate_indent(2)}// Enums\n")
         for enum in enums:
-            this.header_file.write(f"{'enum ' + board.upper() + 'BOARD' + '_' + enum.upper() + ' {'}")
+            this.header_file.write(f"{generate_indent(2) + 'enum ' + enum.upper()}\n")
+            this.header_file.write(f"{generate_indent(2) + '{'}\n")
             output = ""
+            enum_len = len(enums[enum])
+            enum_counter = 0
+
             for value in enums[enum]:
-                print(value)
-                output += f"{value.upper() + ','}"
-            output = output[:-1] #Removing "," from the last element of the enum 
-            this.header_file.write(f"{output + '};'} \n")
+                if enum_counter < enum_len - 1:
+                    output += f"{generate_indent(3) + value.upper() + ','}\n"
+                else:
+                    output += f"{generate_indent(3) + value.upper()}\n"
 
-if __name__ == "__main__":
-    # Load the json file
-    this.manifest_file = open("../../data/RoveComm/manifest.json", "r").read()
-    this.manifest_file = json.loads(this.manifest_file)
+                enum_counter += 1
 
-    # Check manifest spec version
-    if this.manifest_file["ManifestSpecVersion"] != 3:
-        print("Expected Manifest Spec v3, Aborting")
-        exit()
+            this.header_file.write(f"{output + generate_indent(2) + '};'} \n\n")
 
-    # Manifest contains additional info not necessary for header file
-    this.manifest = this.manifest_file["RovecommManifest"]
-    this.header_file = open("../../src/RoveComm/Manifest.h", "w")
+def insert_includes():
+    """
+    This inserts the guard block, all includes, and opens the manifest namespace
+    """
+    out = "\n"
+    out += "#ifndef MANIFEST_H\n"
+    out += "#define MANIFEST_H\n"
+    out += "\n"
+    out += "#include <map>\n"
+    out += "#include <stdint.h>\n"
+    out += "#include <string>\n"
+    out += "\n"
+    out += "namespace manifest\n"
+    out += "{\n"
 
-    for line in header:
-        if "@date" in line:
-            line = " * @date " + today.strftime("%Y-%m-%d" + "\n")
-        this.header_file.write(line)
+    return out
 
-    # Write all the Ips and Ports together
-    for board in this.manifest:
-        ip = this.manifest[board]["Ip"]
-        ip_octs = ip.split(".")
+def insert_footer():
+    """
+    This inserts the closing bracket of the manifest namespace, and closes the guard block
+    """
+    out = "}    // namespace manifest\n"
+    out += "\n"
+    out += "#endif    // MANIFEST_H\n"
 
-        # The < character indicates something is left aligned, in this case we are assuming that the name
-        # plus #define is less than or equal to 50 characters and the PORT/IP less than 10
-        this.header_file.write(
-            f"{define_prefix + ' RC_'+board.upper()+'BOARD'+'_FIRSTOCTET':<50}{ip_octs[0]:<10}\n"
-        )
-        this.header_file.write(
-            f"{define_prefix + ' RC_'+board.upper()+'BOARD'+'_SECONDOCTET':<50}{ip_octs[1]:<10}\n"
-        )
-        this.header_file.write(
-            f"{define_prefix + ' RC_'+board.upper()+'BOARD'+'_THIRDOCTET':<50}{ip_octs[2]:<10}\n"
-        )
-        this.header_file.write(
-            f"{define_prefix + ' RC_'+board.upper()+'BOARD'+'_FOURTHOCTET':<50}{ip_octs[3]:<10}\n"
-        )
-        this.header_file.write("\n")
+    return out
 
-    # A couple of newlines between IP assignments and rovecomm messages
-    this.header_file.write("\n\n")
+def insert_datatypes_enum():
+    """
+    This inserts the DataTypes enumeration
+    """
+    out = generate_indent(1) + "enum DataTypes\n"
+    out += generate_indent(1) + "{\n"
+    out += generate_indent(2) + "INT8_T,\n"
+    out += generate_indent(2) + "UINT8_T,\n"
+    out += generate_indent(2) + "INT16_T,\n"
+    out += generate_indent(2) + "UINT16_T,\n"
+    out += generate_indent(2) + "INT32_T,\n"
+    out += generate_indent(2) + "UINT32_T,\n"
+    out += generate_indent(2) + "FLOAT_T,\n"
+    out += generate_indent(2) + "DOUBLE_T,\n"
+    out += generate_indent(2) + "CHAR\n"
+    out += generate_indent(1) + "};\n"
+    out += "\n"
 
-    # Insert the update rate and UDP port
+    return out
+
+def insert_address_struct():
+    """
+    This inserts the AddressEntry struct
+    """
+    out = generate_indent(1) + "struct AddressEntry\n"
+    out += generate_indent(1) + "{\n"
+    out += generate_indent(2) + "public:\n"
+    out += generate_indent(3) + "int FIRST_OCTET;\n"
+    out += generate_indent(3) + "int SECOND_OCTET;\n"
+    out += generate_indent(3) + "int THIRD_OCTET;\n"
+    out += generate_indent(3) + "int FOURTH_OCTET;\n"
+    out += generate_indent(1) + "};\n"
+    out += "\n"
+
+    return out
+
+def insert_manifest_struct():
+    """
+    This inserts the ManifestEntry struct
+    """
+    out = generate_indent(1) + "struct ManifestEntry\n"
+    out += generate_indent(1) + "{\n"
+    out += generate_indent(2) + "public:\n"
+    out += generate_indent(3) + "int DATA_ID;\n"
+    out += generate_indent(3) + "int DATA_COUNT;\n"
+    out += generate_indent(3) + "DataTypes DATA_TYPE;\n"
+    out += generate_indent(1) + "};\n"
+    out += "\n"
+
+    return out
+
+def insert_general():
+    """
+    This inserts the General Information that needs to be included in RoveComm
+    """
     this.update_rate = this.manifest_file["updateRate"]
-    this.header_file.write(f"{define_prefix + ' ROVECOMM_UPDATE_RATE':<50}{this.update_rate:<10}\n")
+    this.header_file.write(f"{generate_indent(2)}const int UPDATE_RATE            = {this.update_rate};\n")
 
     this.udp_port = this.manifest_file["ethernetUDPPort"]
     this.tcp_port = this.manifest_file["ethernetTCPPort"]
-    this.header_file.write(f"{define_prefix + ' RC_ROVECOMM_ETHERNET_UDP_PORT':<50}{this.udp_port:<10}\n")
-    this.header_file.write(f"{define_prefix + ' RC_ROVECOMM_ETHERNET_TCP_PORT':<50}{this.tcp_port:<10}\n")
+    this.header_file.write(f"{generate_indent(2)}const int ETHERNET_UDP_PORT      = {this.udp_port};\n")
+    this.header_file.write(f"{generate_indent(2)}const int ETHERNET_TCP_PORT      = {this.tcp_port};\n")
 
     # Also grab the first 3 octets of the subnet IP
     # this.subnet_ip = this.manifest_file["subnetIP"]
-    # this.header_file.write(f"{define_prefix + ' RC_ROVECOMM_SUBNET_IP_FIRST_OCTET':<50}{this.subnet_ip[0]:<10}\n")
-    # this.header_file.write(f"{define_prefix + ' RC_ROVECOMM_SUBNET_IP_SECOND_OCTET':<50}{this.subnet_ip[1]:<10}\n")
-    # this.header_file.write(f"{define_prefix + ' RC_ROVECOMM_SUBNET_IP_THIRD_OCTET':<50}{this.subnet_ip[2]:<10}\n")
+    # this.header_file.write(f"{generate_indent(2)}const int SUBNET_IP_FIRST_OCTET  = {this.subnet_ip[0]};\n")
+    # this.header_file.write(f"{generate_indent(2)}const int SUBNET_IP_SECOND_OCTET = {this.subnet_ip[1]};\n")
+    # this.header_file.write(f"{generate_indent(2)}const int SUBNET_IP_THIRD_OCTET  = {this.subnet_ip[2]};\n")
 
-    this.header_file.write("\n\n")
-
-    # Grabs the first 5 bytes of the MAC address
     this.subnet_mac = this.manifest_file["MACaddressPrefix"]
-    this.header_file.write(f"{define_prefix + ' RC_ROVECOMM_SUBNET_MAC_FIRST_BYTE':<50}{this.subnet_mac[0]:<10}\n")
-    this.header_file.write(f"{define_prefix + ' RC_ROVECOMM_SUBNET_MAC_SECOND_BYTE':<50}{this.subnet_mac[1]:<10}\n")
+    this.header_file.write(f"{generate_indent(2)}const int SUBNET_MAC_FIRST_BYTE  = {this.subnet_mac[0]};\n")
+    this.header_file.write(f"{generate_indent(2)}const int SUBNET_MAC_SECOND_BYTE = {this.subnet_mac[1]};\n")
 
-    this.header_file.write("\n\n")
-
-    # First insert the reserved System Id's
+def insert_system():
+    """
+    This inserts the System Information that needs to be included in RoveComm
+    """
+    max_len = 0
     this.system_packets = this.manifest_file["SystemPackets"]
-    this.header_file.write(f"///////////////////////////////////////////////////\n")
-    this.header_file.write(f"{'////////////':<20}{'System Packets':<20}{'///////////':<20}\n")
-    this.header_file.write(f"///////////////////////////////////////////////////\n\n")
 
     for packet in this.system_packets:
-        this.header_file.write(
-            f"{define_prefix + ' RC_ROVECOMM_'+packet.upper()+'_DATA_ID':<50}{this.system_packets[packet]:<10}\n"
-        )
-    this.header_file.write("\n\n")
+        temp = "const int " + packet.upper() + "_DATA_ID"
+        
+        if len(temp) > max_len:
+            max_len = len(temp)
 
-    # Now go through and write all the commands and telemetry
+    for packet in this.system_packets:
+        temp = "const int " + packet.upper() + "_DATA_ID"
+
+        temp += generate_spaces(max_len - len(temp))
+
+        this.header_file.write(f"{generate_indent(2)}{temp} = {this.system_packets[packet]};\n")
+
+def find_board_and_data_id(json_file):
+    results = set()
+    with open(json_file) as f:
+        data = json.load(f)
+
+    for board_name, component in data['RovecommManifest'].items():
+        if 'Commands' in component:
+            for command in component['Commands'].values():
+                data_id = command['dataId'] // 1000
+                results.add((board_name, data_id))
+        elif 'Telemetry' in component:
+            for telemetry in component['Telemetry'].values():
+                data_id = telemetry['dataId'] // 1000
+                results.add((board_name, data_id))
+        elif 'Error' in component:
+            for error in component['Error'].values():
+                data_id = error['dataId'] // 1000
+                results.add((board_name, data_id))
+
+    return sorted(results, key=lambda x: x[1])
+
+def insert_helpers():
+    """
+    This inserts the Helper Information that needs to be included in RoveComm
+    """
+
+    # GetDataTypeFromMap function
+    this.header_file.write(f"{generate_indent(2)}inline DataTypes GetDataTypeFromMap(const std::map<std::string, ManifestEntry>& dataMap, uint16_t dataId)\n")
+    this.header_file.write(f"{generate_indent(2)}{{\n")
+    this.header_file.write(f"{generate_indent(3)}for (const auto& entry : dataMap)\n")
+    this.header_file.write(f"{generate_indent(3)}{{\n")
+    this.header_file.write(f"{generate_indent(4)}if (entry.second.DATA_ID == dataId)\n")
+    this.header_file.write(f"{generate_indent(4)}{{\n")
+    this.header_file.write(f"{generate_indent(5)}return entry.second.DATA_TYPE;\n")
+    this.header_file.write(f"{generate_indent(4)}}}\n")
+    this.header_file.write(f"{generate_indent(3)}}}\n")
+    this.header_file.write(f"{generate_indent(3)}return DataTypes::CHAR;{generate_indent(1)}// Default return value if dataId not found\n")
+    this.header_file.write(f"{generate_indent(2)}}}\n")
+
+    # GetDataTypeFromMap function
+    this.header_file.write(f"{generate_indent(2)}\n")
+    this.header_file.write(f"{generate_indent(2)}inline DataTypes GetDataTypeFromId(uint16_t dataId)\n")
+    this.header_file.write(f"{generate_indent(2)}{{\n")
+    this.header_file.write(f"{generate_indent(3)}int boardId      = dataId / 1000;          // Determine board ID based on thousands place\n")
+    this.header_file.write(f"{generate_indent(3)}int dataTypeCode = (dataId / 100) % 10;    // Determine data type code based on hundreds place\n")
+    this.header_file.write(f"{generate_indent(3)}\n")
+    this.header_file.write(f"{generate_indent(3)}// Determine the board namespace based on boardId\n")
+    this.header_file.write(f"{generate_indent(3)}switch (boardId)\n")
+    this.header_file.write(f"{generate_indent(3)}{{\n")
+    board_and_data_ids = find_board_and_data_id("../../data/RoveComm/manifest.json")
+    for board_name, data_id in board_and_data_ids:
+        this.header_file.write(f"{generate_indent(4)}case {data_id}:{generate_indent(1)}// {board_name} Board\n")
+        this.header_file.write(f"{generate_indent(5)}if (dataTypeCode == 0)\n")
+        this.header_file.write(f"{generate_indent(5)}{{\n")
+        this.header_file.write(f"{generate_indent(6)}return GetDataTypeFromMap({board_name}::COMMANDS, dataId);\n")
+        this.header_file.write(f"{generate_indent(5)}}}\n")
+        this.header_file.write(f"{generate_indent(5)}else if (dataTypeCode == 1)\n")
+        this.header_file.write(f"{generate_indent(5)}{{\n")
+        this.header_file.write(f"{generate_indent(6)}return GetDataTypeFromMap({board_name}::TELEMETRY, dataId);\n")
+        this.header_file.write(f"{generate_indent(5)}}}\n")
+        this.header_file.write(f"{generate_indent(5)}else if (dataTypeCode == 2)\n")
+        this.header_file.write(f"{generate_indent(5)}{{\n")
+        this.header_file.write(f"{generate_indent(6)}return GetDataTypeFromMap({board_name}::ERROR, dataId);\n")
+        this.header_file.write(f"{generate_indent(5)}}}\n")
+        this.header_file.write(f"{generate_indent(5)}break;\n")
+    this.header_file.write(f"{generate_indent(4)}default:\n")
+    this.header_file.write(f"{generate_indent(5)}// Invalid Board ID\n")
+    this.header_file.write(f"{generate_indent(5)}break;\n")
+    this.header_file.write(f"{generate_indent(3)}}}\n")
+    this.header_file.write(f"{generate_indent(3)}\n")
+    this.header_file.write(f"{generate_indent(3)}// If dataId is not found in any namespace, return a default type\n")
+    this.header_file.write(f"{generate_indent(3)}return DataTypes::CHAR;\n")
+    this.header_file.write(f"{generate_indent(2)}}}\n")
+
+def sanity_check(manifest):
+    """
+    This checks that we are trying to parse the correct version of RoveComm
+    """
+    if manifest["ManifestSpecVersion"] != rovecomm_version:
+        print("Expected Manifest Spec v" + str(rovecomm_version) + ", Aborting")
+        exit()
+
+def generate_file_header():
+    """
+    This adds a doxygen file header to the top of the manifest header
+    """
+    output = []
+
+    # Append Start Line
+    output += "/******************************************************************************\n"
+
+    # Append Brief
+    output += [
+        " * @brief RoveComm Manifest\n",
+        " *\n",
+        " *        NOTICE! This file is auto generated and will be overwritten if edited\n",
+        " *                and committed. To make changes edit the manifest.json file or\n",
+        " *                edit parser.py if it is a formatting issue.\n"
+    ]
+
+    # Append Blank Line
+    output += " *\n"
+
+    # Append Filename
+    output += " * @file " + filename + "\n"
+    
+    # Append Author
+    output += " * @author " + author + "\n"
+
+    # Append Date
+    output += " * @date " + date.today().strftime("%Y-%m-%d") + "\n"
+
+    # Append Blank Line
+    output += " *\n"
+
+    # Append Copyright
+    output += " * @copyright Copyright " + organization + " " + date.today().strftime("%Y") + " - All Rights Reserved\n"
+
+    # Append End Line
+    output += " ******************************************************************************/\n"
+
+    # Return File Header
+    return output
+
+def generate_doxygen_block(brief):
+    """
+    This adds a doxygen comment block with custom brief
+    """
+    output = "/******************************************************************************\n"
+
+    # Append Brief
+    if len(brief) > 68:
+        first = True
+        temp_line = ""
+        temp = brief.split(" ")
+
+        for word in temp:
+            if len(temp_line) + len(word) < 68:
+                temp_line += word + " "
+            else:
+                if first:
+                    output += " * @brief " + temp_line + "\n"
+                    first = False
+                    temp_line = ""
+                else:
+                    output += " *        " + temp_line + "\n"
+                    temp_line = ""
+    else:
+        output += " * @brief " + brief + "\n"
+
+    # Append Blank Line
+    output += " *\n"
+
+    # Append Author
+    output += " * @author " + author + "\n"
+
+    # Append Date
+    output += " * @date " + date.today().strftime("%Y-%m-%d") + "\n"
+
+    # Append End Line
+    output += " ******************************************************************************/"
+
+    # Return File Header
+    return output
+
+def generate_indent(num = 1):
+    """
+    Indents by adding spaces
+    """
+    output = ""
+    
+    for i in range(num):
+        output += generate_spaces(4)
+
+    return output
+
+def generate_spaces(num = 1):
+    """
+    Adds the appropriate number of spaces
+    """
+    output = ""
+    
+    for i in range(num):
+        output += " "
+
+    return output
+
+if __name__ == "__main__":
+    ###############################
+    ######### Set Up File #########
+    ###############################
+    
+    # Load the json file
+    this.manifest_file = open(json_path, "r").read()
+    this.manifest_file = json.loads(this.manifest_file)
+
+    # Check manifest spec version
+    sanity_check(this.manifest_file)
+
+    # Manifest contains additional info not necessary for header file
+    this.manifest = this.manifest_file["RovecommManifest"]
+    this.header_file = open(header_path, "w")
+
+    ##############################
+    ######## Write to File #######
+    ##############################
+
+    ## Add Header Doxygen Block
+    for line in generate_file_header():
+        this.header_file.write(line)
+
+    ## Add Includes
+    for line in insert_includes():
+        this.header_file.write(line)
+
+    ## Add DataTypes Enum
+    lines_index = 0
+    lines = generate_doxygen_block("Enumeration of Data Types to be used in RoveComm").split("\n")
+    for line in lines:
+        if lines_index < len(lines) - 1:
+            this.header_file.write(generate_indent(1) + line + "\n")
+        else:
+            this.header_file.write(generate_indent(1) + line + "\n")
+
+        lines_index += 1
+    for line in insert_datatypes_enum():
+        this.header_file.write(line)
+
+    ## Add AddressEntry Struct
+    lines_index = 0
+    lines = generate_doxygen_block("IP Address Object for RoveComm.").split("\n")
+    for line in lines:
+        if lines_index < len(lines) - 1:
+            this.header_file.write(generate_indent(1) + line + "\n")
+        else:
+            this.header_file.write(generate_indent(1) + line + "\n")
+
+        lines_index += 1
+    for line in insert_address_struct():
+        this.header_file.write(line)
+
+    ## Add ManifestEntry Struct
+    lines_index = 0
+    lines = generate_doxygen_block("Manifest Entry Object for RoveComm.").split("\n")
+    for line in lines:
+        if lines_index < len(lines) - 1:
+            this.header_file.write(generate_indent(1) + line + "\n")
+        else:
+            this.header_file.write(generate_indent(1) + line + "\n")
+
+        lines_index += 1
+    for line in insert_manifest_struct():
+        this.header_file.write(line)
+
+    ## Add Board Namespaces
     for board in this.manifest:
-        this.header_file.write(f"///////////////////////////////////////////////////\n")
-        this.header_file.write(f"{'////////////':<20}{board.upper()+'BOARD':<20}{'///////////':<20}\n")
-        this.header_file.write(f"///////////////////////////////////////////////////\n\n")
+
+        # Add Doxgen Comment Block
+        lines_index = 0
+        lines = generate_doxygen_block(board + " Board IP Address, Commands, Telemetry, and Error Packet Information").split("\n")
+        for line in lines:
+            if lines_index < len(lines) - 1:
+                this.header_file.write(generate_indent(1) + line + "\n")
+            else:
+                this.header_file.write(generate_indent(1) + line + "\n")
+
+            lines_index += 1
+
+        # Open Namespace
+        this.header_file.write(f"{generate_indent(1)}namespace {board}\n")
+        this.header_file.write(generate_indent(1) + "{\n")
+
+        # Insert IP Octets
+        insert_address(board)
 
         # Insert the commands, telemetry and error messages for this particular board
         insert_packets(board, "Commands")
@@ -183,8 +517,79 @@ if __name__ == "__main__":
         insert_packets(board, "Error")
         insert_enums(board)
 
-        # Write a couple of newlines to seperate boards
-        this.header_file.write("\n\n")
+        # Close Namespace
+        this.header_file.write(generate_indent(1) + "}" + generate_indent(1) + "// namespace " + board + "\n")
 
-    this.header_file.write("#endif    // MANIFEST_H\n")
-    this.header_file.close()
+        # Write a newline to seperate boards
+        this.header_file.write("\n")
+
+    ## Add General Namspace
+    lines_index = 0
+    lines = generate_doxygen_block("RoveComm General Information").split("\n")
+    for line in lines:
+        if lines_index < len(lines) - 1:
+            this.header_file.write(generate_indent(1) + line + "\n")
+        else:
+            this.header_file.write(generate_indent(1) + line + "\n")
+
+        lines_index += 1
+
+    # Open Namespace
+    this.header_file.write(f"{generate_indent(1)}namespace General\n")
+    this.header_file.write(generate_indent(1) + "{\n")
+
+    insert_general()
+
+    # Close Namespace
+    this.header_file.write(generate_indent(1) + "}" + generate_indent(1) + "// namespace General\n")
+
+    # Write a newline to seperate boards
+    this.header_file.write("\n")
+
+    ## Add System Namespace
+    lines_index = 0
+    lines = generate_doxygen_block("RoveComm System Information").split("\n")
+    for line in lines:
+        if lines_index < len(lines) - 1:
+            this.header_file.write(generate_indent(1) + line + "\n")
+        else:
+            this.header_file.write(generate_indent(1) + line + "\n")
+
+        lines_index += 1
+
+    # Open Namespace
+    this.header_file.write(f"{generate_indent(1)}namespace System\n")
+    this.header_file.write(generate_indent(1) + "{\n")
+
+    insert_system()
+
+    # Close Namespace
+    this.header_file.write(generate_indent(1) + "}" + generate_indent(1) + "// namespace System\n")
+
+    ## Add Helpers Namespace
+    this.header_file.write(f"{generate_indent(2)}\n")
+    lines_index = 0
+    lines = generate_doxygen_block("RoveComm Helper Functions").split("\n")
+    for line in lines:
+        if lines_index < len(lines) - 1:
+            this.header_file.write(generate_indent(1) + line + "\n")
+        else:
+            this.header_file.write(generate_indent(1) + line + "\n")
+
+        lines_index += 1
+
+    # Open Namespace
+    this.header_file.write(f"{generate_indent(1)}namespace Helpers\n")
+    this.header_file.write(generate_indent(1) + "{\n")
+
+    insert_helpers()
+
+    # Close Namespace
+    this.header_file.write(generate_indent(1) + "}" + generate_indent(1) + "// namespace Helpers\n")
+
+    # Write a newline to seperate boards
+    this.header_file.write("\n")
+
+    # Add Footer
+    for line in insert_footer():
+        this.header_file.write(line)
