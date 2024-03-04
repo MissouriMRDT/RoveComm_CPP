@@ -1,4 +1,4 @@
 [submodule "data/RoveComm"]
 	path = data/RoveComm
 	url = https://github.com/MissouriMRDT/RoveComm_Base
-    branch = master
+    branch = embedded-2024
