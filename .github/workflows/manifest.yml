@@ -36,12 +36,6 @@ jobs:
 
       - name: Commit Manifest
         run: |
-          git pull
           git add -f src/RoveComm/RoveCommManifest.h
           git commit -m "** Automated - Manifest Update **"
-
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.event.pull_request.head.ref }}
+          git push
