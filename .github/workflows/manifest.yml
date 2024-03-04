@@ -32,10 +32,10 @@ jobs:
         run: |
           git config user.name "MissouriMRDT"
           git config user.email "marsrover@mst.edu"
-          echo ${{ github.event.pull_request.head.ref }}
+          echo ${{ github.head_ref }}
 
       - name: Commit Manifest
         run: |
           git add -f src/RoveComm/RoveCommManifest.h
           git commit -m "** Automated - Manifest Update **"
-          git push origin ${{ github.event.pull_request.head.ref }}
+          git push origin ${{ github.head_ref }}
