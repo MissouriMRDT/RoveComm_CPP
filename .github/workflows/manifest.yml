@@ -20,6 +20,7 @@ jobs:
       - name: Pull Repo
         uses: actions/checkout@v4
         with:
+          branch: ${{ github.event.pull_request.head.ref }}
           submodules: "recursive"
 
       - name: Generate Manifest
@@ -35,7 +36,6 @@ jobs:
 
       - name: Commit Manifest
         run: |
-          git checkout ${{ github.event.pull_request.head.ref }}
           git pull
           git add -f src/RoveComm/RoveCommManifest.h
           git commit -m "** Automated - Manifest Update **"
