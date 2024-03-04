@@ -35,6 +35,7 @@ jobs:
 
       - name: Commit Manifest
         run: |
+          git pull
           git add -f src/RoveComm/RoveCommManifest.h
           git commit -m "** Automated - Manifest Update **"
 
