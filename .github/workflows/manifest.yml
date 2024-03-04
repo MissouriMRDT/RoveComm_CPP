@@ -38,4 +38,4 @@ jobs:
         run: |
           git add -f src/RoveComm/RoveCommManifest.h
           git commit -m "** Automated - Manifest Update **"
-          git push
+          git push origin ${{ github.event.pull_request.head.ref }}
