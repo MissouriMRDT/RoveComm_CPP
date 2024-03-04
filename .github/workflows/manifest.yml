@@ -1,8 +1,11 @@
 name: Update Manifest Header
 
 on:
-  issue_comment:
-    types: [created, edited, deleted]
+  pull_request:
+    - files:
+        - "tools/RoveComm/parser.py"
+        - "src/RoveComm/RoveCommManifest.h"
+        - ".github/workflows/manifest.yml"
 
 concurrency:
   group: "manifest-generator"
@@ -10,7 +13,6 @@ concurrency:
 
 jobs:
   update-manifest:
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/update-manifest') }}
     runs-on: ubuntu-latest
     steps:
       - name: Pull Repo
@@ -29,7 +31,7 @@ jobs:
 
       - name: Commit Manifest
         run: |
-          git add -f ../../src/RoveComm/Manifest.h
+          git add -f ../../src/RoveComm/RoveCommManifest.h
           git commit -m "** Automated - Manifest Update **"
 
       - name: Push changes
