@@ -178,7 +178,7 @@ TEST(RoveCommTCP, CallbackInvoked)
             rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
 
             // Process the received packet (simulate callback invocation)
-            pRoveCommTCP_Node.CallProcessPacket<uint8_t>(stData, rovecomm::tcp::vUInt8Callbacks);
+            pRoveCommTCP_Node.CallProcessPacket(stData, rovecomm::tcp::vUInt8Callbacks);
 
             // Check if the callback was invoked
             EXPECT_TRUE(bCallbackInvoked);
