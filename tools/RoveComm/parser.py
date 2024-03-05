@@ -39,7 +39,7 @@ def insert_address(board):
         ip_octs = ip.split(".")
 
         this.header_file.write(f"{generate_indent(2)}// IP Address\n")
-        this.header_file.write(f"{generate_indent(2)}const AddressEntry IP_ADDRESS({ip_octs[0]}, {ip_octs[1]}, {ip_octs[2]}, {ip_octs[3]});\n")
+        this.header_file.write(f"{generate_indent(2)}const AddressEntry IP_ADDRESS{{{ip_octs[0]}, {ip_octs[1]}, {ip_octs[2]}, {ip_octs[3]}}};\n")
 
         this.header_file.write("\n")
 
@@ -73,7 +73,7 @@ def insert_packets(board, type):
             dataType = type_to_struct[dataType]
 
 
-            this.header_file.write(f"{generate_indent(3)}{{\"{message.upper()}\", ManifestEntry({dataId}, {dataCount}, {dataType})}},\n")
+            this.header_file.write(f"{generate_indent(3)}{{\"{message.upper()}\", ManifestEntry{{{dataId}, {dataCount}, {dataType}}}}},\n")
 
         this.header_file.write(f"{generate_indent(2)}}};\n")
 

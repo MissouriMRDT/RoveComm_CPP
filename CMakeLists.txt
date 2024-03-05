@@ -10,7 +10,7 @@
 cmake_minimum_required(VERSION 3.24.3)
 
 ## C++ Version
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ## Project Name and Software Version Number
