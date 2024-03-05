@@ -480,6 +480,8 @@ namespace rovecomm
     template ssize_t RoveCommTCP::SendTCPPacket<uint8_t>(const RoveCommPacket<uint8_t>&, const char*, int);
     template void RoveCommTCP::AddTCPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&)>, const uint16_t&);
     template void RoveCommTCP::RemoveTCPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&)>);
+    template void RoveCommTCP::ProcessPacket<uint8_t>(const RoveCommData& stData,
+                                                      const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<uint8_t>&)>, uint16_t>>& vCallbacks);
 
     template ssize_t RoveCommTCP::SendTCPPacket<int8_t>(const RoveCommPacket<int8_t>&, const char*, int);
     template void RoveCommTCP::AddTCPCallback<int8_t>(std::function<void(const RoveCommPacket<int8_t>&)>, const uint16_t&);
