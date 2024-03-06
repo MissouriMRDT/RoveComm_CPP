@@ -14,6 +14,7 @@
 /// \cond
 #include <arpa/inet.h>
 #include <cstring>
+#include <fcntl.h>
 #include <functional>
 #include <iostream>
 #include <netinet/in.h>
@@ -54,6 +55,16 @@ namespace rovecomm
         {
             perror("Failed to create TCP socket");
             return false;
+        }
+        else
+        {
+            // Attempt to set the socket to non-blocking mode.
+            if (fcntl(m_nTCPSocket, F_SETFL, fcntl(m_nTCPSocket, F_GETFL) | O_NONBLOCK) == -1)
+            {
+                // Handle and print error.
+                perror("Failed to set UDP socket to non-blocking mode.");
+                return false;
+            }
         }
 
         // Configure the server address
@@ -367,7 +378,12 @@ namespace rovecomm
         struct sockaddr_in saClientAddr;
         socklen_t sklClientAddrLen = sizeof(saClientAddr);
         int nClientSocket          = accept(m_nTCPSocket, (struct sockaddr*) &saClientAddr, &sklClientAddrLen);
-        if (nClientSocket == -1)
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            // Still waiting for connection return without error.
+            return;
+        }
+        else if (nClientSocket == -1)
         {
             perror("Failed to accept client connection");
             return;
@@ -376,7 +392,12 @@ namespace rovecomm
         // Receive data from the client
         RoveCommData stData;
         ssize_t siBytesReceived = recv(nClientSocket, &stData, sizeof(stData), 0);
-        if (siBytesReceived < 0)
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            // Still waiting for data or connection return without error.
+            return;
+        }
+        else if (siBytesReceived < 0)
         {
             perror("Error receiving data from client");
             close(nClientSocket);
@@ -480,8 +501,6 @@ namespace rovecomm
     template ssize_t RoveCommTCP::SendTCPPacket<uint8_t>(const RoveCommPacket<uint8_t>&, const char*, int);
     template void RoveCommTCP::AddTCPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&)>, const uint16_t&);
     template void RoveCommTCP::RemoveTCPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&)>);
-    template void RoveCommTCP::ProcessPacket<uint8_t>(const RoveCommData& stData,
-                                                      const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<uint8_t>&)>, uint16_t>>& vCallbacks);
 
     template ssize_t RoveCommTCP::SendTCPPacket<int8_t>(const RoveCommPacket<int8_t>&, const char*, int);
     template void RoveCommTCP::AddTCPCallback<int8_t>(std::function<void(const RoveCommPacket<int8_t>&)>, const uint16_t&);

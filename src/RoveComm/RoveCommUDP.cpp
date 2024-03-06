@@ -15,6 +15,7 @@
 /// \cond
 #include <arpa/inet.h>
 #include <cstring>
+#include <fcntl.h>
 #include <functional>
 #include <iostream>
 #include <netinet/in.h>
@@ -55,6 +56,16 @@ namespace rovecomm
         {
             perror("Failed to create UDP socket");
             return false;
+        }
+        else
+        {
+            // Attempt to set the socket to non-blocking mode.
+            if (fcntl(m_nUDPSocket, F_SETFL, fcntl(m_nUDPSocket, F_GETFL) | O_NONBLOCK) == -1)
+            {
+                // Handle and print error.
+                perror("Failed to set UDP socket to non-blocking mode.");
+                return false;
+            }
         }
 
         // Configure the server address
