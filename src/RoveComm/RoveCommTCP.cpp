@@ -150,6 +150,12 @@ namespace rovecomm
 
         // Send the data
         ssize_t siBytesSent = send(nClientSocket, &stData, sizeof(stData), 0);
+        // Check if any bytes were sent.
+        if (siBytesSent == -1)
+        {
+            // Handle and print error message.
+            perror("Failed to send data to TCP client socket");
+        }
 
         // Close the client socket
         close(nClientSocket);

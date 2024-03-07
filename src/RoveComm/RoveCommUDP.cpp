@@ -121,7 +121,11 @@ namespace rovecomm
         {
             saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
             inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
-            sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+            if (sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
+            {
+                // Handle and print error message.
+                perror("Failed to send data to UDP client socket subscriber.");
+            }
         }
 
         // Send the packet to the specified IP address and port

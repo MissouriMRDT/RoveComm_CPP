@@ -127,6 +127,9 @@ int main()
     // Send the packet to the localhost
     pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11000);
 
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     exit(0);
 
     return 0;
