@@ -456,7 +456,7 @@ namespace rovecomm
 
                 // Close the client socket
                 close(m_nCurrentTCPClientSocket);
-                m_nCurrentTCPClientSocket == -1;
+                m_nCurrentTCPClientSocket = -1;
             }
             // Still waiting for data or connection return without error.
             else if (siBytesReceived == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
