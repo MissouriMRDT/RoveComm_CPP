@@ -93,6 +93,9 @@ namespace rovecomm
             // Deinitialization
             void CloseTCPSocket();
 
+            // Selectively make inherited method public so we can get RoveCommNode FPS.
+            using AutonomyThread::GetIPS;
+
             // NOTE: These functions are for testing purposes only and should not be used in production code!
             template<typename T>
             void CallProcessPacket(const RoveCommData& stData,
