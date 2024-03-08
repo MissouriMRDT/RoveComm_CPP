@@ -20,11 +20,13 @@
 
 /// \cond
 #include <arpa/inet.h>
+#include <atomic>
 #include <csignal>
 #include <cstring>
 #include <functional>
 #include <iostream>
 #include <netinet/in.h>
+#include <shared_mutex>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <unordered_set>
@@ -53,9 +55,10 @@ namespace rovecomm
     {
         private:
             // Private member variables
-            int m_nUDPSocket;
+            std::atomic_int m_nUDPSocket;
             struct sockaddr_in m_saUDPServerAddr;
             std::vector<SubscriberInfo> vSubscribers;
+            std::shared_mutex m_muCallbackMutex;
 
             // Packet processing functions
             template<typename T>
@@ -74,7 +77,9 @@ namespace rovecomm
 
         public:
             // Constructor
-            RoveCommUDP() : m_nUDPSocket(-1) {}
+            RoveCommUDP();
+            // Destructor
+            ~RoveCommUDP();
 
             // Initialization
             bool InitUDPSocket(int nPort);
@@ -92,9 +97,6 @@ namespace rovecomm
 
             // Deinitialization
             void CloseUDPSocket();
-
-            // Destructor
-            ~RoveCommUDP();
 
             // NOTE: These functions are for testing purposes only and should not be used in production code!
             template<typename T>

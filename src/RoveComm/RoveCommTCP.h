@@ -21,11 +21,13 @@
 
 /// \cond
 #include <arpa/inet.h>
+#include <atomic>
 #include <csignal>
 #include <cstring>
 #include <functional>
 #include <iostream>
 #include <netinet/in.h>
+#include <shared_mutex>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
@@ -53,8 +55,11 @@ namespace rovecomm
     {
         private:
             // Private member variables
-            int m_nTCPSocket;
+            std::atomic_int m_nTCPSocket;
             struct sockaddr_in m_saTCPServerAddr;
+            std::atomic_int m_nCurrentTCPClientSocket;
+            struct sockaddr_in m_saClientAddr;
+            std::shared_mutex m_muCallbackMutex;
 
             // Packet processing functions
             template<typename T>
@@ -67,7 +72,9 @@ namespace rovecomm
 
         public:
             // Constructor
-            RoveCommTCP() : m_nTCPSocket(-1) {}
+            RoveCommTCP();
+            // Destructor
+            ~RoveCommTCP();
 
             // Initialization
             bool InitTCPSocket(const char* cIPAddress, int nPort);
@@ -85,9 +92,6 @@ namespace rovecomm
 
             // Deinitialization
             void CloseTCPSocket();
-
-            // Destructor
-            ~RoveCommTCP();
 
             // NOTE: These functions are for testing purposes only and should not be used in production code!
             template<typename T>

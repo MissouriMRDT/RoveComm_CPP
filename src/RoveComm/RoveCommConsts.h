@@ -25,5 +25,8 @@ namespace rovecomm
 #define ROVECOMM_PACKET_MAX_DATA_COUNT        65535
 #define ROVECOMM_PACKET_HEADER_SIZE           6
 #define ROVECOMM_VERSION                      3
+
+    // Server constants.
+    const int ROVECOMM_THREAD_MAX_IPS = 120;
 }    // namespace rovecomm
 #endif    // ROVECOMM_CONSTS_H
