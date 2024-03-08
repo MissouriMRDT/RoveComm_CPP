@@ -70,7 +70,7 @@ int main()
     {
         (void) addr;
 
-        std::cout << "Received packet with:" << std::endl;
+        std::cout << "Received UDP packet with:" << std::endl;
         std::cout << "\tData ID: " << packet.unDataId << std::endl;
         std::cout << "\tData Count: " << packet.unDataCount << std::endl;
         std::cout << "\tData Type: " << packet.eDataType << std::endl;
@@ -109,27 +109,34 @@ int main()
     pRoveCommUDP_Node.AddUDPCallback<uint8_t>(UDPCallback, 11000);
     pRoveCommUDP_Node.AddUDPCallback<uint8_t>(UDPCallback, 11000);
     pRoveCommTCP_Node.AddTCPCallback<uint8_t>(TCPCallback, 11000);
+    pRoveCommTCP_Node.AddTCPCallback<uint8_t>(TCPCallback, 11000);
 
     // Create RoveCommPacket
     RoveCommPacket<uint8_t> stPacket;
     stPacket.unDataId    = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_ID;
     stPacket.unDataCount = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_COUNT;
     stPacket.eDataType   = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_TYPE;
-    stPacket.vData.push_back(1);
+    stPacket.vData.push_back(200);
 
     // Send the packet to the localhost
     pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11000);
     pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12000);
 
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
     // Remove the callback functions for UINT8_T data type from the UDP and TCP nodes
     pRoveCommUDP_Node.RemoveUDPCallback<uint8_t>(UDPCallback);
+    pRoveCommUDP_Node.AddUDPCallback<uint8_t>(UDPCallback, 11000);
 
     // Send the packet to the localhost
     pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11000);
+    pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12000);
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     exit(0);
-
-    return 0;
 }
 
 #endif    // __ROVECOMM_LIBRARY_MODE__

@@ -15,6 +15,7 @@
 /// \cond
 #include <arpa/inet.h>
 #include <cstring>
+#include <fcntl.h>
 #include <functional>
 #include <iostream>
 #include <netinet/in.h>
@@ -33,6 +34,34 @@
  ******************************************************************************/
 namespace rovecomm
 {
+    /******************************************************************************
+     * @brief Construct a new RoveCommUDP::RoveCommUDP object.
+     *
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2024-03-07
+     ******************************************************************************/
+    RoveCommUDP::RoveCommUDP()
+    {
+        // Initialize member variables.
+        m_nUDPSocket = -1;
+
+        // Set an IPS cap in the backend RoveComm thread.
+        this->SetMainThreadIPSLimit(rovecomm::ROVECOMM_THREAD_MAX_IPS);
+    }
+
+    /******************************************************************************
+     * @brief Destroy the RoveCommUDP::RoveCommUDP object.
+     *
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
+    RoveCommUDP::~RoveCommUDP()
+    {
+        CloseUDPSocket();
+    }
+
     /******************************************************************************
      * @brief Initialize the UDP socket and bind it to the specified port. This
      *        method also starts the thread that will continuously receive UDP
@@ -56,6 +85,16 @@ namespace rovecomm
             perror("Failed to create UDP socket");
             return false;
         }
+        else
+        {
+            // Attempt to set the socket to non-blocking mode.
+            if (fcntl(m_nUDPSocket, F_SETFL, fcntl(m_nUDPSocket, F_GETFL) | O_NONBLOCK) == -1)
+            {
+                // Handle and print error.
+                perror("Failed to set UDP socket to non-blocking mode.");
+                return false;
+            }
+        }
 
         // Configure the server address
         sockaddr_in saServerAddr;
@@ -65,7 +104,7 @@ namespace rovecomm
         saServerAddr.sin_port        = htons(nPort);
 
         // Bind the socket
-        if (bind(m_nUDPSocket, (struct sockaddr*) &saServerAddr, sizeof(saServerAddr)) == -1)
+        if (bind(m_nUDPSocket.load(), (struct sockaddr*) &saServerAddr, sizeof(saServerAddr)) == -1)
         {
             perror("Failed to bind UDP socket");
             close(m_nUDPSocket);
@@ -110,7 +149,11 @@ namespace rovecomm
         {
             saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
             inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
-            sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+            if (sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
+            {
+                // Handle and print error message.
+                perror("Failed to send data to UDP client socket subscriber.");
+            }
         }
 
         // Send the packet to the specified IP address and port
@@ -144,6 +187,9 @@ namespace rovecomm
     template<typename T>
     void RoveCommUDP::AddUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback, const uint16_t& unCondition)
     {
+        // Acquire a write lock to protect the callback vectors.
+        std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
+
         // Add the callback function to the vector of UDP callbacks for the specified data type
         if constexpr (std::is_same_v<T, uint8_t>)
         {
@@ -208,6 +254,9 @@ namespace rovecomm
     template<typename T>
     void RoveCommUDP::RemoveUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback)
     {
+        // Acquire a write lock to protect the callback vectors.
+        std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
+
         // Remove the callback function from the vector of UDP callbacks for the specified data type
         if constexpr (std::is_same_v<T, uint8_t>)
         {
@@ -325,6 +374,9 @@ namespace rovecomm
         {
             RemoveSubscriber(stSubscriber.szIPAddress, stSubscriber.nPort);
         }
+
+        // Acquire a read lock to protect the callback vectors.
+        std::shared_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
         // Invoke registered callbacks
         for (const std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>& tpCallbackInfo : vCallbacks)
@@ -479,18 +531,6 @@ namespace rovecomm
             // Close the socket
             close(m_nUDPSocket);
         }
-    }
-
-    /******************************************************************************
-     * @brief Destroy the RoveCommUDP::RoveCommUDP object.
-     *
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-07
-     ******************************************************************************/
-    RoveCommUDP::~RoveCommUDP()
-    {
-        CloseUDPSocket();
     }
 
     // Explicitly define template function types
