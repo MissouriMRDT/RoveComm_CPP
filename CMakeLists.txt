@@ -18,7 +18,7 @@ project(RoveComm_CPP VERSION 3.00.00)
 
 ## Include Required CMake Packages
 if(NOT CPack_CMake_INCLUDED)
-include(CPack)
+    include(CPack)
 endif()
 if(NOT CTest_CMake_INCLUDED)
     include(CTest)
