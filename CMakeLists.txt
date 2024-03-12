@@ -18,7 +18,7 @@ project(RoveComm_CPP VERSION 3.00.00)
 
 ## Include Required CMake Packages
 if(NOT CPack_CMake_INCLUDED)
-    include(CPack)
+include(CPack)
 endif()
 if(NOT CTest_CMake_INCLUDED)
     include(CTest)
@@ -59,8 +59,8 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CP
 set(CPACK_GENERATOR "STGZ")
 
 ## Search Project Directories for Header and Source Files
-file(GLOB RoveComm_INCLUDE  CONFIGURE_DEPENDS  "src/RoveComm/*.h")
-file(GLOB RoveComm_SRC      CONFIGURE_DEPENDS  "src/RoveComm/*.cpp")
+file(GLOB_RECURSE RoveComm_INCLUDE      CONFIGURE_DEPENDS  "src/RoveComm/*.h")
+file(GLOB_RECURSE RoveComm_SRC          CONFIGURE_DEPENDS  "src/RoveComm/*.cpp")
 
 ## Declare the library target.
 add_library(${PROJECT_NAME} STATIC ${RoveComm_INCLUDE} ${RoveComm_SRC})
@@ -77,9 +77,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 ## Set the shared object version property to the project's major version.
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
-## Set the public header property to the one with the actual API.
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "src/RoveComm/RoveComm.h")
-
 ## For access to standard installation directory variables (CMAKE_INSTALL_xDIR).
 include(GNUInstallDirs)
 
@@ -88,6 +85,12 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+## Install headers and sources into corresponding folders
+install(DIRECTORY src/RoveComm DESTINATION include FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY external/ DESTINATION external FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY src/interfaces DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY src/util DESTINATION include FILES_MATCHING PATTERN "*.hpp")
 
 ## Create the pkg-config file from the template.
 configure_file(src/RoveComm/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
