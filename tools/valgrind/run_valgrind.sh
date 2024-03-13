@@ -2,9 +2,9 @@
 
 # Define the path to the executable
 if [ "$1" = "GitHub-Action" ]; then
-  executable_path="/opt/RoveComm_CPP/build/RoveComm_CPP"
+  executable_path="/opt/RoveComm_CPP/build/RoveComm_CPP_App"
 else
-  executable_path="/workspaces/RoveComm_CPP/build/RoveComm_CPP"
+  executable_path="/workspaces/RoveComm_CPP/build/RoveComm_CPP_App"
 fi
 
 # Check if the executable exists

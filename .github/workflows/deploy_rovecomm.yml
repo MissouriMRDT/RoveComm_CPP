@@ -21,22 +21,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          path: /opt/
-          submodules: "recursive"
+
+      - name: Copy Repository to /opt
+        shell: bash
+        run: |
+          mkdir -p /opt/RoveComm_CPP
+          cp -r . /opt/RoveComm_CPP
 
       - name: Fix Dubious Ownership
         run: git config --global --add safe.directory /opt/RoveComm_CPP
 
       - name: Checkout Tag
         run: |
-          cd /opt/RoveComm_CPP/
+          ls /opt
+          cd /opt/RoveComm_CPP
           git fetch --tags --force
           tag=$(git describe --tags `git rev-list --tags --max-count=1`)
           echo $tag
           git checkout $tag
+
+      - name: Install Project Dependencies
+        run: |
+          sudo apt update && sudo apt install libeigen3-dev
+          wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/quill/amd64/quill_${QUILL_VERSION}_amd64.deb
+          sudo dpkg -i quill_${QUILL_VERSION}_amd64.deb
+          rm quill_${QUILL_VERSION}_amd64.deb
+          wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/gtest/amd64/gtest_${GTEST_VERSION}_amd64.deb
+          sudo dpkg -i gtest_${GTEST_VERSION}_amd64.deb
+          rm gtest_${GTEST_VERSION}_amd64.deb
+        env:
+          QUILL_VERSION: "3.6.0"
+          GTEST_VERSION: "1.14.0"
 
       - name: Build and Create Executable
         run: |
@@ -62,11 +79,10 @@ jobs:
     needs: build-and-upload
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          path: /opt/
-          submodules: "recursive"
+      - uses: actions/checkout@v4
+      - name: Checkout repository to /opt
+        shell: bash
+        run: cp -r . /opt/
 
       - name: Fix Dubious Ownership
         run: git config --global --add safe.directory /opt/RoveComm_CPP
