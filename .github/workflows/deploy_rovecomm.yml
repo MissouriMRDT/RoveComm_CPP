@@ -35,7 +35,6 @@ jobs:
 
       - name: Checkout Tag
         run: |
-          ls /opt
           cd /opt/RoveComm_CPP
           git fetch --tags --force
           tag=$(git describe --tags `git rev-list --tags --max-count=1`)
