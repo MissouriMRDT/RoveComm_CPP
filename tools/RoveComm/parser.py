@@ -242,19 +242,22 @@ def find_board_and_data_id(json_file):
     with open(json_file) as f:
         data = json.load(f)
 
-    for board_name, component in data['RovecommManifest'].items():
-        if 'Commands' in component:
-            for command in component['Commands'].values():
-                data_id = command['dataId'] // 1000
-                results.add((board_name, data_id))
-        elif 'Telemetry' in component:
-            for telemetry in component['Telemetry'].values():
-                data_id = telemetry['dataId'] // 1000
-                results.add((board_name, data_id))
-        elif 'Error' in component:
-            for error in component['Error'].values():
-                data_id = error['dataId'] // 1000
-                results.add((board_name, data_id))
+    for board_name in data['RovecommManifest'].keys():
+        print(1, board_name)
+        for component in data['RovecommManifest'][board_name].keys():
+            print(2, component)
+            if 'Commands' in component:
+                for command in data['RovecommManifest'][board_name]['Commands'].values():
+                    data_id = command['dataId'] // 1000
+                    results.add((board_name, data_id))
+            if 'Telemetry' in component:
+                for telemetry in data['RovecommManifest'][board_name]['Telemetry'].values():
+                    data_id = telemetry['dataId'] // 1000
+                    results.add((board_name, data_id))
+            if 'Error' in component:
+                for error in data['RovecommManifest'][board_name]['Error'].values():
+                    data_id = error['dataId'] // 1000
+                    results.add((board_name, data_id))
 
     return sorted(results, key=lambda x: x[1])
 
