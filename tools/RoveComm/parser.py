@@ -243,9 +243,7 @@ def find_board_and_data_id(json_file):
         data = json.load(f)
 
     for board_name in data['RovecommManifest'].keys():
-        print(1, board_name)
         for component in data['RovecommManifest'][board_name].keys():
-            print(2, component)
             if 'Commands' in component:
                 for command in data['RovecommManifest'][board_name]['Commands'].values():
                     data_id = command['dataId'] // 1000
