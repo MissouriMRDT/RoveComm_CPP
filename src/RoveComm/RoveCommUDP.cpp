@@ -157,7 +157,7 @@ namespace rovecomm
         }
 
         // Send the packet to the specified IP address and port
-        if (cIPAddress != "0.0.0.0" && nPort != 0)
+        if (std::strcmp(cIPAddress, "0.0.0.0") && nPort != 0)
         {
             saUDPClientAddr.sin_port = htons(nPort);
             inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
