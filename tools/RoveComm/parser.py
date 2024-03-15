@@ -48,7 +48,7 @@ def insert_packets(board, type):
     This inserts all Ids for a given type (Command, Telemetry, Error)
     Currently adds the comments, dataId, dataCount and dataType
     """
-    if (len(this.manifest[board][type]) > 0):
+    if (type in this.manifest[board].keys() and len(this.manifest[board][type]) > 0):
         messages = this.manifest[board][type]
 
         if (type == "Commands"):
