@@ -112,7 +112,7 @@ TEST(RoveCommUDP, SendUDPPacket)
                 ssize_t siBytesSent = pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11001);
 
                 // Check if the packet successfully sent
-                EXPECT_EQ(siBytesSent, sizeof(rovecomm::PackPacket<uint8_t>(stPacket)));
+                EXPECT_EQ(siBytesSent, ROVECOMM_PACKET_HEADER_SIZE + (sizeof(uint8_t) * stPacket.unDataCount));
 
                 // Close the socket
                 pRoveCommUDP_Node.CloseUDPSocket();

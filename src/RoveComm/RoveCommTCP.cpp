@@ -176,8 +176,10 @@ namespace rovecomm
         // Pack the data
         RoveCommData stData = PackPacket(stPacket);
 
+        // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
+        size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
         // Send the data
-        ssize_t siBytesSent = send(nClientSocket, &stData, sizeof(stData), 0);
+        ssize_t siBytesSent = send(nClientSocket, &stData, siDataSize, 0);
         // Check if any bytes were sent.
         if (siBytesSent == -1)
         {
@@ -429,10 +431,10 @@ namespace rovecomm
         {
             // Receive data from the client
             RoveCommData stData;
-            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, &stData, sizeof(stData), 0);
+            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, &stData, sizeof(stData), MSG_DONTWAIT);
 
             // Process the received packet and invoke the appropriate callback
-            if (siBytesReceived == sizeof(RoveCommData))
+            if (siBytesReceived != -1)
             {
                 // Extract the data id from the received data
                 uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);

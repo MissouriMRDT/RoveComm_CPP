@@ -100,7 +100,7 @@ TEST(RoveCommTCP, SendTCPPacket)
             ssize_t siBytesSent = pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12001);
 
             // Check if the packet successfully sent
-            EXPECT_EQ(siBytesSent, sizeof(rovecomm::PackPacket<uint8_t>(stPacket)));
+            EXPECT_EQ(siBytesSent, ROVECOMM_PACKET_HEADER_SIZE + (sizeof(uint8_t) * stPacket.unDataCount));
 
             // Close the socket
             pRoveCommTCP_Node.CloseTCPSocket();

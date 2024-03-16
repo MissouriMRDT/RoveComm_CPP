@@ -86,7 +86,7 @@ namespace rovecomm
 
             // Data transmission functions
             template<typename T>
-            ssize_t SendUDPPacket(const RoveCommPacket<T>& stData, const char* cIPAddress, int nPort);
+            ssize_t SendUDPPacket(const RoveCommPacket<T>& stPacket, const char* cIPAddress, int nPort);
 
             // Callback management functions
             template<typename T>

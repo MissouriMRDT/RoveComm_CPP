@@ -124,7 +124,7 @@ namespace rovecomm
      *
      * @tparam T - The type of data that is to be sent. This can be any of the types
      *             defined in the manifest.
-     * @param stData - The RoveCommPacket that is to be sent.
+     * @param stPacket - The RoveCommPacket that is to be sent.
      * @param cIPAddress - The IP address of the client that the packet is to be sent to.
      * @param nPort - The port that the packet is to be sent to.
      * @return ssize_t - The number of bytes that were sent. If the return value is
@@ -134,10 +134,12 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    ssize_t RoveCommUDP::SendUDPPacket(const RoveCommPacket<T>& stData, const char* cIPAddress, int nPort)
+    ssize_t RoveCommUDP::SendUDPPacket(const RoveCommPacket<T>& stPacket, const char* cIPAddress, int nPort)
     {
         // Pack the RoveCommPacket into a RoveCommData structure
-        RoveCommData data = PackPacket(stData);
+        RoveCommData stData = PackPacket(stPacket);
+        // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
+        size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
 
         // Setup the base UDP client address
         struct sockaddr_in saUDPClientAddr;
@@ -147,9 +149,11 @@ namespace rovecomm
         // Send the packet to all subscribers
         for (const SubscriberInfo& stSubscriber : vSubscribers)
         {
+            // Assemble client address.
             saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
             inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
-            if (sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
+            // Send data.
+            if (sendto(m_nUDPSocket, &stData, siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
             {
                 // Handle and print error message.
                 perror("Failed to send data to UDP client socket subscriber.");
@@ -157,12 +161,12 @@ namespace rovecomm
         }
 
         // Send the packet to the specified IP address and port
-        if (cIPAddress != "0.0.0.0" && nPort != 0)
+        if (std::strcmp(cIPAddress, "0.0.0.0") && nPort != 0)
         {
             saUDPClientAddr.sin_port = htons(nPort);
             inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
 
-            return sendto(m_nUDPSocket, &data, sizeof(data), 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+            return sendto(m_nUDPSocket, &stData, siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
         }
 
         return -1;
@@ -410,9 +414,9 @@ namespace rovecomm
         sockaddr_in saClientAddr;
         socklen_t addrLen          = sizeof(saClientAddr);
 
-        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, &stData, sizeof(stData), 0, (struct sockaddr*) &saClientAddr, &addrLen);
+        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, &stData, sizeof(stData), MSG_DONTWAIT, (struct sockaddr*) &saClientAddr, &addrLen);
 
-        if (siUDPBytesReceived == sizeof(RoveCommData))
+        if (siUDPBytesReceived != -1)
         {
             // Extract the data id from the received data
             uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
