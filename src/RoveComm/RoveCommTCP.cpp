@@ -176,8 +176,10 @@ namespace rovecomm
         // Pack the data
         RoveCommData stData = PackPacket(stPacket);
 
+        // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
+        size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
         // Send the data
-        ssize_t siBytesSent = send(nClientSocket, &stData, sizeof(stData), 0);
+        ssize_t siBytesSent = send(nClientSocket, &stData, siDataSize, 0);
         // Check if any bytes were sent.
         if (siBytesSent == -1)
         {
