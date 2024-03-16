@@ -410,9 +410,9 @@ namespace rovecomm
         sockaddr_in saClientAddr;
         socklen_t addrLen          = sizeof(saClientAddr);
 
-        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, &stData, sizeof(stData), 0, (struct sockaddr*) &saClientAddr, &addrLen);
+        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, &stData, sizeof(stData), MSG_DONTWAIT, (struct sockaddr*) &saClientAddr, &addrLen);
 
-        if (siUDPBytesReceived == sizeof(RoveCommData))
+        if (siUDPBytesReceived != -1)
         {
             // Extract the data id from the received data
             uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);

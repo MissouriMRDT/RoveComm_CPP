@@ -429,10 +429,10 @@ namespace rovecomm
         {
             // Receive data from the client
             RoveCommData stData;
-            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, &stData, sizeof(stData), 0);
+            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, &stData, sizeof(stData), MSG_DONTWAIT);
 
             // Process the received packet and invoke the appropriate callback
-            if (siBytesReceived == sizeof(RoveCommData))
+            if (siBytesReceived != -1)
             {
                 // Extract the data id from the received data
                 uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
