@@ -8,6 +8,7 @@ on:
       - "tools/RoveComm/parser.py"
       - "src/RoveComm/RoveCommManifest.h"
       - ".github/workflows/manifest.yml"
+  workflow_dispatch:
 
 concurrency:
   group: "manifest-generator"
