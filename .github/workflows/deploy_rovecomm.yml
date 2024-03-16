@@ -43,7 +43,7 @@ jobs:
 
       - name: Install Project Dependencies
         run: |
-          sudo apt update && sudo apt install libeigen3-dev
+          sudo apt update && sudo apt install -y libeigen3-dev zip
           wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/quill/amd64/quill_${QUILL_VERSION}_amd64.deb
           sudo dpkg -i quill_${QUILL_VERSION}_amd64.deb
           rm quill_${QUILL_VERSION}_amd64.deb
@@ -64,14 +64,21 @@ jobs:
           make
           make package
 
-      - name: Rename Executable
-        run: mv /opt/RoveComm_CPP/build/RoveComm_CPP**.sh /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
+      - name: Rename Executable and Create ZIP
+        run: |
+          mv /opt/RoveComm_CPP/build/RoveComm_CPP**.sh /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
+          tar xzf RoveComm_CPP*.tar.gz
+          cd RoveComm_CPP*/
+          zip -r RoveComm_CPP_AMD64.zip include/* external/* lib/*
+          cp RoveComm_CPP_AMD64.zip ../
 
-      - name: Upload Artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: RoveComm-AMD64
-          path: /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
+          path: |
+            /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
+            /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.zip
 
   create-release:
     runs-on: ubuntu-latest
@@ -107,7 +114,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: false
-          prerelease: false
+          prerelease: true
           name: "${{ steps.version.outputs.version }}"
           files: "/opt/RoveComm_CPP/artifacts/**"
         env:
