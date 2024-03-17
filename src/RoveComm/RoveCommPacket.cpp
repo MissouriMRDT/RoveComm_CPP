@@ -60,7 +60,40 @@ namespace rovecomm
 
         // The rest of the data is the data payload
         size_t siDataSize = sizeof(T) * stPacket.unDataCount;
-        memcpy(&stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE], stPacket.vData.data(), siDataSize);
+        // Initialize pointers for looping through data.
+        uint8_t* pDataPtr    = &stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE];
+        const T* pPacketData = stPacket.vData.data();
+        // Loop through data.
+        for (uint16_t unInter = 0; unInter < stPacket.unDataCount; ++unInter)
+        {
+            // Check if data is float32.
+            if constexpr (std::is_same_v<T, float>)
+            {
+                // Convert float to network order and add to RoveCommData.
+                uint32_t unResult;
+                memcpy(&unResult, &pPacketData[unInter], sizeof(float));
+                unResult = htonl(unResult);
+                // Add converted data to RoveCommData.
+                memcpy(pDataPtr, &unResult, sizeof(uint32_t));
+                pDataPtr += sizeof(uint32_t);
+            }
+            else if constexpr (std::is_same_v<T, double>)
+            {
+                // Convert double to network order and add to RoveCommData.
+                uint64_t unResult;
+                memcpy(&unResult, &pPacketData[unInter], sizeof(double));
+                unResult = htonll(unResult);
+                // Add converted data to RoveCommData.
+                memcpy(pDataPtr, &unResult, sizeof(uint64_t));
+                pDataPtr += sizeof(uint64_t);
+            }
+            else
+            {
+                // For other types, just copy the data as is
+                memcpy(pDataPtr, &pPacketData[unInter], sizeof(T));
+                pDataPtr += sizeof(T);
+            }
+        }
 
         return stData;
     }
@@ -100,12 +133,47 @@ namespace rovecomm
         stPacket.unDataCount = (stData.unBytes[3] << 8) | stData.unBytes[4];
         stPacket.eDataType   = static_cast<manifest::DataTypes>(stData.unBytes[5]);
 
-        // Calculate the size of the data payload
-        size_t siDataSize = sizeof(T) * stPacket.unDataCount;
-
         // Copy the data payload from stData to stPacket's vData vector
         stPacket.vData.resize(stPacket.unDataCount);
-        memcpy(stPacket.vData.data(), &stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE], siDataSize);
+
+        // Initialize pointers for looping through data.
+        const uint8_t* pDataPtr = &stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE];
+        T* pPacketData          = stPacket.vData.data();
+        // Loop through data.
+        for (uint16_t unIter = 0; unIter < stPacket.unDataCount; ++unIter)
+        {
+            // Check if data is float32.
+            if constexpr (std::is_same_v<T, float>)
+            {
+                // Convert float from network order and add to RoveCommPacket.
+                uint32_t unResult;
+                memcpy(&unResult, pDataPtr + (unIter * sizeof(uint32_t)), sizeof(uint32_t));
+                unResult = ntohl(unResult);
+                float fFloatResult;
+                memcpy(&fFloatResult, &unResult, sizeof(uint32_t));
+                // Add converted data to RoveCommPacket.
+                stPacket.vData[unIter] = fFloatResult;
+            }
+            else if constexpr (std::is_same_v<T, double>)
+            {
+                // Convert double from network order and add to RoveCommPacket.
+                uint64_t unResult;
+                memcpy(&unResult, pDataPtr + (unIter * sizeof(uint64_t)), sizeof(uint64_t));
+                unResult = ntohll(unResult);
+                double fDoubleResult;
+                memcpy(&fDoubleResult, &unResult, sizeof(uint64_t));
+                // Add converted data to RoveCommPacket.
+                stPacket.vData[unIter] = fDoubleResult;
+            }
+            else
+            {
+                // For other types, just copy the data as is
+                T tValue;
+                memcpy(&tValue, pDataPtr + (unIter * sizeof(T)), sizeof(T));
+                // Add converted data to RoveCommPacket.
+                stPacket.vData[unIter] = tValue;
+            }
+        }
 
         return stPacket;
     }
