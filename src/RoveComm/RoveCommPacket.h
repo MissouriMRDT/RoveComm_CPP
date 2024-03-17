@@ -17,9 +17,14 @@
 /// \cond
 #include <cstdint>
 #include <cstring>
+#include <netinet/in.h>
 #include <vector>
 
 /// \endcond
+
+// These are used to convert 64-bit doubles to network bit order and back.
+#define htonll(x) ((1 == htonl(1)) ? (x) : (((uint64_t) htonl((x) & 0xFFFFFFFFUL)) << 32) | htonl((uint32_t) ((x) >> 32)))
+#define ntohll(x) ((1 == ntohl(1)) ? (x) : (((uint64_t) ntohl((x) & 0xFFFFFFFFUL)) << 32) | ntohl((uint32_t) ((x) >> 32)))
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
