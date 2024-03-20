@@ -388,7 +388,7 @@ class AutonomyThread
             for (unsigned int i = 0; i < nNumTasksToQueue; ++i)
             {
                 // Push single task to pool queue. No return value no control.
-                m_thPool.push_task(
+                m_thPool.detach_task(
                     [this]()
                     {
                         // Run user code without lock.
