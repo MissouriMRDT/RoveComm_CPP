@@ -135,8 +135,6 @@ class AutonomyThread
             m_bStopThreads = false;
 
             // Submit single task to pool queue and store resulting future. Still using pool, as it's scheduling is more efficient.
-            // std::future<void> fuMainReturn = m_thMainThread.submit_task(&AutonomyThread::RunThread, this, std::ref(m_bStopThreads));
-
             std::future<void> fuMainReturn = m_thMainThread.submit_task([this]() { RunThread(m_bStopThreads); });
 
             // Unpause pool queues.
