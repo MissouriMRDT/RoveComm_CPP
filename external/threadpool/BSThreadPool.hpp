@@ -41,6 +41,9 @@ namespace BS
 #define BS_THREAD_POOL_VERSION_MINOR 0
 #define BS_THREAD_POOL_VERSION_PATCH 1
 
+// Macros used internally to enable or disable the native handle functions in the relevant functions.
+#define BS_THREAD_POOL_ENABLE_PAUSE 1
+
     class thread_pool;
 
     /**
