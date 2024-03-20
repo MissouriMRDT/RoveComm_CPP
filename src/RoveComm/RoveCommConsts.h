@@ -11,6 +11,8 @@
 #ifndef ROVECOMM_CONSTS_H
 #define ROVECOMM_CONSTS_H
 
+#define BS_THREAD_POOL_ENABLE_PAUSE 1
+
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
  *        RoveComm library. This includes the packet structure and the
