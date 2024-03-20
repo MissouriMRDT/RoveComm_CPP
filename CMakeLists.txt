@@ -87,10 +87,12 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 ## Install headers and sources into corresponding folders
-install(DIRECTORY src/RoveComm DESTINATION include FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY external/ DESTINATION external FILES_MATCHING PATTERN "*.hpp")
-install(DIRECTORY src/interfaces DESTINATION include FILES_MATCHING PATTERN "*.hpp")
-install(DIRECTORY src/util DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+if(PROJECT_IS_TOP_LEVEL)
+    install(DIRECTORY src/RoveComm DESTINATION include FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY external/ DESTINATION external FILES_MATCHING PATTERN "*.hpp")
+    install(DIRECTORY src/interfaces DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+    install(DIRECTORY src/util DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+endif()
 
 ## Create the pkg-config file from the template.
 configure_file(src/RoveComm/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
