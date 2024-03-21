@@ -27,10 +27,10 @@
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-08-28
  ******************************************************************************/
-#ifdef __ROVECOMM_LIBRARY_MODE__
+// #ifdef __ROVECOMM_LIBRARY_MODE__
 #include "../../../../../src/interfaces/AutonomyThread.hpp"
-#else
-#include "../interfaces/AutonomyThread.hpp"
-#endif
+// #else
+// #include "../interfaces/AutonomyThread.hpp"
+// #endif
 
 #endif    // EXTERNAL_INCLUDES_H
