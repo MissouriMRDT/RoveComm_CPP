@@ -79,8 +79,6 @@ class AutonomyThread
          ******************************************************************************/
         virtual ~AutonomyThread()
         {
-            LOG_WARNING(g_qSharedLogger, "===================== AutonomyThread Destructor =====================");
-
             // Tell all threads to stop executing user code.
             m_bStopThreads = true;
             // Update thread state.
