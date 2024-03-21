@@ -14,6 +14,7 @@
 #define AUTONOMYTHREAD_H
 
 #include "../../external/threadpool/BSThreadPool.hpp"
+#include "../RoveCommLoggers.h"
 #include "../util/IPS.hpp"
 
 /// \cond
