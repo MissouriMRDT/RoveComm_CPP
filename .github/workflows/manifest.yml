@@ -18,10 +18,10 @@ jobs:
   update-manifest:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull Repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: "recursive"
+          submodules: recursive
 
       - name: Setup Git
         run: |
