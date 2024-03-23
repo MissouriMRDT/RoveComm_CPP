@@ -2,3 +2,7 @@
 	path = data/RoveComm
 	url = https://github.com/MissouriMRDT/RoveComm_Base.git
     branch = embedded-2024
+[submodule "external/threadpool"]
+	path = external/threadpool
+    url = https://github.com/bshoshany/thread-pool.git
+    branch = v4.1.0
