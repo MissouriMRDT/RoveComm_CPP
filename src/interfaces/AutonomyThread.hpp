@@ -12,7 +12,7 @@
  ******************************************************************************/
 
 // Only worry about compiling if we are not in 'Library-Only Mode'.
-#ifndef __ROVECOMM_LIBRARY_MODE__
+#if defined(__ROVECOMM_LIBRARY_MODE__) && __ROVECOMM_LIBRARY_MODE__ == 0
 
 #ifndef AUTONOMYTHREAD_H
 #define AUTONOMYTHREAD_H
@@ -649,5 +649,5 @@ class AutonomyThread
         }
 };
 
-#endif
-#endif
+#endif    // AUTONOMYTHREAD_H
+#endif    // __ROVECOMM_LIBRARY_MODE__
