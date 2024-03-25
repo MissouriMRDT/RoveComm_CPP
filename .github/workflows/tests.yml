@@ -35,6 +35,8 @@ jobs:
           echo $branch
           git checkout $branch
           git pull
+          git submodule update --recursive --init
+          ls -R external
 
       - name: Build Tests
         run: |
