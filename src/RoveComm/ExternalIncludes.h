@@ -28,7 +28,7 @@
  * @date 2023-08-28
  ******************************************************************************/
 #if defined(__ROVECOMM_LIBRARY_MODE__) && __ROVECOMM_LIBRARY_MODE__ == 1
-#include "../../../../../src/interfaces/AutonomyThread.hpp"
+#include "../../../../src/interfaces/AutonomyThread.hpp"
 #else
 #include "../interfaces/AutonomyThread.hpp"
 #endif
