@@ -30,7 +30,7 @@ jobs:
       - name: Update Branch
         run: |
           cd /opt/RoveComm_CPP/
-          git fetch --force
+          git fetch --force --recurse-submodules
           branch=${{ steps.extract_branch.outputs.branch }}
           echo $branch
           git checkout $branch
