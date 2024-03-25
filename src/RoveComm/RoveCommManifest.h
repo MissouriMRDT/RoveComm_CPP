@@ -179,6 +179,11 @@ namespace manifest
             REACHED_GOAL
         }; 
 
+        inline uint8_t EnumToInteger(DISPLAYSTATE state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
+
         enum class PATTERNS
         {
             MRDT,
@@ -189,6 +194,11 @@ namespace manifest
             MCD,
             WINDOWS
         }; 
+
+        inline uint8_t EnumToInteger(PATTERNS state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
 
     }    // namespace Core
 
@@ -400,6 +410,11 @@ namespace manifest
             STUCK
         }; 
 
+        inline uint8_t EnumToInteger(AUTONOMYSTATE state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
+
         enum class AUTONOMYLOG
         {
             TRACEL3,
@@ -411,6 +426,11 @@ namespace manifest
             ERROR,
             CRITICAL
         }; 
+
+        inline uint8_t EnumToInteger(AUTONOMYLOG state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
 
     }    // namespace Autonomy
 
