@@ -37,11 +37,13 @@ jobs:
 
       - name: Checkout Tag
         run: |
-          cd /opt/RoveComm_CPP
-          git fetch --tags --force
+          cd /opt/RoveComm_CPP/
+          git fetch --force --recurse-submodules
           tag=$(git describe --tags `git rev-list --tags --max-count=1`)
           echo $tag
           git checkout $tag
+          git pull
+          git submodule update --recursive --init
 
       - name: Install Project Dependencies
         run: |
