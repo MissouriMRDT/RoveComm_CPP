@@ -100,7 +100,7 @@ def insert_enums(board):
         this.header_file.write(f"{generate_indent(2)}\n")
         this.header_file.write(f"{generate_indent(2)}// Enums\n")
         for enum in enums:
-            this.header_file.write(f"{generate_indent(2) + 'enum ' + enum.upper()}\n")
+            this.header_file.write(f"{generate_indent(2) + 'enum class ' + enum.upper()}\n")
             this.header_file.write(f"{generate_indent(2) + '{'}\n")
             output = ""
             enum_len = len(enums[enum])
