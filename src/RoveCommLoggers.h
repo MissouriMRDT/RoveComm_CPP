@@ -14,7 +14,7 @@
  ******************************************************************************/
 
 // Only worry about compiling if we are not in 'Library-Only Mode'.
-#if defined(__ROVECOMM_LIBRARY_MODE__) && __ROVECOMM_LIBRARY_MODE__ == 0
+#if !defined(__ROVECOMM_LIBRARY_MODE__) || (__ROVECOMM_LIBRARY_MODE__ == 0)
 
 /// \cond
 #include <chrono>
