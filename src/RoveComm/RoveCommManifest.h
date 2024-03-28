@@ -7,7 +7,7 @@
  *
  * @file RoveCommManifest.h
  * @author Missouri S&T - Mars Rover Design Team
- * @date 2024-03-16
+ * @date 2024-03-25
  *
  * @copyright Copyright Mars Rover Design Team 2024 - All Rights Reserved
  ******************************************************************************/
@@ -25,7 +25,7 @@ namespace manifest
      * @brief Enumeration of Data Types to be used in RoveComm
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     enum DataTypes
     {
@@ -44,7 +44,7 @@ namespace manifest
      * @brief IP Address Object for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     struct AddressEntry
     {
@@ -60,7 +60,7 @@ namespace manifest
      * @brief Manifest Entry Object for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     struct ManifestEntry
     {
@@ -74,7 +74,7 @@ namespace manifest
      * @brief BMS Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace BMS
     {
@@ -109,7 +109,7 @@ namespace manifest
      * @brief Power Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Power
     {
@@ -139,7 +139,7 @@ namespace manifest
      * @brief Core Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Core
     {
@@ -172,14 +172,19 @@ namespace manifest
         const std::map<std::string, ManifestEntry> ERROR = {};
         
         // Enums
-        enum DISPLAYSTATE
+        enum class DISPLAYSTATE
         {
             TELEOP,
             AUTONOMY,
             REACHED_GOAL
         }; 
 
-        enum PATTERNS
+        inline uint8_t EnumToInteger(DISPLAYSTATE state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
+
+        enum class PATTERNS
         {
             MRDT,
             BELGIUM,
@@ -190,13 +195,18 @@ namespace manifest
             WINDOWS
         }; 
 
+        inline uint8_t EnumToInteger(PATTERNS state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
+
     }    // namespace Core
 
     /******************************************************************************
      * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Nav
     {
@@ -225,7 +235,7 @@ namespace manifest
      * @brief BaseStationNav Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace BaseStationNav
     {
@@ -244,7 +254,7 @@ namespace manifest
      * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace SignalStack
     {
@@ -274,7 +284,7 @@ namespace manifest
      * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Arm
     {
@@ -316,7 +326,7 @@ namespace manifest
      * @brief ScienceActuation Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace ScienceActuation
     {
@@ -356,7 +366,7 @@ namespace manifest
      * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Autonomy
     {
@@ -372,6 +382,7 @@ namespace manifest
             {"ADDOBJECTLEG", ManifestEntry{11004, 2, DataTypes::DOUBLE_T}},
             {"CLEARWAYPOINTS", ManifestEntry{11005, 1, DataTypes::UINT8_T}},
             {"SETMAXSPEED", ManifestEntry{11006, 1, DataTypes::FLOAT_T}},
+            {"SETLOGGINGLEVELS", ManifestEntry{11007, 3, DataTypes::UINT8_T}},
         };
 
         // Telemetry
@@ -385,7 +396,7 @@ namespace manifest
         const std::map<std::string, ManifestEntry> ERROR = {};
         
         // Enums
-        enum AUTONOMYSTATE
+        enum class AUTONOMYSTATE
         {
             IDLE,
             NAVIGATING,
@@ -399,13 +410,35 @@ namespace manifest
             STUCK
         }; 
 
+        inline uint8_t EnumToInteger(AUTONOMYSTATE state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
+
+        enum class AUTONOMYLOG
+        {
+            TRACEL3,
+            TRACEL2,
+            TRACEL1,
+            DEBUG,
+            INFO,
+            WARNING,
+            ERROR,
+            CRITICAL
+        }; 
+
+        inline uint8_t EnumToInteger(AUTONOMYLOG state)
+        {
+            return static_cast<uint8_t>(state);
+        } 
+
     }    // namespace Autonomy
 
     /******************************************************************************
      * @brief Camera1 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Camera1
     {
@@ -433,7 +466,7 @@ namespace manifest
      * @brief Camera2 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Camera2
     {
@@ -452,7 +485,7 @@ namespace manifest
      * @brief RamanSpectrometer Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace RamanSpectrometer
     {
@@ -479,12 +512,12 @@ namespace manifest
     }    // namespace RamanSpectrometer
 
     /******************************************************************************
-     * @brief Fluorometer Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief ReflectanceSpectrometer Board IP Address, Commands, Telemetry, and 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
-    namespace Fluorometer
+    namespace ReflectanceSpectrometer
     {
         // IP Address
         const AddressEntry IP_ADDRESS{192, 168, 3, 103};
@@ -502,13 +535,13 @@ namespace manifest
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {};
-    }    // namespace Fluorometer
+    }    // namespace ReflectanceSpectrometer
 
     /******************************************************************************
      * @brief IRSpectrometer Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace IRSpectrometer
     {
@@ -527,7 +560,7 @@ namespace manifest
      * @brief RoveComm General Information
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace General
     {
@@ -542,7 +575,7 @@ namespace manifest
      * @brief RoveComm System Information
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace System
     {
@@ -558,7 +591,7 @@ namespace manifest
      * @brief RoveComm Helper Functions
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2024-03-16
+     * @date 2024-03-25
      ******************************************************************************/
     namespace Helpers
     {
@@ -722,18 +755,18 @@ namespace manifest
                         return GetDataTypeFromMap(RamanSpectrometer::ERROR, dataId);
                     }
                     break;
-                case 14:    // Fluorometer Board
+                case 14:    // ReflectanceSpectrometer Board
                     if (dataTypeCode == 0)
                     {
-                        return GetDataTypeFromMap(Fluorometer::COMMANDS, dataId);
+                        return GetDataTypeFromMap(ReflectanceSpectrometer::COMMANDS, dataId);
                     }
                     else if (dataTypeCode == 1)
                     {
-                        return GetDataTypeFromMap(Fluorometer::TELEMETRY, dataId);
+                        return GetDataTypeFromMap(ReflectanceSpectrometer::TELEMETRY, dataId);
                     }
                     else if (dataTypeCode == 2)
                     {
-                        return GetDataTypeFromMap(Fluorometer::ERROR, dataId);
+                        return GetDataTypeFromMap(ReflectanceSpectrometer::ERROR, dataId);
                     }
                     break;
                 default:

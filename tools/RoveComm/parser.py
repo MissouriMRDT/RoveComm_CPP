@@ -100,7 +100,7 @@ def insert_enums(board):
         this.header_file.write(f"{generate_indent(2)}\n")
         this.header_file.write(f"{generate_indent(2)}// Enums\n")
         for enum in enums:
-            this.header_file.write(f"{generate_indent(2) + 'enum ' + enum.upper()}\n")
+            this.header_file.write(f"{generate_indent(2) + 'enum class ' + enum.upper()}\n")
             this.header_file.write(f"{generate_indent(2) + '{'}\n")
             output = ""
             enum_len = len(enums[enum])
@@ -115,6 +115,11 @@ def insert_enums(board):
                 enum_counter += 1
 
             this.header_file.write(f"{output + generate_indent(2) + '};'} \n\n")
+
+            this.header_file.write(f"{generate_indent(2) + 'inline uint8_t EnumToInteger(' + enum.upper() + ' state)'}\n")
+            this.header_file.write(f"{generate_indent(2) + '{'}\n")
+            this.header_file.write(f"{generate_indent(3) + 'return static_cast<uint8_t>(state);'}\n")
+            this.header_file.write(f"{generate_indent(2) + '}'} \n\n")
 
 def insert_includes():
     """

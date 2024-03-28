@@ -10,10 +10,14 @@
  *
  * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved
  ******************************************************************************/
+
+// Only worry about compiling if we are not in 'Library-Only Mode'.
+#if defined(__ROVECOMM_LIBRARY_MODE__) && __ROVECOMM_LIBRARY_MODE__ == 0
+
 #ifndef AUTONOMYTHREAD_H
 #define AUTONOMYTHREAD_H
 
-#include "../../external/threadpool/BSThreadPool.hpp"
+#include "../../external/threadpool/include/BS_thread_pool.hpp"
 #include "../util/IPS.hpp"
 
 /// \cond
@@ -302,7 +306,7 @@ class AutonomyThread
             }
 
             // Loop nNumThreads times and queue tasks.
-            for (int i = 0; i < nNumTasksToQueue; ++i)
+            for (unsigned int i = 0; i < nNumTasksToQueue; ++i)
             {
                 // Submit single task to pool queue.
                 m_vPoolReturns.emplace_back(m_thPool.submit_task(
@@ -645,4 +649,5 @@ class AutonomyThread
         }
 };
 
-#endif
+#endif    // AUTONOMYTHREAD_H
+#endif    // __ROVECOMM_LIBRARY_MODE__

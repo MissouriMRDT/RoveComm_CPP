@@ -26,7 +26,7 @@ endif()
 
 ## Check if we are using this as a library or just testing within the repo scope
 if(PROJECT_IS_TOP_LEVEL)
-    message(STATUS "RoveComm_CPP -- STAND ALONE MODE")
+    message("RoveComm_CPP -- STAND ALONE MODE")
 
     ## Find Quill
     find_package(quill REQUIRED)
@@ -42,12 +42,18 @@ if(PROJECT_IS_TOP_LEVEL)
 
     ## Enable to CTest and Google Test Frameworks
     enable_testing()
-else()
-    message(STATUS "RoveComm_CPP -- LIBRARY MODE")
 
-    ## Set 'Library Mode' Flag
-    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__)
+    ## Set 'Library Mode' Flag as False
+    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__=0)
+else()
+    message("RoveComm_CPP -- LIBRARY MODE")
+
+    ## Set 'Library Mode' Flag as False
+    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__=1)
 endif()
+
+## Set ThreadPool Variables
+add_compile_definitions(BS_THREAD_POOL_ENABLE_PAUSE=1)
 
 ## Define Project Name and Version Number for CPack
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
@@ -144,9 +150,4 @@ if(PROJECT_IS_TOP_LEVEL)
         target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main RoveComm_CPP)
         add_test(Integration_Tests ${PROJECT_NAME}_IntegrationTests)
     endif()
-else()
-    message(STATUS "RoveComm_CPP -- LIBRARY MODE")
-
-    ## Set 'Library Mode' Flag
-    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__)
 endif()

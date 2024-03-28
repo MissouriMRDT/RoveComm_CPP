@@ -27,8 +27,8 @@
  * @author Eli Byrd (edbgkk@mst.edu)
  * @date 2023-08-28
  ******************************************************************************/
-#ifdef __ROVECOMM_LIBRARY_MODE__
-#include "../../../../../src/interfaces/AutonomyThread.hpp"
+#if defined(__ROVECOMM_LIBRARY_MODE__) && __ROVECOMM_LIBRARY_MODE__ == 1
+#include "../../../../src/interfaces/AutonomyThread.hpp"
 #else
 #include "../interfaces/AutonomyThread.hpp"
 #endif
