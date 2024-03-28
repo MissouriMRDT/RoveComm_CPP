@@ -24,6 +24,18 @@ if(NOT CTest_CMake_INCLUDED)
     include(CTest)
 endif()
 
+if(NOT DEFINED __ROVECOMM_LIBRARY_MODE__)
+    if(PROJECT_IS_TOP_LEVEL)
+        set(__ROVECOMM_LIBRARY_MODE__ 0)
+    else()
+        set(__ROVECOMM_LIBRARY_MODE__ 1)
+    endif()
+endif()
+
+message("RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")
+
+add_definitions(-D__ROVECOMM_LIBRARY_MODE__=${__ROVECOMM_LIBRARY_MODE__})
+
 ## Check if we are using this as a library or just testing within the repo scope
 if(PROJECT_IS_TOP_LEVEL)
     message("RoveComm_CPP -- STAND ALONE MODE")
@@ -106,16 +118,12 @@ else()
     )
 endif()
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE __ROVECOMM_LIBRARY_MODE__=1)
-
 if(PROJECT_IS_TOP_LEVEL)
     ## Find all main source files
     file(GLOB Main_SRC  CONFIGURE_DEPENDS  "src/*.cpp")
-    
+
     ## Create Executable
     add_executable(${PROJECT_NAME}_App ${Main_SRC})
-    
-    target_compile_definitions(${PROJECT_NAME}_App PRIVATE __ROVECOMM_LIBRARY_MODE__=0)
 
     ## Set Compile Options for Autonomy Software.
     if(MSVC) # True when compiler is Microsoft Visual C++/simulation of Visual C++ CL.
@@ -140,7 +148,6 @@ if(PROJECT_IS_TOP_LEVEL)
         add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
         target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main RoveComm_CPP)
         add_test(Unit_Tests ${PROJECT_NAME}_UnitTests)
-        target_compile_definitions(${PROJECT_NAME}_UnitTests PRIVATE __ROVECOMM_LIBRARY_MODE__=0)
     endif()
 
     ## Create Integration Tests if found
@@ -148,6 +155,5 @@ if(PROJECT_IS_TOP_LEVEL)
         add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${IntegrationTests_SRC})
         target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main RoveComm_CPP)
         add_test(Integration_Tests ${PROJECT_NAME}_IntegrationTests)
-        target_compile_definitions(${PROJECT_NAME}_IntegrationTests PRIVATE __ROVECOMM_LIBRARY_MODE__=0)
     endif()
 endif()
