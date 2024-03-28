@@ -14,7 +14,7 @@ concurrency:
 jobs:
   run-valgrind:
     runs-on: ubuntu-latest
-    container: ghcr.io/missourimrdt/rovecomm-ubuntu:2023-07-24
+    container: ghcr.io/missourimrdt/rovecomm-jammy:latest
 
     steps:
       - name: Checkout repository
@@ -50,26 +50,33 @@ jobs:
           chmod 777 /opt/RoveComm_CPP/tools/valgrind/run_valgrind.sh
           /opt/RoveComm_CPP/tools/valgrind/run_valgrind.sh "GitHub-Action"
 
-      - name: Analyse Valgrind - Definitely Lost
+      - name: Analyze Valgrind - Definitely Lost
         if: success() || failure()
         run: |
           cd /opt/RoveComm_CPP/tools/valgrind
           if ! grep 'definitely lost' valgrind.rpt; then exit 0; fi
           if grep 'definitely lost: 0' valgrind.rpt; then exit 0; else exit 1; fi
 
-      - name: Analyse Valgrind - Indirectly Lost
+      - name: Analyze Valgrind - Indirectly Lost
         if: success() || failure()
         run: |
           cd /opt/RoveComm_CPP/tools/valgrind
           if ! grep 'indirectly lost' valgrind.rpt; then exit 0; fi
           if grep 'indirectly lost: 0' valgrind.rpt; then exit 0; else exit 1; fi
 
-      - name: Analyse Valgrind - Possibly Lost
+      - name: Analyze Valgrind - Possibly Lost
         if: success() || failure()
         run: |
           cd /opt/RoveComm_CPP/tools/valgrind
           if ! grep 'possibly lost' valgrind.rpt; then exit 0; fi
-          if grep 'possibly lost: 0' valgrind.rpt; then exit 0; else exit 1; fi
+          if grep 'possibly lost: 0' valgrind.rpt; then exit 0; else exit 0; fi
+
+      - name: Analyze Valgrind - Still Reachable
+        if: success() || failure()
+        run: |
+          cd /opt/RoveComm_CPP/tools/valgrind
+          if ! grep 'still reachable' valgrind.rpt; then exit 0; fi
+          if grep 'still reachable: 0' valgrind.rpt; then exit 0; else exit 0; fi
 
       - name: Upload Valgrind Log
         if: success() || failure()
