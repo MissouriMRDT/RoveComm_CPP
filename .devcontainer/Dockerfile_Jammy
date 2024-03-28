@@ -13,8 +13,6 @@ ARG CUDA_MAJOR="11"
 ARG CUDA_MINOR="7"
 ARG CUDA_PATCH="0"
 ARG CMAKE_VERSION="3.24.3"
-ARG QUILL_VERSION="3.8.0"
-ARG GTEST_VERSION="1.14.0"
 
 # Set Labels
 LABEL authors="Missouri S&T Mars Rover Design Team"
@@ -68,11 +66,13 @@ RUN if [ "${CMAKE_VERSION}" != "none" ]; then \
 WORKDIR /opt
 
 # Install Quill
+ARG QUILL_VERSION="3.8.0"
 RUN wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/quill/amd64/quill_${QUILL_VERSION}_amd64.deb && \
     dpkg -i quill_${QUILL_VERSION}_amd64.deb && \
     rm quill_${QUILL_VERSION}_amd64.deb
 
 # Install Google Test
+ARG GTEST_VERSION="1.14.0"
 RUN wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/gtest/amd64/gtest_${GTEST_VERSION}_amd64.deb && \
     dpkg -i gtest_${GTEST_VERSION}_amd64.deb && \
     rm gtest_${GTEST_VERSION}_amd64.deb
