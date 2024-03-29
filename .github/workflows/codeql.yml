@@ -4,7 +4,13 @@ on:
   pull_request:
     branches: ["development"]
     paths:
-      - examples/**
+      - external/**
+      - src/**
+      - tests/**
+      - tools/**
+  push:
+    branches: ["development"]
+    paths:
       - external/**
       - src/**
       - tests/**
@@ -27,7 +33,7 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/missourimrdt/rovecomm-ubuntu:2023-07-24
+      image: ghcr.io/missourimrdt/rovecomm-jammy:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -46,14 +52,14 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"

@@ -116,11 +116,6 @@ def insert_enums(board):
 
             this.header_file.write(f"{output + generate_indent(2) + '};'} \n\n")
 
-            this.header_file.write(f"{generate_indent(2) + 'inline uint8_t EnumToInteger(' + enum.upper() + ' state)'}\n")
-            this.header_file.write(f"{generate_indent(2) + '{'}\n")
-            this.header_file.write(f"{generate_indent(3) + 'return static_cast<uint8_t>(state);'}\n")
-            this.header_file.write(f"{generate_indent(2) + '}'} \n\n")
-
 def insert_includes():
     """
     This inserts the guard block, all includes, and opens the manifest namespace
