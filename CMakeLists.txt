@@ -113,7 +113,7 @@ if(PROJECT_IS_TOP_LEVEL)
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
 else()
-    install(FILES ${CMAKE_BINARY_DIR}/build/_deps/rovecomm_cpp-src/${PROJECT_NAME}.pc
+    install(FILES ${CMAKE_BINARY_DIR}/external/rovecomm/${PROJECT_NAME}.pc
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
 endif()
