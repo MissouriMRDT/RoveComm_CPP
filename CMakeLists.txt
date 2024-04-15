@@ -24,6 +24,18 @@ if(NOT CTest_CMake_INCLUDED)
     include(CTest)
 endif()
 
+if(NOT DEFINED __ROVECOMM_LIBRARY_MODE__)
+    if(PROJECT_IS_TOP_LEVEL)
+        set(__ROVECOMM_LIBRARY_MODE__ 0)
+    else()
+        set(__ROVECOMM_LIBRARY_MODE__ 1)
+    endif()
+endif()
+
+message("RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")
+
+add_definitions(-D__ROVECOMM_LIBRARY_MODE__=${__ROVECOMM_LIBRARY_MODE__})
+
 ## Check if we are using this as a library or just testing within the repo scope
 if(PROJECT_IS_TOP_LEVEL)
     message("RoveComm_CPP -- STAND ALONE MODE")
@@ -42,14 +54,8 @@ if(PROJECT_IS_TOP_LEVEL)
 
     ## Enable to CTest and Google Test Frameworks
     enable_testing()
-
-    ## Set 'Library Mode' Flag as False
-    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__=0)
 else()
     message("RoveComm_CPP -- LIBRARY MODE")
-
-    ## Set 'Library Mode' Flag as False
-    add_compile_definitions(__ROVECOMM_LIBRARY_MODE__=1)
 endif()
 
 ## Set ThreadPool Variables
@@ -107,7 +113,7 @@ if(PROJECT_IS_TOP_LEVEL)
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
 else()
-    install(FILES ${CMAKE_BINARY_DIR}/build/_deps/rovecomm_cpp-src/${PROJECT_NAME}.pc
+    install(FILES ${CMAKE_BINARY_DIR}/external/rovecomm/${PROJECT_NAME}.pc
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
 endif()
@@ -115,7 +121,7 @@ endif()
 if(PROJECT_IS_TOP_LEVEL)
     ## Find all main source files
     file(GLOB Main_SRC  CONFIGURE_DEPENDS  "src/*.cpp")
-    
+
     ## Create Executable
     add_executable(${PROJECT_NAME}_App ${Main_SRC})
 

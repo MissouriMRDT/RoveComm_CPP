@@ -11,9 +11,6 @@
  * @copyright Copyright Mars Rover Design Team 2023 - All Rights Reserved
  ******************************************************************************/
 
-// Only worry about compiling if we are not in 'Library-Only Mode'.
-#if defined(__ROVECOMM_LIBRARY_MODE__) && __ROVECOMM_LIBRARY_MODE__ == 0
-
 #ifndef AUTONOMYTHREAD_H
 #define AUTONOMYTHREAD_H
 
@@ -650,4 +647,3 @@ class AutonomyThread
 };
 
 #endif    // AUTONOMYTHREAD_H
-#endif    // __ROVECOMM_LIBRARY_MODE__

@@ -14,7 +14,7 @@ concurrency:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-    container: ghcr.io/missourimrdt/rovecomm-focal:latest
+    container: ghcr.io/missourimrdt/rovecomm-jammy:latest
 
     steps:
       - name: Checkout repository

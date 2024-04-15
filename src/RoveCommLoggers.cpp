@@ -14,7 +14,7 @@
  ******************************************************************************/
 
 // Only worry about compiling if we are not in 'Library-Only Mode'.
-#if defined(__ROVECOMM_LIBRARY_MODE__) && __ROVECOMM_LIBRARY_MODE__ == 0
+#if !defined(__ROVECOMM_LIBRARY_MODE__) || (__ROVECOMM_LIBRARY_MODE__ == 0)
 
 #include "RoveCommLoggers.h"
 
@@ -50,13 +50,13 @@ void InitializeLoggers()
     std::shared_ptr<quill::Handler> qConsoleHandler = quill::stdout_handler();
 
     // Configure Patterns
-    qFileHandler->set_pattern("%(ascii_time) %(level_name) [%(process)] [%(thread)] %(message)",       // format
-                              "%Y-%m-%d %H:%M:%S.%Qms",                                                // timestamp format
-                              quill::Timezone::GmtTime);                                               // timestamp's timezone
+    qFileHandler->set_pattern("%(time) %(log_level) [%(process_id)] [%(thread_id)] %(message)",       // format
+                              "%Y-%m-%d %H:%M:%S.%Qms",                                               // timestamp format
+                              quill::Timezone::GmtTime);                                              // timestamp's timezone
 
-    qConsoleHandler->set_pattern("%(ascii_time) %(level_name) [%(process)] [%(thread)] %(message)",    // format
-                                 "%Y-%m-%d %H:%M:%S.%Qms",                                             // timestamp format
-                                 quill::Timezone::GmtTime);                                            // timestamp's timezone
+    qConsoleHandler->set_pattern("%(time) %(log_level) [%(process_id)] [%(thread_id)] %(message)",    // format
+                                 "%Y-%m-%d %H:%M:%S.%Qms",                                            // timestamp format
+                                 quill::Timezone::GmtTime);                                           // timestamp's timezone
 
     // Enable Color Console
     static_cast<quill::ConsoleHandler*>(qConsoleHandler.get())->enable_console_colours();
