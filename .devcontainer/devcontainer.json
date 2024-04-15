@@ -21,7 +21,8 @@
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],
     // Use 'postCreateCommand' to run commands after the container is created.
-    // "postCreateCommand": "gcc -v",
+    "postStartCommand": "git config --global --add safe.directory \"*\"",
+    "postCreateCommand": "echo 'Welcome to the Mars Rover Design Team, RoveComm_CPP Development Environment!'",
     // Configure tool-specific properties.
     "customizations": {
         // Configure properties specific to VS Code.
