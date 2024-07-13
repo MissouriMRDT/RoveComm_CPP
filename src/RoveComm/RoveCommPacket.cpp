@@ -64,34 +64,48 @@ namespace rovecomm
         uint8_t* pDataPtr    = &stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE];
         const T* pPacketData = stPacket.vData.data();
         // Loop through data.
+        static_assert(std::is_arithmetic<T>::value);
         for (uint16_t unInter = 0; unInter < stPacket.unDataCount; ++unInter)
         {
-            // Check if data is float32.
-            if constexpr (std::is_same_v<T, float>)
+            // INT8_T, UINT8_T, CHAR
+            if constexpr (sizeof(T) == sizeof(uint8_t))
             {
-                // Convert float to network order and add to RoveCommData.
+                // No need to convert to network order.
+                memcpy(pDataPtr, &pPacketData[unInter], sizeof(uint8_t));
+                pDataPtr += sizeof(uint8_t);
+            }
+            // INT16_T, UINT16_T
+            else if constexpr (sizeof(T) == sizeof(uint16_t))
+            {
+                // Convert to network order and add to RoveCommData.
+                uint16_t unResult;
+                memcpy(&unResult, &pPacketData[unInter], sizeof(uint16_t));
+                unResult = htons(unResult);
+                // Add converted data to RoveCommData.
+                memcpy(pDataPtr, &unResult, sizeof(uint16_t));
+                pDataPtr += sizeof(uint16_t);
+            }
+            // INT32_T, UINT32_T, FLOAT_T
+            else if constexpr (sizeof(T) == sizeof(uint32_t))
+            {
+                // Convert to network order and add to RoveCommData.
                 uint32_t unResult;
-                memcpy(&unResult, &pPacketData[unInter], sizeof(float));
+                memcpy(&unResult, &pPacketData[unInter], sizeof(uint32_t));
                 unResult = htonl(unResult);
                 // Add converted data to RoveCommData.
                 memcpy(pDataPtr, &unResult, sizeof(uint32_t));
                 pDataPtr += sizeof(uint32_t);
             }
-            else if constexpr (std::is_same_v<T, double>)
+            // DOUBLE_T
+            else if constexpr (sizeof(T) == sizeof(uint64_t))
             {
-                // Convert double to network order and add to RoveCommData.
+                // Convert to network order and add to RoveCommData.
                 uint64_t unResult;
-                memcpy(&unResult, &pPacketData[unInter], sizeof(double));
+                memcpy(&unResult, &pPacketData[unInter], sizeof(uint64_t));
                 unResult = htonll(unResult);
                 // Add converted data to RoveCommData.
                 memcpy(pDataPtr, &unResult, sizeof(uint64_t));
                 pDataPtr += sizeof(uint64_t);
-            }
-            else
-            {
-                // For other types, just copy the data as is
-                memcpy(pDataPtr, &pPacketData[unInter], sizeof(T));
-                pDataPtr += sizeof(T);
             }
         }
 
@@ -140,41 +154,56 @@ namespace rovecomm
         const uint8_t* pDataPtr = &stData.unBytes[ROVECOMM_PACKET_HEADER_SIZE];
         T* pPacketData          = stPacket.vData.data();
         // Loop through data.
-        for (uint16_t unIter = 0; unIter < stPacket.unDataCount; ++unIter)
+        static_assert(std::is_arithmetic<T>::value);
+        for (uint16_t unInter = 0; unInter < stPacket.unDataCount; ++unInter)
         {
-            // Check if data is float32.
-            if constexpr (std::is_same_v<T, float>)
+            // INT8_T, UINT8_T, CHAR
+            if constexpr (sizeof(T) == sizeof(uint8_t))
             {
-                // Convert float from network order and add to RoveCommPacket.
-                uint32_t unResult;
-                memcpy(&unResult, pDataPtr + (unIter * sizeof(uint32_t)), sizeof(uint32_t));
-                unResult = ntohl(unResult);
-                float fFloatResult;
-                memcpy(&fFloatResult, &unResult, sizeof(uint32_t));
-                // Add converted data to RoveCommPacket.
-                stPacket.vData[unIter] = fFloatResult;
+                // No need to convert to host order.
+                memcpy(&pPacketData[unInter], pDataPtr, sizeof(uint8_t));
+                pDataPtr += sizeof(uint8_t);
             }
-            else if constexpr (std::is_same_v<T, double>)
+            // INT16_T, UINT16_T
+            else if constexpr (sizeof(T) == sizeof(uint16_t))
             {
-                // Convert double from network order and add to RoveCommPacket.
-                uint64_t unResult;
-                memcpy(&unResult, pDataPtr + (unIter * sizeof(uint64_t)), sizeof(uint64_t));
-                unResult = ntohll(unResult);
-                double fDoubleResult;
-                memcpy(&fDoubleResult, &unResult, sizeof(uint64_t));
-                // Add converted data to RoveCommPacket.
-                stPacket.vData[unIter] = fDoubleResult;
-            }
-            else
-            {
-                // For other types, just copy the data as is
+                // Convert to host order and add to RoveCommData.
+                uint16_t unResult;
+                memcpy(&unResult, pDataPtr, sizeof(uint16_t));
+                unResult = ntohs(unResult);
+                // Add converted data to RoveCommData.
                 T tValue;
-                memcpy(&tValue, pDataPtr + (unIter * sizeof(T)), sizeof(T));
-                // Add converted data to RoveCommPacket.
-                stPacket.vData[unIter] = tValue;
+                memcpy(&tValue, &unResult, sizeof(uint16_t));
+                pPacketData[unInter] = tValue;
+                pDataPtr += sizeof(uint16_t);
+            }
+            // INT32_T, UINT32_T, FLOAT_T
+            else if constexpr (sizeof(T) == sizeof(uint32_t))
+            {
+                // Convert to host order and add to RoveCommData.
+                uint32_t unResult;
+                memcpy(&unResult, pDataPtr, sizeof(uint32_t));
+                unResult = ntohl(unResult);
+                // Add converted data to RoveCommData.
+                T tValue;
+                memcpy(&tValue, &unResult, sizeof(uint32_t));
+                pPacketData[unInter] = tValue;
+                pDataPtr += sizeof(uint32_t);
+            }
+            // DOUBLE_T
+            else if constexpr (sizeof(T) == sizeof(uint64_t))
+            {
+                // Convert to host order and add to RoveCommData.
+                uint64_t unResult;
+                memcpy(&unResult, pDataPtr, sizeof(uint64_t));
+                unResult = ntohll(unResult);
+                // Add converted data to RoveCommData.
+                T tValue;
+                memcpy(&tValue, &unResult, sizeof(uint64_t));
+                pPacketData[unInter] = tValue;
+                pDataPtr += sizeof(uint64_t);
             }
         }
-
         return stPacket;
     }
 

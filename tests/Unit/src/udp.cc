@@ -158,19 +158,19 @@ TEST(RoveCommUDP, CallbackInvoked)
             // Flag to check if the callback was invoked
             bool bCallbackInvoked              = false;
 
-            std::vector<uint8_t> vExpectedData = {1};
+            std::vector<int32_t> vExpectedData = {-100, -1, 5555};
 
             // Add a callback function for data ID 1100
-            pRoveCommUDP_Node.AddUDPCallback<uint8_t>(
-                [&](const rovecomm::RoveCommPacket<uint8_t>& packet, const sockaddr_in& address)
+            pRoveCommUDP_Node.AddUDPCallback<int32_t>(
+                [&](const rovecomm::RoveCommPacket<int32_t>& packet, const sockaddr_in& address)
                 {
                     // Set the flag to true to indicate that the callback was invoked
                     bCallbackInvoked = true;
 
                     // Assertions to verify the behavior of the callback function
                     EXPECT_EQ(packet.unDataId, 1100);                             // Check the data ID
-                    EXPECT_EQ(packet.unDataCount, 1);                             // Check the data count
-                    EXPECT_EQ(packet.eDataType, manifest::DataTypes::UINT8_T);    // Check the data type
+                    EXPECT_EQ(packet.unDataCount, 3);                             // Check the data count
+                    EXPECT_EQ(packet.eDataType, manifest::DataTypes::INT32_T);    // Check the data type
 
                     for (size_t i = 0; i < packet.vData.size(); i++)
                     {
@@ -181,14 +181,14 @@ TEST(RoveCommUDP, CallbackInvoked)
 
             // Simulate receiving a packet with data ID 1100
             // Create RoveCommPacket
-            rovecomm::RoveCommPacket<uint8_t> stPacket;
+            rovecomm::RoveCommPacket<int32_t> stPacket;
             stPacket.unDataId    = 1100;                            // Data ID for testing
-            stPacket.unDataCount = 1;                               // Sample data count
-            stPacket.eDataType   = manifest::DataTypes::UINT8_T;    // Sample data type
+            stPacket.unDataCount = 3;                               // Sample data count
+            stPacket.eDataType   = manifest::DataTypes::INT32_T;    // Sample data type
 
-            for (uint8_t data : vExpectedData)
+            for (int32_t nData : vExpectedData)
             {
-                stPacket.vData.push_back(data);    // Sample data
+                stPacket.vData.push_back(nData);    // Sample data
             }
 
             // Pack the packet
@@ -202,7 +202,7 @@ TEST(RoveCommUDP, CallbackInvoked)
             inet_pton(AF_INET, "127.0.0.1", &saUDPClientAddr.sin_addr);
 
             // Process the received packet (simulate callback invocation)
-            pRoveCommUDP_Node.CallProcessPacket<uint8_t>(stData, rovecomm::udp::vUInt8Callbacks, saUDPClientAddr);
+            pRoveCommUDP_Node.CallProcessPacket<int32_t>(stData, rovecomm::udp::vInt32Callbacks, saUDPClientAddr);
 
             // Check if the callback was invoked
             EXPECT_TRUE(bCallbackInvoked);
