@@ -20,7 +20,18 @@
 #include <chrono>
 #include <ctime>
 #include <iostream>
-#include <quill/Quill.h>
+#include <quill/Backend.h>
+#include <quill/Frontend.h>
+#include <quill/LogMacros.h>
+#include <quill/Logger.h>
+
+#include "quill/backend/PatternFormatter.h"
+#include "quill/core/Attributes.h"
+#include "quill/core/Common.h"
+#include "quill/core/Filesystem.h"
+
+#include "quill/sinks/ConsoleSink.h"
+#include "quill/sinks/RotatingFileSink.h"
 
 /// \endcond
 
