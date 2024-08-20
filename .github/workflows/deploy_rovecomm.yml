@@ -54,8 +54,8 @@ jobs:
           sudo dpkg -i gtest_${GTEST_VERSION}_amd64.deb
           rm gtest_${GTEST_VERSION}_amd64.deb
         env:
-          QUILL_VERSION: "3.6.0"
-          GTEST_VERSION: "1.14.0"
+          QUILL_VERSION: "7.0.0-pre"
+          GTEST_VERSION: "1.15.2"
 
       - name: Build and Create Executable
         run: |
