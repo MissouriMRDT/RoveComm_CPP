@@ -3,17 +3,14 @@
     "runArgs": [
         "--name",
         "RoveComm_devcontainer",
-        // "--gpus all", // add all available GPUs
-        // "--runtime nvidia", // Use the NVIDIA container runtime.
         "--privileged", // grants permission to the container to access USBs
-        "-e DISPLAY" // Makes DISPLAY environment variable available in the container.
-        // "-v /tmp/.X11-unix:/tmp/.X11-unix" // Required for container to access display.
+        "-e DISPLAY", // Makes DISPLAY environment variable available in the container.
+        "--network host" // Configure container to use the same network stack as the host machine.
     ],
     "image": "ghcr.io/missourimrdt/rovecomm-jammy:latest",
     // "image": "ghcr.io/missourimrdt/rovecomm-jetpack:latest",
     // "build": {
     //     "dockerfile": "Dockerfile_Jammy"
-    //     "dockerfile": "Dockerfile_Focal"
     //     "dockerfile": "Dockerfile_JetPack"
     // },
     // Features to add to the dev container. More info: https://containers.dev/features.
@@ -38,7 +35,8 @@
                 "jbockle.jbockle-format-files",
                 "codezombiech.gitignore",
                 "cschlosser.doxdocgen",
-                "formulahendry.docker-extension-pack"
+                "formulahendry.docker-extension-pack",
+                "vscode-icons-team.vscode-icons"
             ],
             "settings": {
                 // VSCode settings.
@@ -52,7 +50,7 @@
                 "editor.insertSpaces": true,
                 "editor.detectIndentation": false,
                 "editor.rulers": [
-                    150
+                    170
                 ],
                 "search.exclude": {
                     "**/docs": true
@@ -60,8 +58,8 @@
                 "extensions.ignoreRecommendations": true,
                 // C/C++ extension settings.
                 "C_Cpp.formatting": "clangFormat",
-                "C_Cpp.default.compilerPath": "/usr/bin/g++-10",
-                "C_Cpp.default.cppStandard": "c++17",
+                "C_Cpp.default.compilerPath": "/usr/bin/g++",
+                "C_Cpp.default.cppStandard": "c++20",
                 "C_Cpp.default.includePath": [
                     "/usr/local/include/quill/",
                     "/usr/local/include/quill/**",

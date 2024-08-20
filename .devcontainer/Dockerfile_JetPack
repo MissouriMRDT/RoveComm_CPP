@@ -1,26 +1,17 @@
 # Image Variables
-ARG L4T_MAJOR="35"
-ARG L4T_MINOR="3"
-ARG L4T_PATCH="1"
+ARG L4T_MAJOR="36"
+ARG L4T_MINOR="2"
+ARG L4T_PATCH="0"
 ARG L4T_BASE="l4t-jetpack"
 
 # Base Image
 FROM nvcr.io/nvidia/${L4T_BASE}:r${L4T_MAJOR}.${L4T_MINOR}.${L4T_PATCH}
 
 # Install Variables
-ARG L4T_MAJOR="35"
-ARG L4T_MINOR="3"
-ARG L4T_PATCH="1"
+ARG L4T_MAJOR="36"
+ARG L4T_MINOR="2"
+ARG L4T_PATCH="0"
 ARG L4T_BASE="l4t-jetpack"
-ARG CMAKE_VERSION="3.24.3"
-
-# Set Labels
-LABEL authors="Missouri S&T Mars Rover Design Team"
-LABEL maintainer="Mars Rover Design Team <marsrover@mst.edu>"
-LABEL org.opencontainers.image.source=https://github.com/missourimrdt/rovecomm_cpp
-LABEL org.opencontainers.image.licenses=GPL-3.0-only
-LABEL org.opencontainers.image.version="v24.2.5"
-LABEL org.opencontainers.image.description="Docker Image for ${L4T_BASE} ${L4T_MAJOR}.${L4T_MINOR}.${L4T_PATCH} with CUDA ${CUDA_MAJOR}.${CUDA_MINOR}, Quill v${QUILL_VERSION}, and Google Test v${GTEST_VERSION}."
 
 # Set Non-Interactive Mode
 ARG DEBIAN_FRONTEND=noninteractive
@@ -29,7 +20,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV LOGNAME root
 
 # Set Timezone
-RUN echo "America/Chicago" > /etc/localtime
+ARG TZ="America/Chicago"
+RUN echo "${TZ}" > /etc/localtime && \
+    echo "${TZ}" > /etc/timezone
 
 # Set L4T Version
 RUN echo "# R${L4T_MAJOR} (release), REVISION: ${L4T_MINOR}.${L4T_PATCH}" > /etc/nv_tegra_release
@@ -55,6 +48,7 @@ RUN apt-get install  --no-install-recommends -y \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10
 
 # Install CMake
+ARG CMAKE_VERSION="3.30.2"
 COPY install-cmake.sh /tmp/
 RUN if [ "${CMAKE_VERSION}" != "none" ]; then \
     chmod +x /tmp/install-cmake.sh && /tmp/install-cmake.sh ${CMAKE_VERSION}; \
@@ -65,13 +59,13 @@ RUN if [ "${CMAKE_VERSION}" != "none" ]; then \
 WORKDIR /opt
 
 # Install Quill
-ARG QUILL_VERSION="3.8.0"
+ARG QUILL_VERSION="7.0.0-pre"
 RUN wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/quill/arm64/quill_${QUILL_VERSION}_arm64.deb && \
     dpkg -i quill_${QUILL_VERSION}_arm64.deb && \
     rm quill_${QUILL_VERSION}_arm64.deb
 
 # Install Google Test
-ARG GTEST_VERSION="1.14.0"
+ARG GTEST_VERSION="1.15.2"
 RUN wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/gtest/arm64/gtest_${GTEST_VERSION}_arm64.deb && \
     dpkg -i gtest_${GTEST_VERSION}_arm64.deb && \
     rm gtest_${GTEST_VERSION}_arm64.deb
@@ -84,3 +78,11 @@ RUN git clone --recurse-submodules -j8 https://github.com/MissouriMRDT/RoveComm_
 
 # Set Working Directory
 WORKDIR /opt/RoveComm_CPP/
+
+# Set Labels
+LABEL authors="Missouri S&T Mars Rover Design Team"
+LABEL maintainer="Mars Rover Design Team <marsrover@mst.edu>"
+LABEL org.opencontainers.image.source=https://github.com/missourimrdt/rovecomm_cpp
+LABEL org.opencontainers.image.licenses=GPL-3.0-only
+LABEL org.opencontainers.image.version="v24.2.5"
+LABEL org.opencontainers.image.description="Docker Image for ${L4T_BASE} ${L4T_MAJOR}.${L4T_MINOR}.${L4T_PATCH} with CUDA ${CUDA_MAJOR}.${CUDA_MINOR}, Quill v${QUILL_VERSION}, and Google Test v${GTEST_VERSION}."
