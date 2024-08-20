@@ -125,7 +125,7 @@ if(PROJECT_IS_TOP_LEVEL)
     ## Create Executable
     add_executable(${PROJECT_NAME}_App ${Main_SRC})
 
-    ## Set Compile Options for Autonomy Software.
+    ## Set Compile Options for RoveComm_CPP.
     if(MSVC) # True when compiler is Microsoft Visual C++/simulation of Visual C++ CL.
         target_compile_options(${PROJECT_NAME}_App PRIVATE /W4 /WX)
     else()
