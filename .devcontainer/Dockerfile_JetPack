@@ -16,9 +16,6 @@ ARG L4T_BASE="l4t-jetpack"
 # Set Non-Interactive Mode
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Set Jetson Streaming Evironment Variables
-ENV LOGNAME root
-
 # Set Timezone
 ARG TZ="America/Chicago"
 RUN echo "${TZ}" > /etc/localtime && \
