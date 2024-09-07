@@ -24,6 +24,7 @@ if(NOT CTest_CMake_INCLUDED)
     include(CTest)
 endif()
 
+# Check if the project is standalone or within another project.
 if(NOT DEFINED __ROVECOMM_LIBRARY_MODE__)
     if(PROJECT_IS_TOP_LEVEL)
         set(__ROVECOMM_LIBRARY_MODE__ 0)
@@ -31,10 +32,39 @@ if(NOT DEFINED __ROVECOMM_LIBRARY_MODE__)
         set(__ROVECOMM_LIBRARY_MODE__ 1)
     endif()
 endif()
+# Check if we are on Windows or Linux or for windows mode if cross-compiling.
+option(BUILD_WIN "Windows Cross-Compile Mode" ON)
+if(NOT DEFINED __ROVECOMM_WINDOWS_MODE__)
+    if(WIN32 OR BUILD_WIN)
+        set(__ROVECOMM_WINDOWS_MODE__ 1)
+    else()
+        set(__ROVECOMM_WINDOWS_MODE__ 0)
+    endif()
+endif()
 
 message("RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")
-
+message("RoveComm Windows Mode: ${__ROVECOMM_WINDOWS_MODE__}")
 add_definitions(-D__ROVECOMM_LIBRARY_MODE__=${__ROVECOMM_LIBRARY_MODE__})
+add_definitions(-D__ROVECOMM_WINDOWS_MODE__=${__ROVECOMM_WINDOWS_MODE__})
+
+## Detect if we are cross-compiling or should compile for windows.
+if(__ROVECOMM_WINDOWS_MODE__)
+    message("RoveComm_CPP -- Cross-compiling for Windows on Linux")
+    
+    ## Set the cross-compilation toolchain
+    set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)
+    set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++-posix)
+    set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
+
+    ## Set necessary paths for MinGW
+    set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+
+else()
+    message(STATUS "RoveComm_CPP -- Configuring for native platform: ${CMAKE_SYSTEM_NAME}")
+endif()
 
 ## Check if we are using this as a library or just testing within the repo scope
 if(PROJECT_IS_TOP_LEVEL)
@@ -133,7 +163,13 @@ if(PROJECT_IS_TOP_LEVEL)
     endif()
 
     ## Attach libraries to Executable
-    target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill RoveComm_CPP)
+    if (__ROVECOMM_WINDOWS_MODE__)
+        message("RoveComm_CPP -- USING WINDOWS SOCKETS")
+        target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill ws2_32 RoveComm_CPP)
+    else()
+        message("RoveComm_CPP -- USING UNIX SOCKETS")
+        target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill RoveComm_CPP)
+    endif()
 
     ## Find all test source files
     file(GLOB UnitTests_SRC             CONFIGURE_DEPENDS  "tests/Unit/**/*.cc")
@@ -143,7 +179,7 @@ if(PROJECT_IS_TOP_LEVEL)
     list(LENGTH UnitTests_SRC           UnitTests_LEN)
     list(LENGTH IntegrationTests_SRC    IntegrationTests_LEN)
 
-    ## Create Unit Tests if found
+    # Create Unit Tests if found
     if (UnitTests_LEN GREATER 0)
         add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
         target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main RoveComm_CPP)
