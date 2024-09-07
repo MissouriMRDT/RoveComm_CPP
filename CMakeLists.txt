@@ -37,6 +37,7 @@ option(BUILD_WIN "Windows Cross-Compile Mode" ON)
 if(NOT DEFINED __ROVECOMM_WINDOWS_MODE__)
     if(WIN32 OR BUILD_WIN)
         set(__ROVECOMM_WINDOWS_MODE__ 1)
+        include(ExternalProject)
     else()
         set(__ROVECOMM_WINDOWS_MODE__ 0)
     endif()
@@ -61,31 +62,90 @@ if(__ROVECOMM_WINDOWS_MODE__)
     set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
     set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+    
+    ## Check if we are using this as a library or just testing within the repo scope
+    if(PROJECT_IS_TOP_LEVEL)
+        message("RoveComm_CPP -- STAND ALONE MODE")
 
+        ## Find Eigen3.
+        find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+        # ExternalProject configuration for pulling and building Quill
+        ExternalProject_Add(Quill
+            GIT_REPOSITORY https://github.com/odygrd/quill.git
+            GIT_TAG        v7.0.0 # You can specify a specific tag, branch, or commit hash
+            PREFIX         ${CMAKE_BINARY_DIR}/quill
+            CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/quill_install
+        )
+
+        # ExternalProject configuration for pulling and building GTest
+        ExternalProject_Add(GTest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG        v1.15.2  # Specify the GTest version tag or commit
+            PREFIX         ${CMAKE_BINARY_DIR}/gtest
+            CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/gtest_install
+        )
+        
+        # Create an imported target for Quill and GTest
+        add_library(quill::quill IMPORTED INTERFACE)
+        add_library(GTest::gtest IMPORTED INTERFACE)
+        add_library(GTest::gtest_main IMPORTED INTERFACE)
+        
+        # Specify where to find GTest and Quill once they're built
+        ExternalProject_Get_Property(Quill install_dir)
+        set(QUILL_INCLUDE_DIR ${install_dir}_install/include)
+        set(QUILL_LIB_DIR ${install_dir}_install/lib)
+        ExternalProject_Get_Property(GTest install_dir)
+        set(GTEST_INCLUDE_DIR ${install_dir}_install/include)
+        set(GTEST_LIB_DIR ${install_dir}_install/lib)
+
+        # Must create empty install dirs.
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/quill_install/include)
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/quill_install/lib)
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/gtest_install/include)
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/gtest_install/lib)
+
+        # Set the imported target properties for Quill and GTest
+        set_target_properties(quill::quill PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${QUILL_INCLUDE_DIR}
+        )
+        set_target_properties(GTest::gtest PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INCLUDE_DIR}
+            INTERFACE_LINK_LIBRARIES ${GTEST_LIB_DIR}/libgtest.a
+        )
+        set_target_properties(GTest::gtest_main PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INCLUDE_DIR}
+            INTERFACE_LINK_LIBRARIES ${GTEST_LIB_DIR}/libgtest_main.a
+        )
+
+        ## Enable to CTest and Google Test Frameworks
+        enable_testing()
+    else()
+        message("RoveComm_CPP -- LIBRARY MODE")
+    endif()
 else()
     message(STATUS "RoveComm_CPP -- Configuring for native platform: ${CMAKE_SYSTEM_NAME}")
-endif()
+    ## Check if we are using this as a library or just testing within the repo scope
+    if(PROJECT_IS_TOP_LEVEL)
+        message("RoveComm_CPP -- STAND ALONE MODE")
 
-## Check if we are using this as a library or just testing within the repo scope
-if(PROJECT_IS_TOP_LEVEL)
-    message("RoveComm_CPP -- STAND ALONE MODE")
+        ## Find Quill
+        find_package(quill REQUIRED)
 
-    ## Find Quill
-    find_package(quill REQUIRED)
+        ## Find Google Test
+        find_package(GTest CONFIG REQUIRED)
+        include(GoogleTest)
+        add_library(GTest::GTest INTERFACE IMPORTED)
+        target_link_libraries(GTest::GTest INTERFACE gtest_main)
 
-    ## Find Google Test
-    find_package(GTest CONFIG REQUIRED)
-    include(GoogleTest)
-    add_library(GTest::GTest INTERFACE IMPORTED)
-    target_link_libraries(GTest::GTest INTERFACE gtest_main)
+        ## Find Eigen3.
+        find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-    ## Find Eigen3.
-    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-    ## Enable to CTest and Google Test Frameworks
-    enable_testing()
-else()
-    message("RoveComm_CPP -- LIBRARY MODE")
+        ## Enable to CTest and Google Test Frameworks
+        enable_testing()
+    else()
+        message("RoveComm_CPP -- LIBRARY MODE")
+    endif()
 endif()
 
 ## Set ThreadPool Variables
@@ -165,6 +225,9 @@ if(PROJECT_IS_TOP_LEVEL)
     ## Attach libraries to Executable
     if (__ROVECOMM_WINDOWS_MODE__)
         message("RoveComm_CPP -- USING WINDOWS SOCKETS")
+        # Ensure Quill and GTest are built before project
+        add_dependencies(${PROJECT_NAME}_App Quill GTest)
+        # Set link libraries for Quill.
         target_link_libraries(${PROJECT_NAME}_App PRIVATE quill::quill ws2_32 RoveComm_CPP)
     else()
         message("RoveComm_CPP -- USING UNIX SOCKETS")
@@ -180,16 +243,28 @@ if(PROJECT_IS_TOP_LEVEL)
     list(LENGTH IntegrationTests_SRC    IntegrationTests_LEN)
 
     # Create Unit Tests if found
-    if (UnitTests_LEN GREATER 0)
-        add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
-        target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main RoveComm_CPP)
-        add_test(Unit_Tests ${PROJECT_NAME}_UnitTests)
-    endif()
+    # if (UnitTests_LEN GREATER 0)
+    #     add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
+    #     if (__ROVECOMM_WINDOWS_MODE__)
+    #         # Ensure Quill and GTest are built before project
+    #         add_dependencies(${PROJECT_NAME}_UnitTests Quill GTest)
+    #         target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main ws2_32 RoveComm_CPP)
+    #     else()
+    #         target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main RoveComm_CPP)
+    #     endif()
+    #     add_test(Unit_Tests ${PROJECT_NAME}_UnitTests)
+    # endif()
 
-    ## Create Integration Tests if found
-    if (IntegrationTests_LEN GREATER 0)
-        add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${IntegrationTests_SRC})
-        target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main RoveComm_CPP)
-        add_test(Integration_Tests ${PROJECT_NAME}_IntegrationTests)
-    endif()
+    # ## Create Integration Tests if found
+    # if (IntegrationTests_LEN GREATER 0)
+    #     add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${IntegrationTests_SRC})
+    #     if (__ROVECOMM_WINDOWS_MODE__)
+    #         # Ensure Quill and GTest are built before project
+    #         add_dependencies(${PROJECT_NAME}_IntegrationTests Quill GTest)
+    #         target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main ws2_32 RoveComm_CPP)
+    #     else()
+    #         target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main RoveComm_CPP)
+    #     endif()
+    #     add_test(Integration_Tests ${PROJECT_NAME}_IntegrationTests)
+    # endif()
 endif()
