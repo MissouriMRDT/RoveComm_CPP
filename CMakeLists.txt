@@ -32,6 +32,7 @@ if(NOT DEFINED __ROVECOMM_LIBRARY_MODE__)
         set(__ROVECOMM_LIBRARY_MODE__ 1)
     endif()
 endif()
+
 # Check if we are on Windows or Linux or for windows mode if cross-compiling.
 option(BUILD_WIN "Windows Cross-Compile Mode" ON)
 if(NOT DEFINED __ROVECOMM_WINDOWS_MODE__)
@@ -43,14 +44,14 @@ if(NOT DEFINED __ROVECOMM_WINDOWS_MODE__)
     endif()
 endif()
 
-message("RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")
-message("RoveComm Windows Mode: ${__ROVECOMM_WINDOWS_MODE__}")
+message("-- RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")
+message("-- RoveComm Windows Mode: ${__ROVECOMM_WINDOWS_MODE__}")
 add_definitions(-D__ROVECOMM_LIBRARY_MODE__=${__ROVECOMM_LIBRARY_MODE__})
 add_definitions(-D__ROVECOMM_WINDOWS_MODE__=${__ROVECOMM_WINDOWS_MODE__})
 
 ## Detect if we are cross-compiling or should compile for windows.
 if(__ROVECOMM_WINDOWS_MODE__)
-    message("RoveComm_CPP -- Cross-compiling for Windows on Linux")
+    message("-- RoveComm_CPP -- Cross-compiling for Windows on Linux")
     
     ## Set the cross-compilation toolchain
     set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)
@@ -65,7 +66,7 @@ if(__ROVECOMM_WINDOWS_MODE__)
     
     ## Check if we are using this as a library or just testing within the repo scope
     if(PROJECT_IS_TOP_LEVEL)
-        message("RoveComm_CPP -- STAND ALONE MODE")
+        message("-- RoveComm_CPP -- STAND ALONE MODE")
 
         ## Find Eigen3.
         find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -104,13 +105,13 @@ if(__ROVECOMM_WINDOWS_MODE__)
         ## Enable to CTest and Google Test Frameworks
         enable_testing()
     else()
-        message("RoveComm_CPP -- LIBRARY MODE")
+        message("-- RoveComm_CPP -- LIBRARY MODE")
     endif()
 else()
     message(STATUS "RoveComm_CPP -- Configuring for native platform: ${CMAKE_SYSTEM_NAME}")
     ## Check if we are using this as a library or just testing within the repo scope
     if(PROJECT_IS_TOP_LEVEL)
-        message("RoveComm_CPP -- STAND ALONE MODE")
+        message("-- RoveComm_CPP -- STAND ALONE MODE")
 
         ## Find Google Test
         find_package(GTest CONFIG REQUIRED)
@@ -124,7 +125,7 @@ else()
         ## Enable to CTest and Google Test Frameworks
         enable_testing()
     else()
-        message("RoveComm_CPP -- LIBRARY MODE")
+        message("-- RoveComm_CPP -- LIBRARY MODE")
     endif()
 endif()
 
@@ -204,13 +205,13 @@ if(PROJECT_IS_TOP_LEVEL)
 
     ## Attach libraries to Executable
     if (__ROVECOMM_WINDOWS_MODE__)
-        message("RoveComm_CPP -- USING WINDOWS SOCKETS")
+        message("-- RoveComm_CPP -- USING WINDOWS SOCKETS")
         # Ensure GTest is built before project
         add_dependencies(${PROJECT_NAME}_App GTest)
         # Set link libraries.
         target_link_libraries(${PROJECT_NAME}_App PRIVATE ws2_32 RoveComm_CPP)
     else()
-        message("RoveComm_CPP -- USING UNIX SOCKETS")
+        message("-- RoveComm_CPP -- USING UNIX SOCKETS")
         target_link_libraries(${PROJECT_NAME}_App PRIVATE RoveComm_CPP)
     endif()
 
