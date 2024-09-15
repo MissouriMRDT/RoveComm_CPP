@@ -59,12 +59,6 @@ RUN if [ "${CMAKE_VERSION}" != "none" ]; then \
 # Set Working Directory
 WORKDIR /opt
 
-# Install Quill
-ARG QUILL_VERSION="7.0.0-pre"
-RUN wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/quill/amd64/quill_${QUILL_VERSION}_amd64.deb && \
-    dpkg -i quill_${QUILL_VERSION}_amd64.deb && \
-    rm quill_${QUILL_VERSION}_amd64.deb
-
 # Install Google Test
 ARG GTEST_VERSION="1.15.2"
 RUN wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/gtest/amd64/gtest_${GTEST_VERSION}_amd64.deb && \
@@ -92,4 +86,4 @@ LABEL maintainer="Mars Rover Design Team <marsrover@mst.edu>"
 LABEL org.opencontainers.image.source=https://github.com/missourimrdt/rovecomm_cpp
 LABEL org.opencontainers.image.licenses=GPL-3.0-onlyLABEL
 LABEL org.opencontainers.image.version="v24.5.0"
-LABEL org.opencontainers.image.description="Docker Image for Ubuntu ${UBUNTU_MAJOR}.${UBUNTU_MINOR} with CUDA ${CUDA_MAJOR}.${CUDA_MINOR}, Quill v${QUILL_VERSION}, and Google Test v${GTEST_VERSION}."
+LABEL org.opencontainers.image.description="Docker Image for Ubuntu ${UBUNTU_MAJOR}.${UBUNTU_MINOR} with CUDA ${CUDA_MAJOR}.${CUDA_MINOR}, Google Test v${GTEST_VERSION}."

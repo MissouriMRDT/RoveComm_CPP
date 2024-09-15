@@ -47,14 +47,10 @@ jobs:
       - name: Install Project Dependencies
         run: |
           sudo apt update && sudo apt install -y libeigen3-dev zip
-          wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/quill/amd64/quill_${QUILL_VERSION}_amd64.deb
-          sudo dpkg -i quill_${QUILL_VERSION}_amd64.deb
-          rm quill_${QUILL_VERSION}_amd64.deb
           wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/gtest/amd64/gtest_${GTEST_VERSION}_amd64.deb
           sudo dpkg -i gtest_${GTEST_VERSION}_amd64.deb
           rm gtest_${GTEST_VERSION}_amd64.deb
         env:
-          QUILL_VERSION: "7.0.0-pre"
           GTEST_VERSION: "1.15.2"
 
       - name: Build and Create Executable

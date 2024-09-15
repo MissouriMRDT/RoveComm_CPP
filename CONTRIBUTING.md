@@ -89,7 +89,6 @@ Examples: `int g_nExampleGlobalInteger` or `int m_nExampleMemberInteger`
 #### External Types
 - Boost:
     - Asio > `asio`  > Example: `asio::io_context io_context`
-- Quill  > `q` > Example: `quill::Config qConfig`
 
 ### Macro Names
 Macros should be in all caps using underscores to seperate words. They should be detailed enough to not require an additional comment.
