@@ -46,14 +46,14 @@ jobs:
 
       - name: Install Project Dependencies
         run: |
-          sudo apt update && sudo apt install -y libeigen3-dev zip
+          sudo apt update && sudo apt install -y libeigen3-dev zip mingw-w64
           wget -q https://github.com/MissouriMRDT/Autonomy_Packages/raw/main/gtest/amd64/gtest_${GTEST_VERSION}_amd64.deb
           sudo dpkg -i gtest_${GTEST_VERSION}_amd64.deb
           rm gtest_${GTEST_VERSION}_amd64.deb
         env:
           GTEST_VERSION: "1.15.2"
 
-      - name: Build and Create Executable
+      - name: Build and Create Unix Executable
         run: |
           cd /opt/RoveComm_CPP/
           if [ -d "build" ]; then rm -Rf build; fi
@@ -73,6 +73,22 @@ jobs:
           zip -r RoveComm_CPP_AMD64.zip include/* external/* lib/*
           cp RoveComm_CPP_AMD64.zip /opt/RoveComm_CPP/build/
 
+      - name: Build and Create Windows Executable
+        run: |
+          cd /opt/RoveComm_CPP/
+          if [ -d "build" ]; then rm -Rf build; fi
+          mkdir build
+          cd build
+          cmake -DBUILD_WIN=ON ..
+          make
+
+      - name: Rename Executable and Create ZIP
+        run: |
+          mkdir -p /opt/RoveComm_CPP/build/RoveComm_CPP_WIN
+          mv /opt/RoveComm_CPP/build/RoveComm_CPP*.* /opt/RoveComm_CPP/build/RoveComm_CPP_WIN/
+          zip -r RoveComm_CPP_WIN.zip /opt/RoveComm_CPP/build/RoveComm_CPP_WIN
+          cp RoveComm_CPP_WIN64.zip /opt/RoveComm_CPP/build/
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -80,6 +96,7 @@ jobs:
           path: |
             /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
             /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.zip
+            /opt/RoveComm_CPP/build/RoveComm_CPP_WIN64.zip
 
   create-release:
     runs-on: ubuntu-latest
