@@ -209,7 +209,7 @@ if(PROJECT_IS_TOP_LEVEL)
         # Ensure GTest is built before project
         add_dependencies(${PROJECT_NAME}_App GTest)
         # Set link libraries.
-        target_link_libraries(${PROJECT_NAME}_App PRIVATE ws2_32 RoveComm_CPP)
+        target_link_libraries(${PROJECT_NAME}_App PRIVATE RoveComm_CPP ws2_32)
     else()
         message("-- RoveComm_CPP -- USING UNIX SOCKETS")
         target_link_libraries(${PROJECT_NAME}_App PRIVATE RoveComm_CPP)
