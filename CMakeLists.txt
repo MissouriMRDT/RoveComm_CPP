@@ -34,7 +34,7 @@ if(NOT DEFINED __ROVECOMM_LIBRARY_MODE__)
 endif()
 
 # Check if we are on Windows or Linux or for windows mode if cross-compiling.
-option(BUILD_WIN "Windows Cross-Compile Mode" ON)
+option(BUILD_WIN "Windows Cross-Compile Mode" OFF)
 if(NOT DEFINED __ROVECOMM_WINDOWS_MODE__)
     if(WIN32 OR BUILD_WIN)
         set(__ROVECOMM_WINDOWS_MODE__ 1)
@@ -68,31 +68,37 @@ if(__ROVECOMM_WINDOWS_MODE__)
     if(PROJECT_IS_TOP_LEVEL)
         message("-- RoveComm_CPP -- STAND ALONE MODE")
 
+        ## Force CMAKE to build a completely static binary.
+        set(CMAKE_EXE_LINKER_FLAGS "-static")
+
         ## Find Eigen3.
         find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-        # ExternalProject configuration for pulling and building GTest
+        ## ExternalProject configuration for pulling and building GTest
         ExternalProject_Add(GTest
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG        v1.15.2  # Specify the GTest version tag or commit
-            PREFIX         ${CMAKE_BINARY_DIR}/gtest
-            CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/gtest_install
+            GIT_REPOSITORY  https://github.com/google/googletest.git
+            GIT_TAG         v1.15.2  # Specify the GTest version tag or commit
+            PREFIX          ${CMAKE_BINARY_DIR}/gtest
+            CMAKE_ARGS      -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/gtest_install
+                            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc-posix
+                            -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++-posix
+                            -DCMAKE_SYSTEM_NAME=Windows
         )
         
-        # Create an imported target for GTest
+        ## Create an imported target for GTest
         add_library(GTest::gtest IMPORTED INTERFACE)
         add_library(GTest::gtest_main IMPORTED INTERFACE)
         
-        # Specify where to find GTest once they're built
+        ## Specify where to find GTest once they're built
         ExternalProject_Get_Property(GTest install_dir)
         set(GTEST_INCLUDE_DIR ${install_dir}_install/include)
         set(GTEST_LIB_DIR ${install_dir}_install/lib)
 
-        # Must create empty install dirs.
+        ## Must create empty install dirs.
         file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/gtest_install/include)
         file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/gtest_install/lib)
 
-        # Set the imported target properties for GTest
+        ## Set the imported target properties for GTest
         set_target_properties(GTest::gtest PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES ${GTEST_INCLUDE_DIR}
             INTERFACE_LINK_LIBRARIES ${GTEST_LIB_DIR}/libgtest.a
@@ -206,8 +212,6 @@ if(PROJECT_IS_TOP_LEVEL)
     ## Attach libraries to Executable
     if (__ROVECOMM_WINDOWS_MODE__)
         message("-- RoveComm_CPP -- USING WINDOWS SOCKETS")
-        # Ensure GTest is built before project
-        add_dependencies(${PROJECT_NAME}_App GTest)
         # Set link libraries.
         target_link_libraries(${PROJECT_NAME}_App PRIVATE RoveComm_CPP ws2_32)
     else()
@@ -223,29 +227,29 @@ if(PROJECT_IS_TOP_LEVEL)
     list(LENGTH UnitTests_SRC           UnitTests_LEN)
     list(LENGTH IntegrationTests_SRC    IntegrationTests_LEN)
 
-    # Create Unit Tests if found
-    # if (UnitTests_LEN GREATER 0)
-    #     add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
-    #     if (__ROVECOMM_WINDOWS_MODE__)
-    #         # Ensure GTest are built before project
-    #         add_dependencies(${PROJECT_NAME}_UnitTests GTest)
-    #         target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main ws2_32 RoveComm_CPP)
-    #     else()
-    #         target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main RoveComm_CPP)
-    #     endif()
-    #     add_test(Unit_Tests ${PROJECT_NAME}_UnitTests)
-    # endif()
+    ## Create Unit Tests if found
+    if (UnitTests_LEN GREATER 0)
+        add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
+        if (__ROVECOMM_WINDOWS_MODE__)
+            # Ensure GTest are built before project
+            add_dependencies(${PROJECT_NAME}_UnitTests GTest)
+            target_link_libraries(${PROJECT_NAME}_UnitTests RoveComm_CPP ws2_32 GTest::gtest GTest::gtest_main)
+        else()
+            target_link_libraries(${PROJECT_NAME}_UnitTests GTest::gtest GTest::gtest_main RoveComm_CPP)
+        endif()
+        add_test(Unit_Tests ${PROJECT_NAME}_UnitTests)
+    endif()
 
-    # ## Create Integration Tests if found
-    # if (IntegrationTests_LEN GREATER 0)
-    #     add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${IntegrationTests_SRC})
-    #     if (__ROVECOMM_WINDOWS_MODE__)
-    #         # Ensure GTest are built before project
-    #         add_dependencies(${PROJECT_NAME}_IntegrationTests GTest)
-    #         target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main ws2_32 RoveComm_CPP)
-    #     else()
-    #         target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main RoveComm_CPP)
-    #     endif()
-    #     add_test(Integration_Tests ${PROJECT_NAME}_IntegrationTests)
-    # endif()
+    ## Create Integration Tests if found
+    if (IntegrationTests_LEN GREATER 0)
+        add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${IntegrationTests_SRC})
+        if (__ROVECOMM_WINDOWS_MODE__)
+            # Ensure GTest are built before project
+            add_dependencies(${PROJECT_NAME}_IntegrationTests GTest)
+            target_link_libraries(${PROJECT_NAME}_IntegrationTests RoveComm_CPP ws2_32 GTest::gtest GTest::gtest_main)
+        else()
+            target_link_libraries(${PROJECT_NAME}_IntegrationTests GTest::gtest GTest::gtest_main RoveComm_CPP)
+        endif()
+        add_test(Integration_Tests ${PROJECT_NAME}_IntegrationTests)
+    endif()
 endif()
