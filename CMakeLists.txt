@@ -45,8 +45,8 @@ if(NOT DEFINED __ROVECOMM_WINDOWS_MODE__)
 endif()
 
 message("-- RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")
-message("-- RoveComm Windows Mode: ${__ROVECOMM_WINDOWS_MODE__}")
 add_definitions(-D__ROVECOMM_LIBRARY_MODE__=${__ROVECOMM_LIBRARY_MODE__})
+message("-- RoveComm Windows Mode: ${__ROVECOMM_WINDOWS_MODE__}")
 add_definitions(-D__ROVECOMM_WINDOWS_MODE__=${__ROVECOMM_WINDOWS_MODE__})
 
 ## Detect if we are cross-compiling or should compile for windows.
@@ -231,7 +231,7 @@ if(PROJECT_IS_TOP_LEVEL)
     if (UnitTests_LEN GREATER 0)
         add_executable(${PROJECT_NAME}_UnitTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${UnitTests_SRC})
         if (__ROVECOMM_WINDOWS_MODE__)
-            # Ensure GTest are built before project
+            ## Ensure GTest are built before project
             add_dependencies(${PROJECT_NAME}_UnitTests GTest)
             target_link_libraries(${PROJECT_NAME}_UnitTests RoveComm_CPP ws2_32 GTest::gtest GTest::gtest_main)
         else()
@@ -244,7 +244,7 @@ if(PROJECT_IS_TOP_LEVEL)
     if (IntegrationTests_LEN GREATER 0)
         add_executable(${PROJECT_NAME}_IntegrationTests "tests/Unit/main.cc" "tests/TestUtils.cc" ${IntegrationTests_SRC})
         if (__ROVECOMM_WINDOWS_MODE__)
-            # Ensure GTest are built before project
+            ## Ensure GTest are built before project
             add_dependencies(${PROJECT_NAME}_IntegrationTests GTest)
             target_link_libraries(${PROJECT_NAME}_IntegrationTests RoveComm_CPP ws2_32 GTest::gtest GTest::gtest_main)
         else()
