@@ -17,8 +17,23 @@
 /// \cond
 #include <cstdint>
 #include <cstring>
-#include <netinet/in.h>
 #include <vector>
+
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#elif _WIN32_WINNT < 0x0600
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
 
 /// \endcond
 
