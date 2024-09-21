@@ -81,12 +81,16 @@ jobs:
           cd build
           cmake -DBUILD_WIN=ON ..
           make
+          make package
 
       - name: Rename Executable and Create ZIP
         run: |
-          mkdir -p /opt/RoveComm_CPP/build/RoveComm_CPP_WIN
-          mv /opt/RoveComm_CPP/build/RoveComm_CPP*.* /opt/RoveComm_CPP/build/RoveComm_CPP_WIN/
-          zip -r RoveComm_CPP_WIN.zip /opt/RoveComm_CPP/build/RoveComm_CPP_WIN
+          mv /opt/RoveComm_CPP/build/RoveComm_CPP**.sh /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
+          tar xzf /opt/RoveComm_CPP/build/RoveComm_CPP**.tar.gz -C /opt/RoveComm_CPP/build/
+          mkdir -p /opt/RoveComm_CPP/build/RoveComm_CPP
+          mv /opt/RoveComm_CPP/build/RoveComm_CPP**/* /opt/RoveComm_CPP/build/RoveComm_CPP/
+          cd /opt/RoveComm_CPP/build/RoveComm_CPP/
+          zip -r RoveComm_CPP_WIN64.zip include/* external/* lib/*
           cp RoveComm_CPP_WIN64.zip /opt/RoveComm_CPP/build/
 
       - name: Upload Artifacts
