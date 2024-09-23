@@ -11,17 +11,15 @@
 #include "RoveCommTCP.h"
 #include "RoveCommPacket.h"
 
-/// \cond
-#include <arpa/inet.h>
-#include <cstring>
-#include <fcntl.h>
-#include <functional>
-#include <iostream>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <thread>
-
-/// \endcond
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+typedef SOCKET socket_t;
+#define CLOSE_SOCKET   closesocket
+#define GET_LAST_ERROR WSAGetLastError()
+#else
+typedef int socket_t;
+#define CLOSE_SOCKET   close
+#define GET_LAST_ERROR errno
+#endif
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
@@ -77,6 +75,15 @@ namespace rovecomm
      ******************************************************************************/
     bool RoveCommTCP::InitTCPSocket(const char* cIPAddress, int nPort)
     {
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            std::cerr << "WSAStartup failed." << std::endl;
+            return 1;
+        }
+#endif
+
         // Create a TCP socket
         m_nTCPSocket = socket(AF_INET, SOCK_STREAM, 0);
         if (m_nTCPSocket == -1)
@@ -86,13 +93,23 @@ namespace rovecomm
         }
         else
         {
-            // Attempt to set the socket to non-blocking mode.
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+            u_long mode = 1;    // 1 to enable non-blocking mode
+            if (ioctlsocket(m_nTCPSocket, FIONBIO, &mode) == SOCKET_ERROR)
+            {
+                // Handle and print error.
+                int err = WSAGetLastError();
+                fprintf(stderr, "Failed to set UDP socket to non-blocking mode. Error code: %d\n", err);
+                return false;
+            }
+#else
             if (fcntl(m_nTCPSocket, F_SETFL, fcntl(m_nTCPSocket, F_GETFL) | O_NONBLOCK) == -1)
             {
                 // Handle and print error.
                 perror("Failed to set UDP socket to non-blocking mode.");
                 return false;
             }
+#endif
         }
 
         // Configure the server address
@@ -179,7 +196,11 @@ namespace rovecomm
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
         size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
         // Send the data
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+        ssize_t siBytesSent = send(nClientSocket, reinterpret_cast<char*>(&stData), siDataSize, 0);
+#else
         ssize_t siBytesSent = send(nClientSocket, &stData, siDataSize, 0);
+#endif
         // Check if any bytes were sent.
         if (siBytesSent == -1)
         {
@@ -431,7 +452,11 @@ namespace rovecomm
         {
             // Receive data from the client
             RoveCommData stData;
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, reinterpret_cast<char*>(&stData), sizeof(stData), 0);
+#else
             ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, &stData, sizeof(stData), MSG_DONTWAIT);
+#endif
 
             // Process the received packet and invoke the appropriate callback
             if (siBytesReceived != -1)
@@ -513,7 +538,11 @@ namespace rovecomm
             Join();
 
             // Close the TCP socket
-            close(m_nTCPSocket);
+            CLOSE_SOCKET(m_nTCPSocket);
+
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+            WSACleanup();
+#endif
         }
     }
 

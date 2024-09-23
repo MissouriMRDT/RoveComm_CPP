@@ -12,17 +12,15 @@
 #include "RoveCommUDP.h"
 #include "RoveCommPacket.h"
 
-/// \cond
-#include <arpa/inet.h>
-#include <cstring>
-#include <fcntl.h>
-#include <functional>
-#include <iostream>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <thread>
-
-/// \endcond
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+typedef SOCKET socket_t;
+#define CLOSE_SOCKET   closesocket
+#define GET_LAST_ERROR WSAGetLastError()
+#else
+typedef int socket_t;
+#define CLOSE_SOCKET   close
+#define GET_LAST_ERROR errno
+#endif
 
 /******************************************************************************
  * @brief The RoveComm namespace contains all of the functionality for the
@@ -78,6 +76,15 @@ namespace rovecomm
      ******************************************************************************/
     bool RoveCommUDP::InitUDPSocket(int nPort)
     {
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            std::cerr << "WSAStartup failed." << std::endl;
+            return 1;
+        }
+#endif
+
         // Create a UDP socket
         m_nUDPSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (m_nUDPSocket == -1)
@@ -87,13 +94,23 @@ namespace rovecomm
         }
         else
         {
-            // Attempt to set the socket to non-blocking mode.
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+            u_long mode = 1;    // 1 to enable non-blocking mode
+            if (ioctlsocket(m_nUDPSocket, FIONBIO, &mode) == SOCKET_ERROR)
+            {
+                // Handle and print error.
+                int err = WSAGetLastError();
+                fprintf(stderr, "Failed to set UDP socket to non-blocking mode. Error code: %d\n", err);
+                return false;
+            }
+#else
             if (fcntl(m_nUDPSocket, F_SETFL, fcntl(m_nUDPSocket, F_GETFL) | O_NONBLOCK) == -1)
             {
                 // Handle and print error.
                 perror("Failed to set UDP socket to non-blocking mode.");
                 return false;
             }
+#endif
         }
 
         // Configure the server address
@@ -153,7 +170,7 @@ namespace rovecomm
             saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
             inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
             // Send data.
-            if (sendto(m_nUDPSocket, &stData, siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
+            if (sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
             {
                 // Handle and print error message.
                 perror("Failed to send data to UDP client socket subscriber.");
@@ -166,7 +183,7 @@ namespace rovecomm
             saUDPClientAddr.sin_port = htons(nPort);
             inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
 
-            return sendto(m_nUDPSocket, &stData, siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+            return sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
         }
 
         return -1;
@@ -412,9 +429,13 @@ namespace rovecomm
     {
         RoveCommData stData;
         sockaddr_in saClientAddr;
-        socklen_t addrLen          = sizeof(saClientAddr);
+        socklen_t addrLen = sizeof(saClientAddr);
 
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, reinterpret_cast<char*>(&stData), sizeof(stData), 0, (struct sockaddr*) &saClientAddr, &addrLen);
+#else
         ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, &stData, sizeof(stData), MSG_DONTWAIT, (struct sockaddr*) &saClientAddr, &addrLen);
+#endif
 
         if (siUDPBytesReceived != -1)
         {
@@ -533,7 +554,11 @@ namespace rovecomm
             Join();
 
             // Close the socket
-            close(m_nUDPSocket);
+            CLOSE_SOCKET(m_nUDPSocket);
+
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+            WSACleanup();
+#endif
         }
     }
 

@@ -19,15 +19,12 @@
 #include "RoveCommPacket.h"
 
 /// \cond
-#include <arpa/inet.h>
 #include <atomic>
 #include <csignal>
 #include <cstring>
 #include <functional>
 #include <iostream>
-#include <netinet/in.h>
 #include <shared_mutex>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>

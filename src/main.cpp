@@ -12,7 +12,6 @@
 #if !defined(__ROVECOMM_LIBRARY_MODE__) || (__ROVECOMM_LIBRARY_MODE__ == 0)
 
 #include "RoveComm/RoveComm.h"
-#include "RoveCommLoggers.h"
 
 /// \cond
 #include <fstream>
@@ -45,10 +44,7 @@ int main()
     }
 
     std::cout << szHeaderText << std::endl;
-    std::cout << "Copyright \u00A9 2023 - Mars Rover Design Team\n" << std::endl;
-
-    // Initialize Loggers
-    logging::InitializeLoggers(logging::LOGGING_OUTPUT_PATH_ABSOLUTE);
+    std::cout << "Copyright \u00A9 2024 - Mars Rover Design Team\n" << std::endl;
 
     // Define a callback function for handling received TCP packets
     auto TCPCallback = [](const rovecomm::RoveCommPacket<uint8_t>& packet)
