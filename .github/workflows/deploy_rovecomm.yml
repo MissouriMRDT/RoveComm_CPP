@@ -98,9 +98,9 @@ jobs:
         with:
           name: RoveComm-Packages
           path: |
-            /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64_Installer.sh
-            /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.zip
-            /opt/RoveComm_CPP/build/RoveComm_CPP_WIN64.zip
+            /opt/RoveComm_CPP/RoveComm_CPP_AMD64_Installer.sh
+            /opt/RoveComm_CPP/RoveComm_CPP_AMD64.zip
+            /opt/RoveComm_CPP/RoveComm_CPP_WIN64.zip
 
   create-release:
     runs-on: ubuntu-latest
