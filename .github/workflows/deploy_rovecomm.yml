@@ -69,7 +69,7 @@ jobs:
 
       - name: Rename Executable and Create ZIP
         run: |
-          mv /opt/RoveComm_CPP/build/RoveComm_CPP**.sh /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
+          mv /opt/RoveComm_CPP/build/RoveComm_CPP**.sh /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64_Installer.sh
           tar xzf /opt/RoveComm_CPP/build/RoveComm_CPP**.tar.gz -C /opt/RoveComm_CPP/build/
           mkdir -p /opt/RoveComm_CPP/build/RoveComm_CPP
           mv /opt/RoveComm_CPP/build/RoveComm_CPP**/* /opt/RoveComm_CPP/build/RoveComm_CPP/
@@ -80,9 +80,9 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: RoveComm-AMD64
+          name: RoveComm-Packages
           path: |
-            /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.sh
+            /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64_Installer.sh
             /opt/RoveComm_CPP/build/RoveComm_CPP_AMD64.zip
 
   create-release:
