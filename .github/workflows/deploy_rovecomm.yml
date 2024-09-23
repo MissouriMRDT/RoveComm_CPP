@@ -92,6 +92,7 @@ jobs:
           cd /opt/RoveComm_CPP/build/RoveComm_CPP/
           zip -r RoveComm_CPP_WIN64.zip include/* external/* lib/*
           cp RoveComm_CPP_WIN64.zip /opt/RoveComm_CPP/build/
+          ls /opt/RoveComm_CPP/build/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
