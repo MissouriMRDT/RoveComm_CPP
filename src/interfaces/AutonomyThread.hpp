@@ -601,7 +601,7 @@ class AutonomyThread
         void RunThread(std::atomic_bool& bStopThread)
         {
             // Declare instance variables.
-            std::chrono::system_clock::time_point tmStartTime;
+            std::chrono::high_resolution_clock::time_point tmStartTime;
 
             // Loop until stop flag is set.
             while (!bStopThread)
@@ -620,7 +620,7 @@ class AutonomyThread
                 if (m_nMainThreadMaxIterationPerSecond > 0)
                 {
                     // Get end execution time.
-                    std::chrono::system_clock::time_point tmEndTime = std::chrono::high_resolution_clock::now();
+                    std::chrono::high_resolution_clock::time_point tmEndTime = std::chrono::high_resolution_clock::now();
                     // Get execution time of user code.
                     std::chrono::microseconds tmElapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(tmEndTime - tmStartTime);
                     // Check if the elapsed time is slower than the max iterations per seconds.
