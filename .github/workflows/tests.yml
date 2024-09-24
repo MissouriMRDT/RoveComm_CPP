@@ -42,7 +42,7 @@ jobs:
           cd /opt/RoveComm_CPP/
           mkdir build
           cd build
-          cmake ..
+          cmake -DBUILD_TESTS_MODE=ON ..
           make
 
       - name: Run Unit Tests
