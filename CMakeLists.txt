@@ -187,7 +187,7 @@ file(GLOB_RECURSE RoveComm_SRC          CONFIGURE_DEPENDS  "src/RoveComm/*.cpp")
 add_library(${PROJECT_NAME} STATIC ${RoveComm_INCLUDE} ${RoveComm_SRC})
 
 ## Configure the directories to search for header files.
-target_include_directories(${PROJECT_NAME} PRIVATE src/RoveComm)
+target_include_directories(${PROJECT_NAME} PUBLIC src/RoveComm)
 
 ## Set the version property.
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
