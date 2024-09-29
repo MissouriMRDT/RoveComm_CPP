@@ -10,14 +10,13 @@
 cmake_minimum_required(VERSION 3.24.3)
 
 ## C++ Version
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 ## C++ Compiler Flags.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++20")
 
 ## Project Name and Software Version Number
-project(RoveComm_CPP VERSION 3.00.00)
+project(RoveComm_CPP VERSION 3.00.00 LANGUAGES CXX)
 
 ## Include Required CMake Packages
 if(NOT CPack_CMake_INCLUDED)
