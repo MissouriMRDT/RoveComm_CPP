@@ -1,0 +1,27 @@
+name: Checkout RoveComm Submodule
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'  # Run the workflow every minute
+  workflow_dispatch:  # Allows manual triggering if needed
+
+jobs:
+  checkout_rovecomm_submodule:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true    # Ensure submodules are initialized
+          fetch-depth: 0       # Fetch all history so we can access the latest commit
+
+      - name: Update RoveComm submodule to latest commit
+        run: |
+          git submodule update --remote --merge data/RoveComm
+          cd data/RoveComm
+          git checkout $(git rev-parse --abbrev-ref HEAD)
+          cd -
+
+      - name: Verify RoveComm Submodule
+        run: git submodule status
