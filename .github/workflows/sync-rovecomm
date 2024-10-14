@@ -1,9 +1,8 @@
 name: Checkout RoveComm Submodule
 
 on:
-  schedule:
-    - cron: '*/1 * * * *'  # Run the workflow every minute
-  workflow_dispatch:  # Allows manual triggering if needed
+  repository_dispatch:
+    types: [rovecomm_sync]
 
 jobs:
   checkout_rovecomm_submodule:
@@ -18,10 +17,37 @@ jobs:
 
       - name: Update RoveComm submodule to latest commit
         run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git submodule update --remote --merge data/RoveComm
           cd data/RoveComm
           git checkout $(git rev-parse --abbrev-ref HEAD)
           cd -
 
-      - name: Verify RoveComm Submodule
-        run: git submodule status
+      - name: Commit changes if RoveComm was updated
+        id: commit_changes  # Set an ID so we can refer to this step's output
+        run: |
+          git add data/RoveComm
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit"
+            echo "::set-output name=changes_made::false"
+          else
+            git commit -m "Update RoveComm submodule to the latest commit"
+            echo "::set-output name=changes_made::true"
+          fi
+
+      - name: Push changes to a new branch
+        if: steps.commit_changes.outputs.changes_made == 'true'
+        run: |
+          git checkout -b update-rovecomm-submodule
+          git push origin update-rovecomm-submodule
+
+      - name: Create Pull Request
+        if: steps.commit_changes.outputs.changes_made == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          head: update-rovecomm-submodule
+          base: main
+          title: "Update RoveComm submodule to the latest commit"
+          body: "This pull request updates the RoveComm submodule to the latest commit."
