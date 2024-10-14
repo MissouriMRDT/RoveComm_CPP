@@ -1,0 +1,62 @@
+name: Sync RoveComm Submodule
+
+on:
+  # Triggered from a webhook sent by a push to https://github.com/missourimrdt/rovecomm_base via an implementation of https://github.com/Byrdman32/github-action-on-webhook
+  repository_dispatch:
+    types: [rovecomm_sync]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  checkout_rovecomm_submodule:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up GitHub CLI
+        run: |
+          sudo apt-get install -y gh
+          echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
+          gh auth setup-git  # Ensure gh is authenticated with GITHUB_TOKEN
+
+      - name: Update RoveComm submodule to latest commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch and update the submodule to the latest commit from the remote branch
+          git submodule update --remote -- data/RoveComm
+
+          # Ensure Git detects the submodule change by explicitly adding the submodule state
+          git add data/RoveComm
+          
+          # Check for any changes
+          git status
+          git diff --cached
+
+          # Commit any changes
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update RoveComm submodule to the latest commit"
+
+            git status
+
+            BRANCH_NAME="sync/rovecomm-$(date +'%Y%m%d-%H%M%S')"
+            git checkout -b $BRANCH_NAME
+            git push origin $BRANCH_NAME
+
+            git status
+
+            gh pr create --head $BRANCH_NAME --base main \
+            --title "Update RoveComm submodule to the latest commit" \
+            --body "This pull request updates the RoveComm submodule to the latest commit." \
+            --reviewer "MissouriMRDT/rovecomm-review"
+          fi  
