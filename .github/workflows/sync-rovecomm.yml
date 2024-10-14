@@ -1,8 +1,13 @@
-name: Checkout RoveComm Submodule
+name: Sync RoveComm Submodule
 
 on:
+  # Triggered from a webhook sent by a push to https://github.com/missourimrdt/rovecomm_base via an implementation of https://github.com/Byrdman32/github-action-on-webhook
   repository_dispatch:
     types: [rovecomm_sync]
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   checkout_rovecomm_submodule:
@@ -12,42 +17,46 @@ jobs:
       - name: Checkout main repository
         uses: actions/checkout@v4
         with:
-          submodules: true    # Ensure submodules are initialized
-          fetch-depth: 0       # Fetch all history so we can access the latest commit
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up GitHub CLI
+        run: |
+          sudo apt-get install -y gh
+          echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
+          gh auth setup-git  # Ensure gh is authenticated with GITHUB_TOKEN
 
       - name: Update RoveComm submodule to latest commit
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git submodule update --remote --merge data/RoveComm
-          cd data/RoveComm
-          git checkout $(git rev-parse --abbrev-ref HEAD)
-          cd -
 
-      - name: Commit changes if RoveComm was updated
-        id: commit_changes  # Set an ID so we can refer to this step's output
-        run: |
+          # Fetch and update the submodule to the latest commit from the remote branch
+          git submodule update --remote -- data/RoveComm
+
+          # Ensure Git detects the submodule change by explicitly adding the submodule state
           git add data/RoveComm
+          
+          # Check for any changes
+          git status
+          git diff --cached
+
+          # Commit any changes
           if git diff-index --quiet HEAD; then
             echo "No changes to commit"
-            echo "::set-output name=changes_made::false"
           else
             git commit -m "Update RoveComm submodule to the latest commit"
-            echo "::set-output name=changes_made::true"
-          fi
 
-      - name: Push changes to a new branch
-        if: steps.commit_changes.outputs.changes_made == 'true'
-        run: |
-          git checkout -b update-rovecomm-submodule
-          git push origin update-rovecomm-submodule
+            git status
 
-      - name: Create Pull Request
-        if: steps.commit_changes.outputs.changes_made == 'true'
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          head: update-rovecomm-submodule
-          base: main
-          title: "Update RoveComm submodule to the latest commit"
-          body: "This pull request updates the RoveComm submodule to the latest commit."
+            BRANCH_NAME="sync/rovecomm-$(date +'%Y%m%d-%H%M%S')"
+            git checkout -b $BRANCH_NAME
+            git push origin $BRANCH_NAME
+
+            git status
+
+            gh pr create --head $BRANCH_NAME --base main \
+            --title "Update RoveComm submodule to the latest commit" \
+            --body "This pull request updates the RoveComm submodule to the latest commit." \
+            --reviewer "MissouriMRDT/rovecomm-review"
+          fi  
