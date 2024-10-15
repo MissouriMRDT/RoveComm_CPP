@@ -20,12 +20,6 @@ jobs:
           submodules: true
           fetch-depth: 0
 
-      - name: Set up GitHub CLI
-        run: |
-          sudo apt-get install -y gh
-          echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
-          gh auth setup-git  # Ensure gh is authenticated with GITHUB_TOKEN
-
       - name: Update RoveComm submodule to latest commit
         run: |
           git config --global user.name "github-actions[bot]"
@@ -60,3 +54,5 @@ jobs:
             --body "This pull request updates the RoveComm submodule to the latest commit." \
             --reviewer "MissouriMRDT/rovecomm-review"
           fi  
+        env:
+          GH_TOKEN: ${{ secrets.RC_PAT_TOKEN }}
