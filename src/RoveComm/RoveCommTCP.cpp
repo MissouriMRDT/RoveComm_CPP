@@ -122,7 +122,7 @@ namespace rovecomm
         if (bind(m_nTCPSocket.load(), (struct sockaddr*) &m_saTCPServerAddr, sizeof(m_saTCPServerAddr)) == -1)
         {
             perror("Failed to bind TCP socket");
-            close(m_nTCPSocket);
+            CLOSE_SOCKET(m_nTCPSocket);
             return false;
         }
 
@@ -130,7 +130,7 @@ namespace rovecomm
         if (listen(m_nTCPSocket, 5) == -1)
         {
             perror("Failed to listen on TCP socket");
-            close(m_nTCPSocket);
+            CLOSE_SOCKET(m_nTCPSocket);
             return false;
         }
 
@@ -178,7 +178,7 @@ namespace rovecomm
         if (inet_pton(AF_INET, cClientIPAddress, &saClientAddr.sin_addr) <= 0)
         {
             perror("Invalid address/ Address not supported");
-            close(nClientSocket);
+            CLOSE_SOCKET(nClientSocket);
             return -1;
         }
 
@@ -186,7 +186,7 @@ namespace rovecomm
         if (connect(nClientSocket, (struct sockaddr*) &saClientAddr, sizeof(saClientAddr)) == -1)
         {
             perror("Connection failed");
-            close(nClientSocket);
+            CLOSE_SOCKET(nClientSocket);
             return -1;
         }
 
@@ -209,7 +209,7 @@ namespace rovecomm
         }
 
         // Close the client socket
-        close(nClientSocket);
+        CLOSE_SOCKET(nClientSocket);
 
         return siBytesSent;
     }
@@ -483,7 +483,7 @@ namespace rovecomm
                 }
 
                 // Close the client socket
-                close(m_nCurrentTCPClientSocket);
+                CLOSE_SOCKET(m_nCurrentTCPClientSocket);
                 m_nCurrentTCPClientSocket = -1;
             }
             // Still waiting for data or connection return without error.
