@@ -20,7 +20,7 @@
 #include <vector>
 
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
-#ifndef ssize_t
+#if !defined(ssize_t) && defined(_MSC_VER)
 typedef int ssize_t;
 #endif
 #ifndef _WIN32_WINNT
