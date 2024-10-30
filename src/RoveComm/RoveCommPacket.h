@@ -20,16 +20,18 @@
 #include <vector>
 
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+#ifndef ssize_t
 typedef int ssize_t;
+#endif
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0600
 #elif _WIN32_WINNT < 0x0600
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0600
 #endif
+#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <windows.h>
 #else
 #include <arpa/inet.h>
 #include <fcntl.h>
