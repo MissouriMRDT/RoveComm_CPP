@@ -20,7 +20,6 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
-#include <unistd.h>
 #include <vector>
 
 /// \endcond

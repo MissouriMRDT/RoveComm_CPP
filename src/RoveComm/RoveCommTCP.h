@@ -26,7 +26,6 @@
 #include <functional>
 #include <iostream>
 #include <shared_mutex>
-#include <unistd.h>
 #include <vector>
 
 /// \endcond

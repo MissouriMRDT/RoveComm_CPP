@@ -124,7 +124,7 @@ namespace rovecomm
         if (bind(m_nUDPSocket.load(), (struct sockaddr*) &saServerAddr, sizeof(saServerAddr)) == -1)
         {
             perror("Failed to bind UDP socket");
-            close(m_nUDPSocket);
+            CLOSE_SOCKET(m_nUDPSocket);
             return false;
         }
 
