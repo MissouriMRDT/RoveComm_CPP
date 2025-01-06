@@ -70,9 +70,13 @@ namespace rovecomm
             // INT8_T, UINT8_T, CHAR
             if constexpr (sizeof(T) == sizeof(uint8_t))
             {
-                // No need to convert to network order.
-                memcpy(pDataPtr, &pPacketData[unInter], sizeof(uint8_t));
-                pDataPtr += sizeof(uint8_t);
+                // Check if unIter is within the bounds of the packet data.
+                if (unInter < stPacket.vData.size())
+                {
+                    // No need to convert to network order.
+                    memcpy(pDataPtr, &pPacketData[unInter], sizeof(uint8_t));
+                    pDataPtr += sizeof(uint8_t);
+                }
             }
             // INT16_T, UINT16_T
             else if constexpr (sizeof(T) == sizeof(uint16_t))
