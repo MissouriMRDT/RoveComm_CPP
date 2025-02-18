@@ -94,13 +94,33 @@ namespace rovecomm
         }
         else
         {
-            // Increase the socket buffer size to 10MB
+            // Increase the socket buffer size to 1MB
             int bufferSize = 1 * 1024 * 1024;
             if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_RCVBUF, &bufferSize, sizeof(bufferSize)) == -1)
             {
                 perror("Failed to set socket receive buffer size");
                 return false;
             }
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_SNDBUF, &bufferSize, sizeof(bufferSize)) == -1)
+            {
+                perror("Failed to set socket send buffer size");
+                return false;
+            }
+
+            // Set SO_REUSEADDR and SO_REUSEPORT
+            int optval = 1;
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+            {
+                perror("Failed to set SO_REUSEADDR");
+                return false;
+            }
+#ifdef SO_REUSEPORT
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1)
+            {
+                perror("Failed to set SO_REUSEPORT");
+                return false;
+            }
+#endif
 
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
             u_long mode = 1;    // 1 to enable non-blocking mode
@@ -166,13 +186,14 @@ namespace rovecomm
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
         size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
 
+        // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
+        std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
+
         // Setup the base UDP client address
         struct sockaddr_in saUDPClientAddr;
         memset(&saUDPClientAddr, 0, sizeof(saUDPClientAddr));
         saUDPClientAddr.sin_family = AF_INET;
 
-        // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
-        std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
         // Send the packet to all subscribers
         for (const SubscriberInfo& stSubscriber : vSubscribers)
         {
@@ -449,6 +470,8 @@ namespace rovecomm
 
         if (siUDPBytesReceived != -1)
         {
+            std::cout << "Received UDP bytes: " << siUDPBytesReceived << std::endl;
+
             // Extract the data id from the received data
             uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
             // Determine the data type from the received data
