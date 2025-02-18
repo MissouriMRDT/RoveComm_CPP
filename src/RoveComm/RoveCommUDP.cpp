@@ -94,6 +94,14 @@ namespace rovecomm
         }
         else
         {
+            // Increase the socket buffer size.
+            int bufferSize = 1024 * 1024;    // 1 MB
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_RCVBUF, &bufferSize, sizeof(bufferSize)) == -1)
+            {
+                perror("Failed to set socket receive buffer size");
+                return false;
+            }
+
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
             u_long mode = 1;    // 1 to enable non-blocking mode
             if (ioctlsocket(m_nUDPSocket, FIONBIO, &mode) == SOCKET_ERROR)
