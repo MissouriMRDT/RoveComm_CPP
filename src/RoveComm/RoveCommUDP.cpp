@@ -94,8 +94,8 @@ namespace rovecomm
         }
         else
         {
-            // Increase the socket buffer size.
-            int bufferSize = 1024 * 1024;    // 1 MB
+            // Increase the socket buffer size to 10MB
+            int bufferSize = 1 * 1024 * 1024;
             if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_RCVBUF, &bufferSize, sizeof(bufferSize)) == -1)
             {
                 perror("Failed to set socket receive buffer size");
