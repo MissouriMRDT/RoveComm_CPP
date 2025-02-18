@@ -55,6 +55,7 @@ namespace rovecomm
             struct sockaddr_in m_saUDPServerAddr;
             std::vector<SubscriberInfo> vSubscribers;
             std::shared_mutex m_muCallbackMutex;
+            std::mutex m_muSocketSendMutex;
 
             // Packet processing functions
             template<typename T>

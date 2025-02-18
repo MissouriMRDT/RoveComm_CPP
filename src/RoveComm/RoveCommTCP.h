@@ -56,6 +56,7 @@ namespace rovecomm
             std::atomic_int m_nCurrentTCPClientSocket;
             struct sockaddr_in m_saClientAddr;
             std::shared_mutex m_muCallbackMutex;
+            std::mutex m_muSocketSendMutex;
 
             // Packet processing functions
             template<typename T>
