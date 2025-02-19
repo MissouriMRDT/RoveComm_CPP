@@ -32,6 +32,39 @@ typedef int socket_t;
  ******************************************************************************/
 namespace rovecomm
 {
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+    /******************************************************************************
+     * @brief This struct is used to store the context for an asynchronous receive
+     *      operation. This is used to receive multiple packets at once.
+     *
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2025-02-18
+     ******************************************************************************/
+    struct RecvContext
+    {
+            OVERLAPPED overlapped;
+            RoveCommData data;
+            sockaddr_in addr;
+            WSABUF wsabuf;
+    };
+
+    /******************************************************************************
+     * @brief This struct is used to store the context for an asynchronous send
+     *      operation. This is used to send multiple packets at once.
+     *
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2025-02-18
+     ******************************************************************************/
+    struct SendContext
+    {
+            OVERLAPPED overlapped;
+            WSABUF wsabuf;
+            sockaddr_in addr;
+    };
+#endif
+
     /******************************************************************************
      * @brief Construct a new RoveCommUDP::RoveCommUDP object.
      *
@@ -96,12 +129,12 @@ namespace rovecomm
         {
             // Increase the socket buffer size to 1MB
             int bufferSize = 1 * 1024 * 1024;
-            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_RCVBUF, &bufferSize, sizeof(bufferSize)) == -1)
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_RCVBUF, (char*) &bufferSize, sizeof(bufferSize)) == -1)
             {
                 perror("Failed to set socket receive buffer size");
                 return false;
             }
-            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_SNDBUF, &bufferSize, sizeof(bufferSize)) == -1)
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_SNDBUF, (char*) &bufferSize, sizeof(bufferSize)) == -1)
             {
                 perror("Failed to set socket send buffer size");
                 return false;
@@ -109,13 +142,13 @@ namespace rovecomm
 
             // Set SO_REUSEADDR and SO_REUSEPORT
             int optval = 1;
-            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &optval, sizeof(optval)) == -1)
             {
                 perror("Failed to set SO_REUSEADDR");
                 return false;
             }
 #ifdef SO_REUSEPORT
-            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) == -1)
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEPORT, (char*) &optval, sizeof(optval)) == -1)
             {
                 perror("Failed to set SO_REUSEPORT");
                 return false;
@@ -123,12 +156,12 @@ namespace rovecomm
 #endif
 
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
-            u_long mode = 1;    // 1 to enable non-blocking mode
-            if (ioctlsocket(m_nUDPSocket, FIONBIO, &mode) == SOCKET_ERROR)
+            // For asynchronous I/O, we use overlapped operations instead of non-blocking mode.
+            // Create an IOCP and associate our UDP socket with it.
+            m_stdIOCP = CreateIoCompletionPort((HANDLE) (SOCKET) m_nUDPSocket.load(), NULL, 0, 0);
+            if (m_stdIOCP == NULL)
             {
-                // Handle and print error.
-                int err = WSAGetLastError();
-                fprintf(stderr, "Failed to set UDP socket to non-blocking mode. Error code: %d\n", err);
+                perror("CreateIoCompletionPort failed.");
                 return false;
             }
 #else
@@ -467,11 +500,11 @@ namespace rovecomm
         for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
         {
             ZeroMemory(&rcContexts[siIter].overlapped, sizeof(OVERLAPPED));
-            rcContexts[siInter].wsabuf.buf = reinterpret_cast<char*>(&rcContexts[siIter].data);
-            rcContexts[siIter].wsabuf.len  = sizeof(RoveCommData);
-            int nAddrLen                   = sizeof(rcContexts[siIter].addr);
-            DWORD stdFlags                 = 0;
-            int nRet                       = WSARecvFrom(m_nUDPSocket,
+            rcContexts[siIter].wsabuf.buf = reinterpret_cast<char*>(&rcContexts[siIter].data);
+            rcContexts[siIter].wsabuf.len = sizeof(RoveCommData);
+            int nAddrLen                  = sizeof(rcContexts[siIter].addr);
+            DWORD stdFlags                = 0;
+            int nRet                      = WSARecvFrom(m_nUDPSocket,
                                    &rcContexts[siIter].wsabuf,
                                    1,
                                    NULL,
@@ -493,10 +526,10 @@ namespace rovecomm
         // Wait for completions in a loop.
         DWORD stdNumberOfBytesTransferred;
         ULONG_PTR ulCompletionKey;
-        stdLPOverlapped stdLPOverlapped;
+        LPOVERLAPPED stdLPOverlapped;
         while (true)
         {
-            BOOL bSuccess = GetQueuedCompletionStatus(m_hIOCP, &stdNumberOfBytesTransferred, &ulCompletionKey, &stdLPOverlapped, INFINITE);
+            BOOL bSuccess = GetQueuedCompletionStatus(m_stdIOCP, &stdNumberOfBytesTransferred, &ulCompletionKey, &stdLPOverlapped, INFINITE);
             if (!bSuccess)
             {
                 // You may want to handle errors and decide when to exit.

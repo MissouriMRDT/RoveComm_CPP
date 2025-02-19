@@ -50,6 +50,11 @@ namespace rovecomm
     class RoveCommUDP : AutonomyThread<void>
     {
         private:
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+            // Windows specific private member variables.
+            HANDLE m_stdIOCP;
+#endif
+
             // Private member variables
             std::atomic_int m_nUDPSocket;
             struct sockaddr_in m_saUDPServerAddr;
