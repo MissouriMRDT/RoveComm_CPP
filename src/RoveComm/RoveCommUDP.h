@@ -56,6 +56,7 @@ namespace rovecomm
             std::vector<SubscriberInfo> vSubscribers;
             std::shared_mutex m_muCallbackMutex;
             std::mutex m_muSocketSendMutex;
+            std::mutex m_muSocketReceiveMutex;
 
             // Packet processing functions
             template<typename T>
