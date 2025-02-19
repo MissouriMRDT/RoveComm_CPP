@@ -29,6 +29,7 @@ typedef int ssize_t;
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0600
 #endif
+#define _WINSOCKAPI_
 #include <mswsock.h>
 #include <windows.h>
 #include <winsock2.h>
