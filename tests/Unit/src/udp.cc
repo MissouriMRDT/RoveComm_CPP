@@ -110,9 +110,14 @@ TEST(RoveCommUDP, SendUDPPacket)
 
                 // Send the packet to the localhost
                 ssize_t siBytesSent = pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11001);
+                // Check if the packet successfully sent.
+                EXPECT_EQ(siBytesSent, 1);
 
-                // Check if the packet successfully sent
-                EXPECT_EQ(siBytesSent, ROVECOMM_PACKET_HEADER_SIZE + (sizeof(uint8_t) * stPacket.unDataCount));
+                // Send two packets to the localhost
+                ssize_t siBytesSent1 = pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11001);
+                ssize_t siBytesSent2 = pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11001);
+                // Check if the packets successfully sent.
+                EXPECT_EQ(siBytesSent1 + siBytesSent2, 2);
 
                 // Close the socket
                 pRoveCommUDP_Node.CloseUDPSocket();
