@@ -219,9 +219,7 @@ namespace rovecomm
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
         size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
 
-        // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
-        std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
-
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         // Setup the base UDP client address
         struct sockaddr_in saUDPClientAddr;
         memset(&saUDPClientAddr, 0, sizeof(saUDPClientAddr));
@@ -233,12 +231,16 @@ namespace rovecomm
             // Assemble client address.
             saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
             inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
+            // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
+            std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
             // Send data.
             if (sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
             {
                 // Handle and print error message.
                 perror("Failed to send data to UDP client socket subscriber.");
             }
+            // Release the lock.
+            lkSocketSendLock.unlock();
         }
 
         // Send the packet to the specified IP address and port.
@@ -247,10 +249,78 @@ namespace rovecomm
             saUDPClientAddr.sin_port = htons(nPort);
             inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
 
+            // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
+            std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
             return sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
         }
 
         return -1;
+#else
+        // Use sendmmsg to send the same packet to multiple destinations in one call.
+        std::vector<sockaddr_in> vDestinations;
+        // Add all subscribers.
+        for (const SubscriberInfo& stSubscriber : vSubscribers)
+        {
+            // Assemble client address.
+            sockaddr_in stdAddr{};
+            stdAddr.sin_family = AF_INET;
+            stdAddr.sin_port   = htons(stSubscriber.nPort);
+            // Convert the IP address to binary form.
+            inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &stdAddr.sin_addr);
+            // Add the subscriber to the list of destinations.
+            vDestinations.push_back(stdAddr);
+        }
+        // Add the specified destination if provided.
+        if (std::strcmp(cIPAddress, "0.0.0.0") != 0 && nPort != 0)
+        {
+            // Assemble client address.
+            sockaddr_in stdAddr{};
+            stdAddr.sin_family = AF_INET;
+            stdAddr.sin_port   = htons(nPort);
+            // Convert the IP address to binary form.
+            inet_pton(AF_INET, cIPAddress, &stdAddr.sin_addr);
+            // Add the specified destination to the list of destinations.
+            vDestinations.push_back(stdAddr);
+        }
+
+        // Send the packet to all destinations.
+        if (vDestinations.empty())
+        {
+            return -1;
+        }
+
+        // Get the number of destinations and create the necessary data structures.
+        size_t siCount = vDestinations.size();
+        std::vector<struct mmsghdr> vMsgVec(siCount);
+        std::vector<struct iovec> vIOVecs(siCount);
+        // Send the packet to all destinations.
+        for (size_t siIter = 0; siIter < siCount; siIter++)
+        {
+            // Set the data to be sent.
+            vIOVecs[siIter].iov_base = reinterpret_cast<char*>(&stData);
+            vIOVecs[siIter].iov_len  = siDataSize;
+            memset(&vMsgVec[siIter], 0, sizeof(struct mmsghdr));
+            // Set the destination address.
+            vMsgVec[siIter].msg_hdr.msg_iov    = &vIOVecs[siIter];
+            vMsgVec[siIter].msg_hdr.msg_iovlen = 1;
+            vMsgVec[siIter].msg_hdr.msg_name   = &vDestinations[siIter];
+            // Set the length of the destination address.
+            vMsgVec[siIter].msg_hdr.msg_namelen = sizeof(sockaddr_in);
+        }
+
+        // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
+        std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
+        // Send the packet to all destinations.
+        int nSentMessages = sendmmsg(m_nUDPSocket, vMsgVec.data(), siCount, 0);
+        if (nSentMessages == -1)
+        {
+            perror("sendmmsg error");
+            return -1;
+        }
+
+        // Return the number of packets sent.
+        return nSentMessages;
+#endif
     }
 
     /******************************************************************************
