@@ -367,11 +367,11 @@ namespace manifest
             {"ADDPOSITIONLEG", ManifestEntry{11002, 2, DataTypes::DOUBLE_T}},
             {"ADDMARKERLEG", ManifestEntry{11003, 4, DataTypes::DOUBLE_T}},
             {"ADDOBJECTLEG", ManifestEntry{11004, 3, DataTypes::DOUBLE_T}},
-            {"ADDOBSTACLE", ManifestEntry{11008, 3, DataTypes::DOUBLE_T}},
             {"CLEARWAYPOINTS", ManifestEntry{11005, 1, DataTypes::UINT8_T}},
-            {"CLEAROBSTACLES", ManifestEntry{11009, 1, DataTypes::UINT8_T}},
             {"SETMAXSPEED", ManifestEntry{11006, 1, DataTypes::FLOAT_T}},
             {"SETLOGGINGLEVELS", ManifestEntry{11007, 3, DataTypes::UINT8_T}},
+            {"ADDOBSTACLE", ManifestEntry{11008, 3, DataTypes::DOUBLE_T}},
+            {"CLEAROBSTACLES", ManifestEntry{11009, 1, DataTypes::UINT8_T}},
         };
 
         // Telemetry
