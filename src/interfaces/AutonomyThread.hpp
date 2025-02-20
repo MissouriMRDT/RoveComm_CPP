@@ -14,12 +14,13 @@
 #ifndef AUTONOMYTHREAD_H
 #define AUTONOMYTHREAD_H
 
-#include "../../external/threadpool/include/BS_thread_pool.hpp"
 #include "../util/IPS.hpp"
 
 /// \cond
+#include "../../external/threadpool/include/BS_thread_pool.hpp"
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <vector>
 
 /// \endcond
@@ -41,7 +42,7 @@ class AutonomyThread
         /////////////////////////////////////////
 
         // Define an enum for storing this classes state.
-        enum AutonomyThreadState
+        enum class AutonomyThreadState
         {
             eStarting,
             eRunning,
@@ -63,7 +64,7 @@ class AutonomyThread
         {
             // Initialize member variables.
             m_bStopThreads                     = false;
-            m_eThreadState                     = eStopped;
+            m_eThreadState                     = AutonomyThreadState::eStopped;
             m_nMainThreadMaxIterationPerSecond = 0;
         }
 
@@ -82,7 +83,7 @@ class AutonomyThread
             // Tell all threads to stop executing user code.
             m_bStopThreads = true;
             // Update thread state.
-            m_eThreadState = eStopping;
+            m_eThreadState = AutonomyThreadState::eStopping;
 
             // Pause and clear pool queues.
             m_thPool.pause();
@@ -94,7 +95,7 @@ class AutonomyThread
             m_thPool.wait();
             m_thMainThread.wait();
             // Update thread state.
-            m_eThreadState = eStopped;
+            m_eThreadState = AutonomyThreadState::eStopped;
         }
 
         /******************************************************************************
@@ -108,6 +109,7 @@ class AutonomyThread
          *      If you want to wait until they fully execute their code, then call the Join()
          *      method before starting a new thread.
          *
+         * @note This method will block until the thread state is eRunning.
          *
          * @author ClayJay3 (claytonraycowen@gmail.com)
          * @date 2023-07-22
@@ -117,7 +119,7 @@ class AutonomyThread
             // Tell any open thread to stop.
             m_bStopThreads = true;
             // Update thread state.
-            m_eThreadState = eStopping;
+            m_eThreadState = AutonomyThreadState::eStopping;
 
             // Pause queuing of new tasks to the threads, then purge them.
             m_thPool.pause();
@@ -129,7 +131,7 @@ class AutonomyThread
             this->Join();
 
             // Update thread state.
-            m_eThreadState = eStarting;
+            m_eThreadState = AutonomyThreadState::eStarting;
             // Clear results vector.
             m_vPoolReturns.clear();
             // Reset thread stop toggle.
@@ -141,6 +143,12 @@ class AutonomyThread
             // Unpause pool queues.
             m_thPool.unpause();
             m_thMainThread.unpause();
+
+            // Block until thread is started or currently stopping if thread start failed.
+            std::unique_lock<std::mutex> lkStartLock(m_muThreadRunningConditionMutex);
+            m_cdThreadRunningCondition.wait(lkStartLock,
+                                            [this]
+                                            { return this->m_eThreadState == AutonomyThreadState::eRunning || this->m_eThreadState == AutonomyThreadState::eStopping; });
         }
 
         /******************************************************************************
@@ -158,7 +166,7 @@ class AutonomyThread
             // Signal for any open threads to stop executing,
             m_bStopThreads = true;
             // Update thread state.
-            m_eThreadState = eStopping;
+            m_eThreadState = AutonomyThreadState::eStopping;
         }
 
         /******************************************************************************
@@ -177,7 +185,7 @@ class AutonomyThread
             m_thMainThread.wait();
 
             // Update thread state.
-            m_eThreadState = eStopped;
+            m_eThreadState = AutonomyThreadState::eStopped;
         }
 
         /******************************************************************************
@@ -191,18 +199,8 @@ class AutonomyThread
          * @date 2023-07-22
          ******************************************************************************/
         bool Joinable() const
-        {
-            // Check current number of running and queued tasks.
-            if (m_thMainThread.get_tasks_total() <= 0 && m_thPool.get_tasks_total() <= 0)
-            {
-                // Threads are joinable.
-                return true;
-            }
-            else
-            {
-                // Threads are still running.
-                return false;
-            }
+        {    // Check current number of running and queued tasks.
+            return (m_thMainThread.get_tasks_total() <= 0 && m_thPool.get_tasks_total() <= 0);
         }
 
         /******************************************************************************
@@ -268,9 +266,6 @@ class AutonomyThread
             // Check if the pools need to be resized.
             if (m_thPool.get_thread_count() != nNumThreads)
             {
-                // Tell any open thread to stop.
-                m_bStopThreads = true;
-
                 // Pause queuing of new tasks to the threads, then purge them.
                 m_thPool.pause();
                 m_thPool.purge();
@@ -281,15 +276,10 @@ class AutonomyThread
 
                 // Clear results vector.
                 m_vPoolReturns.clear();
-                // Reset thread stop toggle.
-                m_bStopThreads = false;
             }
             // Check if the current pool tasks should be stopped before queueing more tasks.
             else if (bForceStopCurrentThreads)
             {
-                // Tell any open thread to stop.
-                m_bStopThreads = true;
-
                 // Pause queuing of new tasks to the threads, then purge them.
                 m_thPool.pause();
                 m_thPool.purge();
@@ -297,9 +287,6 @@ class AutonomyThread
                 m_thPool.wait();
                 // Unpause queue.
                 m_thPool.unpause();
-
-                // Reset stop toggle.
-                m_bStopThreads = false;
             }
 
             // Loop nNumThreads times and queue tasks.
@@ -351,9 +338,6 @@ class AutonomyThread
             // Check if the pools need to be resized.
             if (m_thPool.get_thread_count() != nNumThreads)
             {
-                // Tell any open thread to stop.
-                m_bStopThreads = true;
-
                 // Pause queuing of new tasks to the threads, then purge them.
                 m_thPool.pause();
                 m_thPool.purge();
@@ -364,15 +348,10 @@ class AutonomyThread
 
                 // Clear results vector.
                 m_vPoolReturns.clear();
-                // Reset thread stop toggle.
-                m_bStopThreads = false;
             }
             // Check if the current pool tasks should be stopped before queueing more tasks.
             else if (bForceStopCurrentThreads)
             {
-                // Tell any open thread to stop.
-                m_bStopThreads = true;
-
                 // Pause queuing of new tasks to the threads, then purge them.
                 m_thPool.pause();
                 m_thPool.purge();
@@ -380,9 +359,6 @@ class AutonomyThread
                 m_thPool.wait();
                 // Unpause queue.
                 m_thPool.unpause();
-
-                // Reset stop toggle.
-                m_bStopThreads = false;
             }
 
             // Loop nNumThreads times and queue tasks.
@@ -430,11 +406,12 @@ class AutonomyThread
             // Create new thread pool.
             BS::thread_pool m_thLoopPool = BS::thread_pool(nNumThreads);
 
-            m_thLoopPool.detach_blocks(tTotalIterations,
-                                       [&tLoopFunction](const int a, const int b)
+            m_thLoopPool.detach_blocks(0,
+                                       tTotalIterations,
+                                       [&tLoopFunction](const int nStart, const int nEnd)
                                        {
                                            // Call loop function without lock.
-                                           tLoopFunction(a, b);
+                                           tLoopFunction(nStart, nEnd);
                                        });
 
             // Wait for loop to finish.
@@ -474,16 +451,7 @@ class AutonomyThread
         bool PoolJoinable() const
         {
             // Check current number of running and queued tasks.
-            if (m_thPool.get_tasks_total() <= 0)
-            {
-                // Threads are joinable.
-                return true;
-            }
-            else
-            {
-                // Threads are still running.
-                return false;
-            }
+            return (m_thPool.get_tasks_total() <= 0);
         }
 
         /******************************************************************************
@@ -576,6 +544,8 @@ class AutonomyThread
         std::vector<std::future<T>> m_vPoolReturns;
         std::atomic_bool m_bStopThreads;
         std::atomic<AutonomyThreadState> m_eThreadState;
+        std::mutex m_muThreadRunningConditionMutex;
+        std::condition_variable m_cdThreadRunningCondition;
         int m_nMainThreadMaxIterationPerSecond;
 
         /////////////////////////////////////////
@@ -601,7 +571,7 @@ class AutonomyThread
         void RunThread(std::atomic_bool& bStopThread)
         {
             // Declare instance variables.
-            std::chrono::high_resolution_clock::time_point tmStartTime;
+            std::chrono::_V2::system_clock::time_point tmStartTime;
 
             // Loop until stop flag is set.
             while (!bStopThread)
@@ -620,7 +590,7 @@ class AutonomyThread
                 if (m_nMainThreadMaxIterationPerSecond > 0)
                 {
                     // Get end execution time.
-                    std::chrono::high_resolution_clock::time_point tmEndTime = std::chrono::high_resolution_clock::now();
+                    std::chrono::_V2::system_clock::time_point tmEndTime = std::chrono::high_resolution_clock::now();
                     // Get execution time of user code.
                     std::chrono::microseconds tmElapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(tmEndTime - tmStartTime);
                     // Check if the elapsed time is slower than the max iterations per seconds.
@@ -634,16 +604,21 @@ class AutonomyThread
                 }
 
                 // Check if thread state needs to be updated.
-                if (m_eThreadState != eRunning && m_eThreadState != eStopping)
+                if (m_eThreadState != AutonomyThreadState::eRunning && m_eThreadState != AutonomyThreadState::eStopping)
                 {
                     // Update thread state to running.
-                    m_eThreadState = eRunning;
+                    m_eThreadState = AutonomyThreadState::eRunning;
+                    // Notify waiting start method that thread is now running.
+                    m_cdThreadRunningCondition.notify_all();
                 }
 
                 // Call iteration per second tracking tick.
                 m_IPS.Tick();
             }
+
+            // Notify waiting start method that thread is now stopping.
+            m_cdThreadRunningCondition.notify_all();
         }
 };
 
-#endif    // AUTONOMYTHREAD_H
+#endif
