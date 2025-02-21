@@ -132,6 +132,10 @@ int main()
     // Wait for packets to be processed.
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
+    // Close the UDP and TCP sockets
+    pRoveCommUDP_Node.CloseUDPSocket();
+    pRoveCommTCP_Node.CloseTCPSocket();
+
     exit(0);
 }
 

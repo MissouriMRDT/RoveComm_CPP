@@ -32,6 +32,39 @@ typedef int socket_t;
  ******************************************************************************/
 namespace rovecomm
 {
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+    /******************************************************************************
+     * @brief This struct is used to store the context for an asynchronous receive
+     *      operation. This is used to receive multiple packets at once.
+     *
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2025-02-18
+     ******************************************************************************/
+    struct RecvContext
+    {
+            OVERLAPPED overlapped;
+            RoveCommData data;
+            sockaddr_in addr;
+            WSABUF wsabuf;
+    };
+
+    /******************************************************************************
+     * @brief This struct is used to store the context for an asynchronous send
+     *      operation. This is used to send multiple packets at once.
+     *
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2025-02-18
+     ******************************************************************************/
+    struct SendContext
+    {
+            OVERLAPPED overlapped;
+            WSABUF wsabuf;
+            sockaddr_in addr;
+    };
+#endif
+
     /******************************************************************************
      * @brief Construct a new RoveCommUDP::RoveCommUDP object.
      *
@@ -94,13 +127,41 @@ namespace rovecomm
         }
         else
         {
-#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
-            u_long mode = 1;    // 1 to enable non-blocking mode
-            if (ioctlsocket(m_nUDPSocket, FIONBIO, &mode) == SOCKET_ERROR)
+            // Increase the socket buffer size to 1MB
+            int bufferSize = 1 * 1024 * 1024;
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_RCVBUF, (char*) &bufferSize, sizeof(bufferSize)) == -1)
             {
-                // Handle and print error.
-                int err = WSAGetLastError();
-                fprintf(stderr, "Failed to set UDP socket to non-blocking mode. Error code: %d\n", err);
+                perror("Failed to set socket receive buffer size");
+                return false;
+            }
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_SNDBUF, (char*) &bufferSize, sizeof(bufferSize)) == -1)
+            {
+                perror("Failed to set socket send buffer size");
+                return false;
+            }
+
+            // Set SO_REUSEADDR and SO_REUSEPORT
+            int optval = 1;
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &optval, sizeof(optval)) == -1)
+            {
+                perror("Failed to set SO_REUSEADDR");
+                return false;
+            }
+#ifdef SO_REUSEPORT
+            if (setsockopt(m_nUDPSocket, SOL_SOCKET, SO_REUSEPORT, (char*) &optval, sizeof(optval)) == -1)
+            {
+                perror("Failed to set SO_REUSEPORT");
+                return false;
+            }
+#endif
+
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
+            // For asynchronous I/O, we use overlapped operations instead of non-blocking mode.
+            // Create an IOCP and associate our UDP socket with it.
+            m_stdIOCP = CreateIoCompletionPort((HANDLE) (SOCKET) m_nUDPSocket.load(), NULL, 0, 0);
+            if (m_stdIOCP == NULL)
+            {
+                perror("CreateIoCompletionPort failed.");
                 return false;
             }
 #else
@@ -158,6 +219,7 @@ namespace rovecomm
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
         size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
 
+#if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         // Setup the base UDP client address
         struct sockaddr_in saUDPClientAddr;
         memset(&saUDPClientAddr, 0, sizeof(saUDPClientAddr));
@@ -169,24 +231,96 @@ namespace rovecomm
             // Assemble client address.
             saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
             inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
+            // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
+            std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
             // Send data.
             if (sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
             {
                 // Handle and print error message.
                 perror("Failed to send data to UDP client socket subscriber.");
             }
+            // Release the lock.
+            lkSocketSendLock.unlock();
         }
 
-        // Send the packet to the specified IP address and port
+        // Send the packet to the specified IP address and port.
         if (std::strcmp(cIPAddress, "0.0.0.0") && nPort != 0)
         {
             saUDPClientAddr.sin_port = htons(nPort);
             inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
 
+            // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
+            std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
             return sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
         }
 
         return -1;
+#else
+        // Use sendmmsg to send the same packet to multiple destinations in one call.
+        std::vector<sockaddr_in> vDestinations;
+        // Add all subscribers.
+        for (const SubscriberInfo& stSubscriber : vSubscribers)
+        {
+            // Assemble client address.
+            sockaddr_in stdAddr{};
+            stdAddr.sin_family = AF_INET;
+            stdAddr.sin_port   = htons(stSubscriber.nPort);
+            // Convert the IP address to binary form.
+            inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &stdAddr.sin_addr);
+            // Add the subscriber to the list of destinations.
+            vDestinations.push_back(stdAddr);
+        }
+        // Add the specified destination if provided.
+        if (std::strcmp(cIPAddress, "0.0.0.0") != 0 && nPort != 0)
+        {
+            // Assemble client address.
+            sockaddr_in stdAddr{};
+            stdAddr.sin_family = AF_INET;
+            stdAddr.sin_port   = htons(nPort);
+            // Convert the IP address to binary form.
+            inet_pton(AF_INET, cIPAddress, &stdAddr.sin_addr);
+            // Add the specified destination to the list of destinations.
+            vDestinations.push_back(stdAddr);
+        }
+
+        // Send the packet to all destinations.
+        if (vDestinations.empty())
+        {
+            return -1;
+        }
+
+        // Get the number of destinations and create the necessary data structures.
+        size_t siCount = vDestinations.size();
+        std::vector<struct mmsghdr> vMsgVec(siCount);
+        std::vector<struct iovec> vIOVecs(siCount);
+        // Send the packet to all destinations.
+        for (size_t siIter = 0; siIter < siCount; siIter++)
+        {
+            // Set the data to be sent.
+            vIOVecs[siIter].iov_base = reinterpret_cast<char*>(&stData);
+            vIOVecs[siIter].iov_len  = siDataSize;
+            memset(&vMsgVec[siIter], 0, sizeof(struct mmsghdr));
+            // Set the destination address.
+            vMsgVec[siIter].msg_hdr.msg_iov    = &vIOVecs[siIter];
+            vMsgVec[siIter].msg_hdr.msg_iovlen = 1;
+            vMsgVec[siIter].msg_hdr.msg_name   = &vDestinations[siIter];
+            // Set the length of the destination address.
+            vMsgVec[siIter].msg_hdr.msg_namelen = sizeof(sockaddr_in);
+        }
+
+        // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
+        std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
+        // Send the packet to all destinations.
+        int nSentMessages = sendmmsg(m_nUDPSocket, vMsgVec.data(), siCount, 0);
+        if (nSentMessages == -1)
+        {
+            perror("sendmmsg error");
+            return -1;
+        }
+
+        // Return the number of packets sent.
+        return nSentMessages;
+#endif
     }
 
     /******************************************************************************
@@ -427,25 +561,156 @@ namespace rovecomm
      ******************************************************************************/
     void RoveCommUDP::ReceiveUDPPacketAndCallback()
     {
-        RoveCommData stData;
-        sockaddr_in saClientAddr;
-        socklen_t addrLen = sizeof(saClientAddr);
-
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
-        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, reinterpret_cast<char*>(&stData), sizeof(stData), 0, (struct sockaddr*) &saClientAddr, &addrLen);
-#else
-        ssize_t siUDPBytesReceived = recvfrom(m_nUDPSocket, &stData, sizeof(stData), MSG_DONTWAIT, (struct sockaddr*) &saClientAddr, &addrLen);
-#endif
+        // Create a batch of RecvContext structures to receive multiple packets at once.
+        constexpr size_t BATCH_SIZE = 32;
+        RecvContext rcContexts[BATCH_SIZE];
 
-        if (siUDPBytesReceived != -1)
+        // Post BATCH_SIZE asynchronous receives.
+        for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
         {
-            // Extract the data id from the received data
-            uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
-            // Determine the data type from the received data
-            // manifest::DataTypes eDataType = manifest::Helpers::GetDataTypeFromId(unDataId);
+            ZeroMemory(&rcContexts[siIter].overlapped, sizeof(OVERLAPPED));
+            rcContexts[siIter].wsabuf.buf = reinterpret_cast<char*>(&rcContexts[siIter].data);
+            rcContexts[siIter].wsabuf.len = sizeof(RoveCommData);
+            int nAddrLen                  = sizeof(rcContexts[siIter].addr);
+            DWORD stdFlags                = 0;
+            int nRet                      = WSARecvFrom(m_nUDPSocket,
+                                   &rcContexts[siIter].wsabuf,
+                                   1,
+                                   NULL,
+                                   &stdFlags,
+                                   reinterpret_cast<sockaddr*>(&rcContexts[siIter].addr),
+                                   &nAddrLen,
+                                   &rcContexts[siIter].overlapped,
+                                   NULL);
+            if (nRet == SOCKET_ERROR)
+            {
+                int nErr = WSAGetLastError();
+                if (nErr != WSA_IO_PENDING)
+                {
+                    perror("WSARecvFrom failed!");
+                }
+            }
+        }
+
+        // Wait for completions in a loop.
+        DWORD stdNumberOfBytesTransferred;
+        ULONG_PTR ulCompletionKey;
+        LPOVERLAPPED stdLPOverlapped;
+        // Set a short timeout (in milliseconds) to poll for completions.
+        const DWORD dwTimeout = 1;    // 1ms timeout (adjust as needed).
+        while (true)
+        {
+            // Wait for an I/O completion event with a short timeout.
+            BOOL bSuccess = GetQueuedCompletionStatus(m_stdIOCP, &stdNumberOfBytesTransferred, &ulCompletionKey, &stdLPOverlapped, dwTimeout);
+            if (!bSuccess)
+            {
+                if (GetLastError() == WAIT_TIMEOUT)
+                {
+                    // No completion available within the timeout period.
+                    break;    // Exit the loop so the function returns.
+                }
+                else
+                {
+                    perror("GetQueuedCompletionStatus (recv) failed!");
+                    continue;
+                }
+            }
+
+            // If stdLPOverlapped is NULL, something went wrong.
+            if (stdLPOverlapped == nullptr)
+            {
+                continue;
+            }
+
+            // Identify the RecvContext from the overlapped pointer.
+            RecvContext* pContext = CONTAINING_RECORD(stdLPOverlapped, RecvContext, overlapped);
+
+            // Process the received data.
+            RoveCommData& stData      = pContext->data;
+            sockaddr_in& saClientAddr = pContext->addr;
+
+            // Extract data id and data type from the packet.
+            uint16_t unDataId             = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
             manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(stData.unBytes[5]);
 
-            // Convert RoveCommData to appropriate RoveCommPacket based on data type
+            switch (eDataType)
+            {
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(stData, udp::vUInt8Callbacks, saClientAddr); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(stData, udp::vInt8Callbacks, saClientAddr); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(stData, udp::vUInt16Callbacks, saClientAddr); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(stData, udp::vInt16Callbacks, saClientAddr); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(stData, udp::vUInt32Callbacks, saClientAddr); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(stData, udp::vInt32Callbacks, saClientAddr); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(stData, udp::vFloatCallbacks, saClientAddr); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(stData, udp::vDoubleCallbacks, saClientAddr); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, udp::vCharCallbacks, saClientAddr); break;
+            }
+
+            // Re-post the asynchronous receive for this context.
+            ZeroMemory(&pContext->overlapped, sizeof(OVERLAPPED));
+            pContext->wsabuf.buf = reinterpret_cast<char*>(&pContext->data);
+            pContext->wsabuf.len = sizeof(RoveCommData);
+            int nAddrLen         = sizeof(pContext->addr);
+            DWORD stdFlags       = 0;
+            int nRet =
+                WSARecvFrom(m_nUDPSocket, &pContext->wsabuf, 1, NULL, &stdFlags, reinterpret_cast<sockaddr*>(&pContext->addr), &nAddrLen, &pContext->overlapped, NULL);
+            if (nRet == SOCKET_ERROR)
+            {
+                int nErr = WSAGetLastError();
+                if (nErr != WSA_IO_PENDING)
+                {
+                    perror("WSARecvFrom (re-post) failed!");
+                }
+            }
+        }
+#else
+        // Create a batch of RoveCommData structures to receive multiple packets at once.
+        constexpr size_t BATCH_SIZE = 32;
+        RoveCommData aDataBatch[BATCH_SIZE];
+        struct iovec aIOVecs[BATCH_SIZE];
+        struct mmsghdr aMsgVec[BATCH_SIZE];
+        sockaddr_in aAddrs[BATCH_SIZE];
+
+        // Initialize the aIOVecs and aMsgVec arrays. These are used by the recvmmsg function.
+        memset(aMsgVec, 0, sizeof(aMsgVec));
+        for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
+        {
+            aIOVecs[siIter].iov_base            = &aDataBatch[siIter];
+            aIOVecs[siIter].iov_len             = sizeof(RoveCommData);
+            aMsgVec[siIter].msg_hdr.msg_iov     = &aIOVecs[siIter];
+            aMsgVec[siIter].msg_hdr.msg_iovlen  = 1;
+            aMsgVec[siIter].msg_hdr.msg_name    = &aAddrs[siIter];
+            aMsgVec[siIter].msg_hdr.msg_namelen = sizeof(sockaddr_in);
+        }
+
+        // Acquire a write lock on the socket receive mutex to protect the socket, which is shared between threads, but not thread-safe.
+        std::unique_lock<std::mutex> lkSocketReceiveLock(m_muSocketReceiveMutex);
+
+        // Receive a batch of packets.
+        int nRet = recvmmsg(m_nUDPSocket, aMsgVec, BATCH_SIZE, MSG_DONTWAIT, nullptr);
+        if (nRet < 0)
+        {
+            if (errno != EAGAIN && errno != EWOULDBLOCK)
+            {
+                perror("Failed to receive data from UDP socket using recvmmsg.");
+            }
+            return;
+        }
+        // Release the lock.
+        lkSocketReceiveLock.unlock();
+
+        // Process each received packet.
+        for (int nIter = 0; nIter < nRet; nIter++)
+        {
+            // Get the data and client address from the received packet.
+            RoveCommData& stData      = aDataBatch[nIter];
+            sockaddr_in& saClientAddr = aAddrs[nIter];
+
+            // Extract the data id and data type from the packet.
+            uint16_t unDataId             = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
+            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(stData.unBytes[5]);
+
             switch (eDataType)
             {
                 case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(stData, udp::vUInt8Callbacks, saClientAddr); break;
@@ -459,6 +724,7 @@ namespace rovecomm
                 case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, udp::vCharCallbacks, saClientAddr); break;
             }
         }
+#endif
     }
 
     /******************************************************************************
@@ -521,7 +787,10 @@ namespace rovecomm
      ******************************************************************************/
     void RoveCommUDP::ThreadedContinuousCode()
     {
-        ReceiveUDPPacketAndCallback();
+        // Start the thread pool to receive multiple packets at once.
+        this->RunDetachedPool(10, 5);
+        // Wait for thread pool to finish.
+        this->JoinPool();
     }
 
     /******************************************************************************
@@ -535,7 +804,10 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    void RoveCommUDP::PooledLinearCode() {}
+    void RoveCommUDP::PooledLinearCode()
+    {
+        ReceiveUDPPacketAndCallback();
+    }
 
     /******************************************************************************
      * @brief Close the UDP socket. This method is called when the RoveCommUDP
