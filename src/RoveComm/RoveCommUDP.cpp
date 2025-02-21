@@ -597,20 +597,34 @@ namespace rovecomm
         DWORD stdNumberOfBytesTransferred;
         ULONG_PTR ulCompletionKey;
         LPOVERLAPPED stdLPOverlapped;
+        // Set a short timeout (in milliseconds) to poll for completions.
+        const DWORD dwTimeout = 1;    // 1ms timeout (adjust as needed).
         while (true)
         {
-            BOOL bSuccess = GetQueuedCompletionStatus(m_stdIOCP, &stdNumberOfBytesTransferred, &ulCompletionKey, &stdLPOverlapped, INFINITE);
+            // Wait for an I/O completion event with a short timeout.
+            BOOL bSuccess = GetQueuedCompletionStatus(m_stdIOCP, &stdNumberOfBytesTransferred, &ulCompletionKey, &stdLPOverlapped, dwTimeout);
             if (!bSuccess)
             {
-                // You may want to handle errors and decide when to exit.
-                perror("GetQueuedCompletionStatus (recv) failed!");
+                if (GetLastError() == WAIT_TIMEOUT)
+                {
+                    // No completion available within the timeout period.
+                    break;    // Exit the loop so the function returns.
+                }
+                else
+                {
+                    perror("GetQueuedCompletionStatus (recv) failed!");
+                    continue;
+                }
+            }
+
+            // If stdLPOverlapped is NULL, something went wrong.
+            if (stdLPOverlapped == nullptr)
+            {
                 continue;
             }
 
             // Identify the RecvContext from the overlapped pointer.
             RecvContext* pContext = CONTAINING_RECORD(stdLPOverlapped, RecvContext, overlapped);
-
-            std::cout << "Received UDP bytes: " << stdNumberOfBytesTransferred << std::endl;
 
             // Process the received data.
             RoveCommData& stData      = pContext->data;
@@ -633,7 +647,7 @@ namespace rovecomm
                 case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, udp::vCharCallbacks, saClientAddr); break;
             }
 
-            // Re-post the receive for this context.
+            // Re-post the asynchronous receive for this context.
             ZeroMemory(&pContext->overlapped, sizeof(OVERLAPPED));
             pContext->wsabuf.buf = reinterpret_cast<char*>(&pContext->data);
             pContext->wsabuf.len = sizeof(RoveCommData);
