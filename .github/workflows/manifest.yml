@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["development"]
     paths:
-      - "data/RoveComm/manifest.json"
+      - "data/RoveComm/**" # Watch all changes in the submodule
       - "tools/RoveComm/parser.py"
       - "src/RoveComm/RoveCommManifest.h"
       - ".github/workflows/manifest.yml"
