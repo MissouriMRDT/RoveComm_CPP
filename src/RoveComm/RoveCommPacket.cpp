@@ -67,49 +67,49 @@ namespace rovecomm
         static_assert(std::is_arithmetic<T>::value);
         for (uint16_t unInter = 0; unInter < stPacket.unDataCount; ++unInter)
         {
-            // INT8_T, UINT8_T, CHAR
-            if constexpr (sizeof(T) == sizeof(uint8_t))
+            // Check if unIter is within the bounds of the packet data.
+            if (unInter < stPacket.vData.size())
             {
-                // Check if unIter is within the bounds of the packet data.
-                if (unInter < stPacket.vData.size())
+                // INT8_T, UINT8_T, CHAR
+                if constexpr (sizeof(T) == sizeof(uint8_t))
                 {
                     // No need to convert to network order.
                     memcpy(pDataPtr, &pPacketData[unInter], sizeof(uint8_t));
                     pDataPtr += sizeof(uint8_t);
                 }
-            }
-            // INT16_T, UINT16_T
-            else if constexpr (sizeof(T) == sizeof(uint16_t))
-            {
-                // Convert to network order and add to RoveCommData.
-                uint16_t unResult;
-                memcpy(&unResult, &pPacketData[unInter], sizeof(uint16_t));
-                unResult = htons(unResult);
-                // Add converted data to RoveCommData.
-                memcpy(pDataPtr, &unResult, sizeof(uint16_t));
-                pDataPtr += sizeof(uint16_t);
-            }
-            // INT32_T, UINT32_T, FLOAT_T
-            else if constexpr (sizeof(T) == sizeof(uint32_t))
-            {
-                // Convert to network order and add to RoveCommData.
-                uint32_t unResult;
-                memcpy(&unResult, &pPacketData[unInter], sizeof(uint32_t));
-                unResult = htonl(unResult);
-                // Add converted data to RoveCommData.
-                memcpy(pDataPtr, &unResult, sizeof(uint32_t));
-                pDataPtr += sizeof(uint32_t);
-            }
-            // DOUBLE_T
-            else if constexpr (sizeof(T) == sizeof(uint64_t))
-            {
-                // Convert to network order and add to RoveCommData.
-                uint64_t unResult;
-                memcpy(&unResult, &pPacketData[unInter], sizeof(uint64_t));
-                unResult = htonll(unResult);
-                // Add converted data to RoveCommData.
-                memcpy(pDataPtr, &unResult, sizeof(uint64_t));
-                pDataPtr += sizeof(uint64_t);
+                // INT16_T, UINT16_T
+                else if constexpr (sizeof(T) == sizeof(uint16_t))
+                {
+                    // Convert to network order and add to RoveCommData.
+                    uint16_t unResult;
+                    memcpy(&unResult, &pPacketData[unInter], sizeof(uint16_t));
+                    unResult = htons(unResult);
+                    // Add converted data to RoveCommData.
+                    memcpy(pDataPtr, &unResult, sizeof(uint16_t));
+                    pDataPtr += sizeof(uint16_t);
+                }
+                // INT32_T, UINT32_T, FLOAT_T
+                else if constexpr (sizeof(T) == sizeof(uint32_t))
+                {
+                    // Convert to network order and add to RoveCommData.
+                    uint32_t unResult;
+                    memcpy(&unResult, &pPacketData[unInter], sizeof(uint32_t));
+                    unResult = htonl(unResult);
+                    // Add converted data to RoveCommData.
+                    memcpy(pDataPtr, &unResult, sizeof(uint32_t));
+                    pDataPtr += sizeof(uint32_t);
+                }
+                // DOUBLE_T
+                else if constexpr (sizeof(T) == sizeof(uint64_t))
+                {
+                    // Convert to network order and add to RoveCommData.
+                    uint64_t unResult;
+                    memcpy(&unResult, &pPacketData[unInter], sizeof(uint64_t));
+                    unResult = htonll(unResult);
+                    // Add converted data to RoveCommData.
+                    memcpy(pDataPtr, &unResult, sizeof(uint64_t));
+                    pDataPtr += sizeof(uint64_t);
+                }
             }
         }
 

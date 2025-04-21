@@ -317,9 +317,15 @@ namespace rovecomm
             perror("sendmmsg error");
             return -1;
         }
+        // Do the math to get the number of bytes sent.
+        ssize_t siBytesSent = 0;
+        for (size_t siIter = 0; siIter < siCount; siIter++)
+        {
+            siBytesSent += vIOVecs[siIter].iov_len;
+        }
 
         // Return the number of packets sent.
-        return nSentMessages;
+        return siBytesSent;
 #endif
     }
 
