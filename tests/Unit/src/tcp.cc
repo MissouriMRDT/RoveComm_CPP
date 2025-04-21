@@ -31,7 +31,7 @@ TEST(RoveCommTCP, InitSocket)
         []()
         {
             // Create RoveComm Node
-            rovecomm::RoveCommTCP pRoveCommTCP_Node;
+            rovecomm::RoveCommTCP RoveCommTCPNode;
 
             bool bInitSuccess = false;
 
@@ -39,7 +39,7 @@ TEST(RoveCommTCP, InitSocket)
             // Since the socket is bound to a specific port, it may take a few tries to find an available port
             for (int i = 0; i < 3; ++i)
             {
-                if (pRoveCommTCP_Node.InitTCPSocket("127.0.0.1", 12000))
+                if (RoveCommTCPNode.InitTCPSocket("127.0.0.1", 12000))
                 {
                     bInitSuccess = true;
                     break;
@@ -54,7 +54,7 @@ TEST(RoveCommTCP, InitSocket)
             EXPECT_TRUE(bInitSuccess);
 
             // Close the socket
-            pRoveCommTCP_Node.CloseTCPSocket();
+            RoveCommTCPNode.CloseTCPSocket();
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)
@@ -73,13 +73,13 @@ TEST(RoveCommTCP, SendTCPPacket)
         []()
         {
             // Create RoveComm Nodes
-            rovecomm::RoveCommTCP pRoveCommTCP_Node;
+            rovecomm::RoveCommTCP RoveCommTCPNode;
 
             // Give the node three chances to initialize the socket
             // Since the socket is bound to a specific port, it may take a few tries to find an available port
             for (int i = 0; i < 3; ++i)
             {
-                if (pRoveCommTCP_Node.InitTCPSocket("127.0.0.1", 12001))
+                if (RoveCommTCPNode.InitTCPSocket("127.0.0.1", 12001))
                 {
                     break;
                 }
@@ -97,13 +97,13 @@ TEST(RoveCommTCP, SendTCPPacket)
             stPacket.vData.push_back(1);
 
             // Send the packet to the localhost
-            ssize_t siBytesSent = pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12001);
+            ssize_t siBytesSent = RoveCommTCPNode.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12001);
 
             // Check if the packet successfully sent
             EXPECT_EQ(siBytesSent, ROVECOMM_PACKET_HEADER_SIZE + (sizeof(uint8_t) * stPacket.unDataCount));
 
             // Close the socket
-            pRoveCommTCP_Node.CloseTCPSocket();
+            RoveCommTCPNode.CloseTCPSocket();
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)
@@ -122,13 +122,13 @@ TEST(RoveCommTCP, CallbackInvoked)
         []()
         {
             // Create RoveComm Nodes
-            rovecomm::RoveCommTCP pRoveCommTCP_Node;
+            rovecomm::RoveCommTCP RoveCommTCPNode;
 
             // Give the node three chances to initialize the socket
             // Since the socket is bound to a specific port, it may take a few tries to find an available port
             for (int i = 0; i < 3; ++i)
             {
-                if (pRoveCommTCP_Node.InitTCPSocket("127.0.0.1", 12002))
+                if (RoveCommTCPNode.InitTCPSocket("127.0.0.1", 12002))
                 {
                     break;
                 }
@@ -144,7 +144,7 @@ TEST(RoveCommTCP, CallbackInvoked)
             std::vector<int32_t> vExpectedData = {-100, -1, 5555};
 
             // Add a callback function for data ID 1100
-            pRoveCommTCP_Node.AddTCPCallback<int32_t>(
+            RoveCommTCPNode.AddTCPCallback<int32_t>(
                 [&](const rovecomm::RoveCommPacket<int32_t>& packet)
                 {
                     // Set the flag to true to indicate that the callback was invoked
@@ -178,13 +178,13 @@ TEST(RoveCommTCP, CallbackInvoked)
             rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
 
             // Process the received packet (simulate callback invocation)
-            pRoveCommTCP_Node.CallProcessPacket(stData, rovecomm::tcp::vInt32Callbacks);
+            RoveCommTCPNode.CallProcessPacket(stData, rovecomm::tcp::vInt32Callbacks);
 
             // Check if the callback was invoked
             EXPECT_TRUE(bCallbackInvoked);
 
             // Close the socket
-            pRoveCommTCP_Node.CloseTCPSocket();
+            RoveCommTCPNode.CloseTCPSocket();
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)
