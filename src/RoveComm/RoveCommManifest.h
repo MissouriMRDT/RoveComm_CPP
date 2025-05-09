@@ -7,7 +7,7 @@
  *
  * @file RoveCommManifest.h
  * @author Missouri S&T - Mars Rover Design Team
- * @date 2025-04-21
+ * @date 2025-05-09
  *
  * @copyright Copyright Mars Rover Design Team 2025 - All Rights Reserved
  ******************************************************************************/
@@ -25,7 +25,7 @@ namespace manifest
      * @brief Enumeration of Data Types to be used in RoveComm
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     enum DataTypes
     {
@@ -44,7 +44,7 @@ namespace manifest
      * @brief IP Address Object for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     struct AddressEntry
     {
@@ -60,7 +60,7 @@ namespace manifest
      * @brief Manifest Entry Object for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     struct ManifestEntry
     {
@@ -74,7 +74,7 @@ namespace manifest
      * @brief Core Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Core
     {
@@ -101,15 +101,29 @@ namespace manifest
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"DRIVESPEEDS", ManifestEntry{3100, 6, DataTypes::FLOAT_T}},
-            {"IMUDATA", ManifestEntry{3101, 3, DataTypes::FLOAT_T}},
-            {"ACCELEROMETERDATA", ManifestEntry{3102, 3, DataTypes::FLOAT_T}},
+            {"MOTORSPEEDS", ManifestEntry{3100, 6, DataTypes::FLOAT_T}},
+            {"MOTORCURRENTS", ManifestEntry{3101, 6, DataTypes::FLOAT_T}},
+            {"VESCCURRENTS", ManifestEntry{3102, 6, DataTypes::FLOAT_T}},
+            {"IMUDATA", ManifestEntry{3103, 3, DataTypes::FLOAT_T}},
+            {"ACCELEROMETERDATA", ManifestEntry{3104, 3, DataTypes::FLOAT_T}},
         };
 
         // Error
-        const std::map<std::string, ManifestEntry> ERROR = {};
+        const std::map<std::string, ManifestEntry> ERROR = {
+            {"VESCFAULT", ManifestEntry{3200, 2, DataTypes::UINT8_T}},
+        };
         
         // Enums
+        enum class MOTORS
+        {
+            FRONT_LEFT,
+            MIDDLE_LEFT,
+            BACK_LEFT,
+            FRONT_RIGHT,
+            MIDDLE_RIGHT,
+            BACK_RIGHT
+        }; 
+
         enum class DISPLAYSTATE
         {
             TELEOP,
@@ -128,13 +142,45 @@ namespace manifest
             WINDOWS
         }; 
 
+        enum class VESCFAULTCODE
+        {
+            NONE,
+            OVER_VOLTAGE,
+            UNDER_VOLTAGE,
+            DRV,
+            ABS_OVER_CURRENT,
+            OVER_TEMP_FET,
+            OVER_TEMP_MOTOR,
+            GATE_DRIVER_OVER_VOLTAGE,
+            GATE_DRIVER_UNDER_VOLTAGE,
+            MCU_UNDER_VOLTAGE,
+            BOOTING_FROM_WATCHDOG_RESET,
+            ENCODER_SPI,
+            ENCODER_SINCOS_BELOW_MIN_AMPLITUDE,
+            ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE,
+            FLASH_CORRUPTION,
+            HIGH_OFFSET_CURRENT_SENSOR_1,
+            HIGH_OFFSET_CURRENT_SENSOR_2,
+            HIGH_OFFSET_CURRENT_SENSOR_3,
+            UNBALANCED_CURRENTS,
+            BRK,
+            RESOLVER_LOT,
+            RESOLVER_DOS,
+            RESOLVER_LOS,
+            FLASH_CORRUPTION_APP_CFG,
+            FLASH_CORRUPTION_MC_CFG,
+            ENCODER_NO_MAGNET,
+            ENCODER_MAGNET_TOO_STRONG,
+            PHASE_FILTER
+        }; 
+
     }    // namespace Core
 
     /******************************************************************************
      * @brief PMS Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace PMS
     {
@@ -174,7 +220,7 @@ namespace manifest
      * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Nav
     {
@@ -203,7 +249,7 @@ namespace manifest
      * @brief BaseStationNav Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace BaseStationNav
     {
@@ -222,7 +268,7 @@ namespace manifest
      * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace SignalStack
     {
@@ -252,7 +298,7 @@ namespace manifest
      * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Arm
     {
@@ -284,7 +330,7 @@ namespace manifest
 
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"POSITIONS", ManifestEntry{8100, 6, DataTypes::FLOAT_T}},
+            {"POSITIONS", ManifestEntry{8100, 7, DataTypes::FLOAT_T}},
             {"COORDINATES", ManifestEntry{8101, 6, DataTypes::FLOAT_T}},
             {"LIMITSWITCHTRIGGERED", ManifestEntry{8102, 1, DataTypes::UINT16_T}},
         };
@@ -311,7 +357,7 @@ namespace manifest
      * @brief Auger Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Auger
     {
@@ -330,7 +376,7 @@ namespace manifest
             {"REQUESTTEMPERATURE", ManifestEntry{9007, 1, DataTypes::UINT8_T}},
             {"REQUESTHUMIDITY", ManifestEntry{9008, 1, DataTypes::UINT8_T}},
             {"UVLED", ManifestEntry{9009, 1, DataTypes::UINT8_T}},
-            {"AUGERGIMBALINCREMENT", ManifestEntry{9010, 2, DataTypes::INT16_T}},
+            {"AUGERMULTIPLEXERSERVO", ManifestEntry{9010, 1, DataTypes::INT16_T}},
         };
 
         // Telemetry
@@ -353,7 +399,7 @@ namespace manifest
      * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Autonomy
     {
@@ -419,9 +465,8 @@ namespace manifest
             NOTSET,
             MAINPROCESS,
             MAINCAM,
-            GROUNDCAM,
-            MAINDETECTOR,
-            GROUNDDETECTOR,
+            MAINTAGDETECTOR,
+            MAINOBJECTDETECTOR,
             STATEMACHINE,
             ROVECOMMUDP,
             ROVECOMMTCP
@@ -433,7 +478,7 @@ namespace manifest
      * @brief Camera1 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Camera1
     {
@@ -444,6 +489,8 @@ namespace manifest
         const std::map<std::string, ManifestEntry> COMMANDS = {
             {"TAKEPICTURE", ManifestEntry{12000, 2, DataTypes::UINT8_T}},
             {"TOGGLESTREAM", ManifestEntry{12001, 2, DataTypes::UINT8_T}},
+            {"SETFFMPEGARGUMENTS", ManifestEntry{12002, 16384, DataTypes::CHAR}},
+            {"SETPICTUREARGUMENTS", ManifestEntry{12003, 16384, DataTypes::CHAR}},
         };
 
         // Telemetry
@@ -451,19 +498,18 @@ namespace manifest
             {"AVAILABLECAMERAS", ManifestEntry{12100, 1, DataTypes::UINT8_T}},
             {"STREAMINGCAMERAS", ManifestEntry{12101, 1, DataTypes::UINT8_T}},
             {"PICTURETAKEN", ManifestEntry{12102, 1, DataTypes::UINT8_T}},
+            {"UTILIZATION", ManifestEntry{12103, 6, DataTypes::UINT8_T}},
         };
 
         // Error
-        const std::map<std::string, ManifestEntry> ERROR = {
-            {"CAMERAUNAVAILABLE", ManifestEntry{12200, 1, DataTypes::UINT8_T}},
-        };
+        const std::map<std::string, ManifestEntry> ERROR = {};
     }    // namespace Camera1
 
     /******************************************************************************
      * @brief Camera2 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Camera2
     {
@@ -474,6 +520,8 @@ namespace manifest
         const std::map<std::string, ManifestEntry> COMMANDS = {
             {"TAKEPICTURE", ManifestEntry{13000, 2, DataTypes::UINT8_T}},
             {"TOGGLESTREAM", ManifestEntry{13001, 2, DataTypes::UINT8_T}},
+            {"SETFFMPEGARGUMENTS", ManifestEntry{13002, 16384, DataTypes::CHAR}},
+            {"SETPICTUREARGUMENTS", ManifestEntry{13003, 16384, DataTypes::CHAR}},
         };
 
         // Telemetry
@@ -481,6 +529,7 @@ namespace manifest
             {"AVAILABLECAMERAS", ManifestEntry{13100, 1, DataTypes::UINT8_T}},
             {"STREAMINGCAMERAS", ManifestEntry{13101, 1, DataTypes::UINT8_T}},
             {"PICTURETAKEN", ManifestEntry{13102, 1, DataTypes::UINT8_T}},
+            {"UTILIZATION", ManifestEntry{13103, 6, DataTypes::UINT8_T}},
         };
 
         // Error
@@ -491,7 +540,7 @@ namespace manifest
      * @brief CameraServer Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace CameraServer
     {
@@ -528,7 +577,7 @@ namespace manifest
      * @brief IRSpectrometer Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace IRSpectrometer
     {
@@ -547,7 +596,7 @@ namespace manifest
      * @brief Raman Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Raman
     {
@@ -587,7 +636,7 @@ namespace manifest
      * @brief RoveSoSimulator Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace RoveSoSimulator
     {
@@ -609,7 +658,7 @@ namespace manifest
      * @brief RoveComm General Information
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace General
     {
@@ -624,7 +673,7 @@ namespace manifest
      * @brief RoveComm System Information
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace System
     {
@@ -640,7 +689,7 @@ namespace manifest
      * @brief RoveComm Helper Functions
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2025-04-21
+     * @date 2025-05-09
      ******************************************************************************/
     namespace Helpers
     {
