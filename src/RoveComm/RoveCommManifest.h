@@ -523,10 +523,10 @@ namespace manifest
         const std::map<std::string, ManifestEntry> COMMANDS = {
             {"TAKEPICTURE", ManifestEntry{13000, 2, DataTypes::UINT8_T}},
             {"TOGGLESTREAM", ManifestEntry{13001, 2, DataTypes::UINT8_T}},
-            {"SETFFMPEGARGUMENTS", ManifestEntry{12002, 16384, DataTypes::CHAR}},
-            {"SETPICTUREARGUMENTS", ManifestEntry{12003, 16384, DataTypes::CHAR}},
-            {"SETBRIGHTNESS", ManifestEntry{12004, 4, DataTypes::FLOAT_T}},
-            {"SETCONTRAST", ManifestEntry{12005, 4, DataTypes::FLOAT_T}},
+            {"SETFFMPEGARGUMENTS", ManifestEntry{13002, 16384, DataTypes::CHAR}},
+            {"SETPICTUREARGUMENTS", ManifestEntry{13003, 16384, DataTypes::CHAR}},
+            {"SETBRIGHTNESS", ManifestEntry{13004, 4, DataTypes::FLOAT_T}},
+            {"SETCONTRAST", ManifestEntry{13005, 4, DataTypes::FLOAT_T}},
         };
 
         // Telemetry
@@ -814,20 +814,6 @@ namespace manifest
                     else if (dataTypeCode == 2)
                     {
                         return GetDataTypeFromMap(Autonomy::ERROR, dataId);
-                    }
-                    break;
-                case 12:    // Camera2 Board
-                    if (dataTypeCode == 0)
-                    {
-                        return GetDataTypeFromMap(Camera2::COMMANDS, dataId);
-                    }
-                    else if (dataTypeCode == 1)
-                    {
-                        return GetDataTypeFromMap(Camera2::TELEMETRY, dataId);
-                    }
-                    else if (dataTypeCode == 2)
-                    {
-                        return GetDataTypeFromMap(Camera2::ERROR, dataId);
                     }
                     break;
                 case 12:    // Camera1 Board
