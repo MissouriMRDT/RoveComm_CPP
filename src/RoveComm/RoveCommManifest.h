@@ -116,62 +116,62 @@ namespace manifest
         // Enums
         enum class MOTORS
         {
-            FRONT_LEFT,
-            MIDDLE_LEFT,
-            BACK_LEFT,
-            FRONT_RIGHT,
-            MIDDLE_RIGHT,
-            BACK_RIGHT
+            FRONT_LEFT = 0,
+            MIDDLE_LEFT = 1,
+            BACK_LEFT = 2,
+            FRONT_RIGHT = 3,
+            MIDDLE_RIGHT = 4,
+            BACK_RIGHT = 5
         }; 
 
         enum class DISPLAYSTATE
         {
-            TELEOP,
-            AUTONOMY,
-            REACHED_GOAL
+            TELEOP = 0,
+            AUTONOMY = 1,
+            REACHED_GOAL = 2
         }; 
 
         enum class PATTERNS
         {
-            MRDT,
-            BELGIUM,
-            MERICA,
-            DIRT,
-            DOTA,
-            MCD,
-            WINDOWS
+            MRDT = 0,
+            BELGIUM = 1,
+            MERICA = 2,
+            DIRT = 3,
+            DOTA = 4,
+            MCD = 5,
+            WINDOWS = 6
         }; 
 
         enum class VESCFAULTCODE
         {
-            NONE,
-            OVER_VOLTAGE,
-            UNDER_VOLTAGE,
-            DRV,
-            ABS_OVER_CURRENT,
-            OVER_TEMP_FET,
-            OVER_TEMP_MOTOR,
-            GATE_DRIVER_OVER_VOLTAGE,
-            GATE_DRIVER_UNDER_VOLTAGE,
-            MCU_UNDER_VOLTAGE,
-            BOOTING_FROM_WATCHDOG_RESET,
-            ENCODER_SPI,
-            ENCODER_SINCOS_BELOW_MIN_AMPLITUDE,
-            ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE,
-            FLASH_CORRUPTION,
-            HIGH_OFFSET_CURRENT_SENSOR_1,
-            HIGH_OFFSET_CURRENT_SENSOR_2,
-            HIGH_OFFSET_CURRENT_SENSOR_3,
-            UNBALANCED_CURRENTS,
-            BRK,
-            RESOLVER_LOT,
-            RESOLVER_DOS,
-            RESOLVER_LOS,
-            FLASH_CORRUPTION_APP_CFG,
-            FLASH_CORRUPTION_MC_CFG,
-            ENCODER_NO_MAGNET,
-            ENCODER_MAGNET_TOO_STRONG,
-            PHASE_FILTER
+            NONE = 0,
+            OVER_VOLTAGE = 1,
+            UNDER_VOLTAGE = 2,
+            DRV = 3,
+            ABS_OVER_CURRENT = 4,
+            OVER_TEMP_FET = 5,
+            OVER_TEMP_MOTOR = 6,
+            GATE_DRIVER_OVER_VOLTAGE = 7,
+            GATE_DRIVER_UNDER_VOLTAGE = 8,
+            MCU_UNDER_VOLTAGE = 9,
+            BOOTING_FROM_WATCHDOG_RESET = 10,
+            ENCODER_SPI = 11,
+            ENCODER_SINCOS_BELOW_MIN_AMPLITUDE = 12,
+            ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE = 13,
+            FLASH_CORRUPTION = 14,
+            HIGH_OFFSET_CURRENT_SENSOR_1 = 15,
+            HIGH_OFFSET_CURRENT_SENSOR_2 = 16,
+            HIGH_OFFSET_CURRENT_SENSOR_3 = 17,
+            UNBALANCED_CURRENTS = 18,
+            BRK = 19,
+            RESOLVER_LOT = 20,
+            RESOLVER_DOS = 21,
+            RESOLVER_LOS = 22,
+            FLASH_CORRUPTION_APP_CFG = 23,
+            FLASH_CORRUPTION_MC_CFG = 24,
+            ENCODER_NO_MAGNET = 25,
+            ENCODER_MAGNET_TOO_STRONG = 26,
+            PHASE_FILTER = 27
         }; 
 
     }    // namespace Core
@@ -343,12 +343,12 @@ namespace manifest
         // Enums
         enum class JOINTS
         {
-            X,
-            J2,
-            J3,
-            J4,
-            PITCH,
-            ROLL
+            X = 0,
+            J2 = 1,
+            J3 = 2,
+            J4 = 3,
+            PITCH = 4,
+            ROLL = 5
         }; 
 
     }    // namespace Arm
@@ -434,54 +434,54 @@ namespace manifest
         // Enums
         enum class AUTONOMYSTATE
         {
-            IDLE,
-            NAVIGATING,
-            SEARCHPATTERN,
-            APPROACHINGMARKER,
-            APPROACHINGOBJECT,
-            VERIFYINGGPS,
-            VERIFYINGMARKER,
-            VERIFYINGOBJECT,
-            AVOIDANCE,
-            REVERSING,
-            STUCK
+            IDLE = 0,
+            NAVIGATING = 1,
+            SEARCHPATTERN = 2,
+            APPROACHINGMARKER = 3,
+            APPROACHINGOBJECT = 4,
+            VERIFYINGGPS = 5,
+            VERIFYINGMARKER = 6,
+            VERIFYINGOBJECT = 7,
+            AVOIDANCE = 8,
+            REVERSING = 9,
+            STUCK = 10
         }; 
 
         enum class AUTONOMYLOG
         {
-            TRACEL3,
-            TRACEL2,
-            TRACEL1,
-            DEBUG,
-            INFO,
-            NOTICE,
-            WARNING,
-            ERROR,
-            CRITICAL
+            TRACEL3 = 0,
+            TRACEL2 = 1,
+            TRACEL1 = 2,
+            DEBUG = 3,
+            INFO = 4,
+            NOTICE = 5,
+            WARNING = 6,
+            ERROR = 7,
+            CRITICAL = 8
         }; 
 
         enum class AUTONOMYTHREADS
         {
-            NOTSET,
-            MAINPROCESS,
-            MAINCAM,
-            GROUNDCAM,
-            TAGDETECTOR,
-            OBJECTDETECTOR,
-            STATEMACHINE,
-            ROVECOMMUDP,
-            ROVECOMMTCP
+            NOTSET = 0,
+            MAINPROCESS = 1,
+            MAINCAM = 2,
+            GROUNDCAM = 3,
+            TAGDETECTOR = 4,
+            OBJECTDETECTOR = 5,
+            STATEMACHINE = 6,
+            ROVECOMMUDP = 7,
+            ROVECOMMTCP = 8
         }; 
 
         enum class AUTONOMYDETECTIONTYPES
         {
-            WATERBOTTLE,
-            MALLET,
-            ANY,
-            TAG0,
-            TAG1,
-            TAG2,
-            TAG3
+            WATERBOTTLE = -3,
+            MALLET = -2,
+            ANY = -1,
+            TAG0 = 0,
+            TAG1 = 1,
+            TAG2 = 2,
+            TAG3 = 3
         }; 
 
     }    // namespace Autonomy

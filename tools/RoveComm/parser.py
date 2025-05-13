@@ -99,7 +99,9 @@ def insert_enums(board):
         enums = this.manifest[board]["Enums"]
         this.header_file.write(f"{generate_indent(2)}\n")
         this.header_file.write(f"{generate_indent(2)}// Enums\n")
+        print(enums)
         for enum in enums:
+            print(enum)
             this.header_file.write(f"{generate_indent(2) + 'enum class ' + enum.upper()}\n")
             this.header_file.write(f"{generate_indent(2) + '{'}\n")
             output = ""
@@ -107,10 +109,11 @@ def insert_enums(board):
             enum_counter = 0
 
             for value in enums[enum]:
+                enum_value = str(enums[enum][value])
                 if enum_counter < enum_len - 1:
-                    output += f"{generate_indent(3) + value.upper() + ','}\n"
+                    output += f"{generate_indent(3) + value.upper() + ' = ' + enum_value + ','}\n"
                 else:
-                    output += f"{generate_indent(3) + value.upper()}\n"
+                    output += f"{generate_indent(3) + value.upper() + ' = ' + enum_value}\n"
 
                 enum_counter += 1
 
