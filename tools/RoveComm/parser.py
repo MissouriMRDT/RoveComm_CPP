@@ -63,7 +63,6 @@ def insert_packets(board, type):
             this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> ERROR = {{\n")
 
         for message in messages:
-            ### print(message)
             dataId = this.manifest[board][type][message]["dataId"]
             dataCount = this.manifest[board][type][message]["dataCount"]
             comments = this.manifest[board][type][message]["comments"]
@@ -107,10 +106,11 @@ def insert_enums(board):
             enum_counter = 0
 
             for value in enums[enum]:
+                enum_value = str(enums[enum][value])
                 if enum_counter < enum_len - 1:
-                    output += f"{generate_indent(3) + value.upper() + ','}\n"
+                    output += f"{generate_indent(3) + value.upper() + ' = ' + enum_value + ','}\n"
                 else:
-                    output += f"{generate_indent(3) + value.upper()}\n"
+                    output += f"{generate_indent(3) + value.upper() + ' = ' + enum_value}\n"
 
                 enum_counter += 1
 
