@@ -664,7 +664,7 @@ namespace manifest
         const std::map<std::string, ManifestEntry> COMMANDS = {};
         // Telemetry
         const std::map<std::string, ManifestEntry> TELEMETRY = {
-            {"ULTRASONIC1", ManifestEntry{99100, 2, DataTypes::FLOAT_T}},
+            {"IMU", ManifestEntry{99100, 10, DataTypes::DOUBLE_T}},
         };
 
         // Error
