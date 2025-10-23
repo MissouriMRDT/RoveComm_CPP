@@ -416,9 +416,10 @@ namespace manifest
             {"CLEARWAYPOINTS", ManifestEntry{11005, 1, DataTypes::UINT8_T}},
             {"SETMAXSPEED", ManifestEntry{11006, 1, DataTypes::FLOAT_T}},
             {"SETMINTRAVSCORE", ManifestEntry{11007, 1, DataTypes::FLOAT_T}},
-            {"SETLOGGINGLEVELS", ManifestEntry{11008, 3, DataTypes::UINT8_T}},
-            {"ADDOBSTACLE", ManifestEntry{11009, 3, DataTypes::DOUBLE_T}},
-            {"CLEAROBSTACLES", ManifestEntry{11010, 1, DataTypes::UINT8_T}},
+            {"SETBETABIAS", ManifestEntry{11008, 1, DataTypes::FLOAT_T}},
+            {"SETLOGGINGLEVELS", ManifestEntry{11009, 3, DataTypes::UINT8_T}},
+            {"ADDOBSTACLE", ManifestEntry{11010, 3, DataTypes::DOUBLE_T}},
+            {"CLEAROBSTACLES", ManifestEntry{11011, 1, DataTypes::UINT8_T}},
         };
 
         // Telemetry
