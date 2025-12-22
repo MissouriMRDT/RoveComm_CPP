@@ -3,12 +3,16 @@ name: Update Manifest Header
 on:
   pull_request:
     branches: ["development"]
+    # Triggers on any push to the PR if these specific paths change.
     paths:
-      - "data/RoveComm/**" # Watch all changes in the submodule
+      - "data/RoveComm"
       - "tools/RoveComm/parser.py"
-      - "src/RoveComm/RoveCommManifest.h"
       - ".github/workflows/manifest.yml"
   workflow_dispatch:
+
+# Grant permission to push changes back to the repo.
+permissions:
+  contents: write
 
 concurrency:
   group: "manifest-generator"
@@ -22,20 +26,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # Checkout the actual PR branch (HEAD) instead of the merge commit.
+          ref: ${{ github.head_ref }}
 
       - name: Setup Git
         run: |
           git config user.name "MissouriMRDT"
           git config user.email "marsrover@mst.edu"
 
-      - name: Rebase Changes
-        run: |
-          git fetch origin ${{ github.head_ref }}
-          git rebase origin/${{ github.head_ref }}
-
       - name: Generate Manifest
         run: |
-          git branch
           cd tools/RoveComm
           python parser.py
 
@@ -46,4 +46,5 @@ jobs:
 
       - name: Push Changes
         run: |
+          # Push strictly to the branch attached to this Pull Request
           git push origin HEAD:${{ github.head_ref }} --force-with-lease || echo "Failed to push changes"
