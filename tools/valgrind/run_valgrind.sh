@@ -2,14 +2,19 @@
 
 # Define the path to the executable
 if [ "$1" = "GitHub-Action" ]; then
+  # Legacy path for old container logic
   executable_path="/opt/RoveComm_CPP/build/RoveComm_CPP_App"
+elif [ "$1" = "CI-Workspace" ]; then
+  # New logic for clean CI runs
+  executable_path="./build/RoveComm_CPP_App"
 else
+  # Default devcontainer/local logic
   executable_path="/workspaces/RoveComm_CPP/build/RoveComm_CPP_App"
 fi
 
 # Check if the executable exists
 if [ ! -f "$executable_path" ]; then
-  echo "Executable not found or hasn't been compiled yet."
+  echo "Executable not found or hasn't been compiled yet: $executable_path"
   exit 1
 fi
 
@@ -21,11 +26,15 @@ supp_files=$(find "$script_dir" -maxdepth 1 -type f -name "*.supp")
 
 # Construct the Valgrind command
 valgrind_cmd="valgrind -s --leak-check=yes --show-leak-kinds=all --track-origins=yes "
+
 if [ "$1" = "GitHub-Action" ]; then
   valgrind_cmd+=" --log-file=/opt/RoveComm_CPP/tools/valgrind/valgrind.rpt"
+elif [ "$1" = "CI-Workspace" ]; then
+  valgrind_cmd+=" --log-file=./tools/valgrind/valgrind.rpt"
 else
   valgrind_cmd+=" --log-file=/workspaces/RoveComm_CPP/tools/valgrind/valgrind.rpt"
 fi
+
 for supp_file in $supp_files; do
   valgrind_cmd+=" --suppressions=$supp_file"
 done
