@@ -53,7 +53,8 @@ namespace manifest
             int SECOND_OCTET;
             int THIRD_OCTET;
             int FOURTH_OCTET;
-            std::string IP_STR = std::to_string(FIRST_OCTET) + "." + std::to_string(SECOND_OCTET) + "." + std::to_string(THIRD_OCTET) + "." + std::to_string(FOURTH_OCTET);
+            std::string IP_STR =
+                std::to_string(FIRST_OCTET) + "." + std::to_string(SECOND_OCTET) + "." + std::to_string(THIRD_OCTET) + "." + std::to_string(FOURTH_OCTET);
     };
 
     /******************************************************************************
@@ -71,7 +72,7 @@ namespace manifest
     };
 
     /******************************************************************************
-     * @brief Core Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Core Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -113,61 +114,61 @@ namespace manifest
         const std::map<std::string, ManifestEntry> ERROR = {
             {"VESCFAULT", ManifestEntry{3200, 2, DataTypes::UINT8_T}},
         };
-        
+
         // Enums
         enum class MOTORS
         {
-            FRONT_LEFT = 0,
-            MIDDLE_LEFT = 1,
-            BACK_LEFT = 2,
-            FRONT_RIGHT = 3,
+            FRONT_LEFT   = 0,
+            MIDDLE_LEFT  = 1,
+            BACK_LEFT    = 2,
+            FRONT_RIGHT  = 3,
             MIDDLE_RIGHT = 4,
-            BACK_RIGHT = 5
-        }; 
+            BACK_RIGHT   = 5
+        };
 
         enum class DISPLAYSTATE
         {
-            TELEOP = 0,
-            AUTONOMY = 1,
+            TELEOP       = 0,
+            AUTONOMY     = 1,
             REACHED_GOAL = 2
-        }; 
+        };
 
         enum class VESCFAULTCODE
         {
-            NONE = 0,
-            OVER_VOLTAGE = 1,
-            UNDER_VOLTAGE = 2,
-            DRV = 3,
-            ABS_OVER_CURRENT = 4,
-            OVER_TEMP_FET = 5,
-            OVER_TEMP_MOTOR = 6,
-            GATE_DRIVER_OVER_VOLTAGE = 7,
-            GATE_DRIVER_UNDER_VOLTAGE = 8,
-            MCU_UNDER_VOLTAGE = 9,
-            BOOTING_FROM_WATCHDOG_RESET = 10,
-            ENCODER_SPI = 11,
+            NONE                               = 0,
+            OVER_VOLTAGE                       = 1,
+            UNDER_VOLTAGE                      = 2,
+            DRV                                = 3,
+            ABS_OVER_CURRENT                   = 4,
+            OVER_TEMP_FET                      = 5,
+            OVER_TEMP_MOTOR                    = 6,
+            GATE_DRIVER_OVER_VOLTAGE           = 7,
+            GATE_DRIVER_UNDER_VOLTAGE          = 8,
+            MCU_UNDER_VOLTAGE                  = 9,
+            BOOTING_FROM_WATCHDOG_RESET        = 10,
+            ENCODER_SPI                        = 11,
             ENCODER_SINCOS_BELOW_MIN_AMPLITUDE = 12,
             ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE = 13,
-            FLASH_CORRUPTION = 14,
-            HIGH_OFFSET_CURRENT_SENSOR_1 = 15,
-            HIGH_OFFSET_CURRENT_SENSOR_2 = 16,
-            HIGH_OFFSET_CURRENT_SENSOR_3 = 17,
-            UNBALANCED_CURRENTS = 18,
-            BRK = 19,
-            RESOLVER_LOT = 20,
-            RESOLVER_DOS = 21,
-            RESOLVER_LOS = 22,
-            FLASH_CORRUPTION_APP_CFG = 23,
-            FLASH_CORRUPTION_MC_CFG = 24,
-            ENCODER_NO_MAGNET = 25,
-            ENCODER_MAGNET_TOO_STRONG = 26,
-            PHASE_FILTER = 27
-        }; 
+            FLASH_CORRUPTION                   = 14,
+            HIGH_OFFSET_CURRENT_SENSOR_1       = 15,
+            HIGH_OFFSET_CURRENT_SENSOR_2       = 16,
+            HIGH_OFFSET_CURRENT_SENSOR_3       = 17,
+            UNBALANCED_CURRENTS                = 18,
+            BRK                                = 19,
+            RESOLVER_LOT                       = 20,
+            RESOLVER_DOS                       = 21,
+            RESOLVER_LOS                       = 22,
+            FLASH_CORRUPTION_APP_CFG           = 23,
+            FLASH_CORRUPTION_MC_CFG            = 24,
+            ENCODER_NO_MAGNET                  = 25,
+            ENCODER_MAGNET_TOO_STRONG          = 26,
+            PHASE_FILTER                       = 27
+        };
 
     }    // namespace Core
 
     /******************************************************************************
-     * @brief PMS Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief PMS Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -203,7 +204,7 @@ namespace manifest
     }    // namespace PMS
 
     /******************************************************************************
-     * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -229,7 +230,7 @@ namespace manifest
     }    // namespace Nav
 
     /******************************************************************************
-     * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -257,7 +258,7 @@ namespace manifest
     }    // namespace SignalStack
 
     /******************************************************************************
-     * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -301,7 +302,7 @@ namespace manifest
     }    // namespace Arm
 
     /******************************************************************************
-     * @brief Auger Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Auger Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -338,7 +339,7 @@ namespace manifest
     }    // namespace Auger
 
     /******************************************************************************
-     * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -375,65 +376,65 @@ namespace manifest
 
         // Error
         const std::map<std::string, ManifestEntry> ERROR = {};
-        
+
         // Enums
         enum class AUTONOMYSTATE
         {
-            IDLE = 0,
-            NAVIGATING = 1,
-            SEARCHPATTERN = 2,
+            IDLE              = 0,
+            NAVIGATING        = 1,
+            SEARCHPATTERN     = 2,
             APPROACHINGMARKER = 3,
             APPROACHINGOBJECT = 4,
-            VERIFYINGGPS = 5,
-            VERIFYINGMARKER = 6,
-            VERIFYINGOBJECT = 7,
-            REVERSING = 8,
-            STUCK = 9
-        }; 
+            VERIFYINGGPS      = 5,
+            VERIFYINGMARKER   = 6,
+            VERIFYINGOBJECT   = 7,
+            REVERSING         = 8,
+            STUCK             = 9
+        };
 
         enum class AUTONOMYLOG
         {
-            TRACEL3 = 0,
-            TRACEL2 = 1,
-            TRACEL1 = 2,
-            DEBUG = 3,
-            INFO = 4,
-            NOTICE = 5,
-            WARNING = 6,
-            ERROR = 7,
+            TRACEL3  = 0,
+            TRACEL2  = 1,
+            TRACEL1  = 2,
+            DEBUG    = 3,
+            INFO     = 4,
+            NOTICE   = 5,
+            WARNING  = 6,
+            ERROR    = 7,
             CRITICAL = 8
-        }; 
+        };
 
         enum class AUTONOMYTHREADS
         {
-            NOTSET = 0,
-            MAINPROCESS = 1,
-            MAINCAM = 2,
-            REARCAM = 3,
-            TAGDETECTOR = 4,
+            NOTSET         = 0,
+            MAINPROCESS    = 1,
+            MAINCAM        = 2,
+            REARCAM        = 3,
+            TAGDETECTOR    = 4,
             OBJECTDETECTOR = 5,
-            STATEMACHINE = 6,
-            ROVECOMMUDP = 7,
-            ROVECOMMTCP = 8
-        }; 
+            STATEMACHINE   = 6,
+            ROVECOMMUDP    = 7,
+            ROVECOMMTCP    = 8
+        };
 
         enum class AUTONOMYWAYPOINTTYPES
         {
             CONTINUOUSNAVIGATE = -99,
-            ROCKPICK = -4,
-            WATERBOTTLE = -3,
-            MALLET = -2,
-            ANY = -1,
-            TAG0 = 0,
-            TAG1 = 1,
-            TAG2 = 2,
-            TAG3 = 3
-        }; 
+            ROCKPICK           = -4,
+            WATERBOTTLE        = -3,
+            MALLET             = -2,
+            ANY                = -1,
+            TAG0               = 0,
+            TAG1               = 1,
+            TAG2               = 2,
+            TAG3               = 3
+        };
 
     }    // namespace Autonomy
 
     /******************************************************************************
-     * @brief Camera1 Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Camera1 Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -466,7 +467,7 @@ namespace manifest
     }    // namespace Camera1
 
     /******************************************************************************
-     * @brief Camera2 Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Camera2 Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -499,7 +500,7 @@ namespace manifest
     }    // namespace Camera2
 
     /******************************************************************************
-     * @brief CameraServer Board IP Address, Commands, Telemetry, and Error 
+     * @brief CameraServer Board IP Address, Commands, Telemetry, and Error
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -536,7 +537,7 @@ namespace manifest
     }    // namespace CameraServer
 
     /******************************************************************************
-     * @brief Raman Board IP Address, Commands, Telemetry, and Error Packet 
+     * @brief Raman Board IP Address, Commands, Telemetry, and Error Packet
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -572,7 +573,7 @@ namespace manifest
     }    // namespace Raman
 
     /******************************************************************************
-     * @brief RoveSoSimulator Board IP Address, Commands, Telemetry, and Error 
+     * @brief RoveSoSimulator Board IP Address, Commands, Telemetry, and Error
      *
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-03-21
@@ -623,7 +624,7 @@ namespace manifest
         const int INVALID_VERSION_DATA_ID = 5;
         const int NO_DATA_DATA_ID         = 6;
     }    // namespace System
-        
+
     /******************************************************************************
      * @brief RoveComm Helper Functions
      *
@@ -643,12 +644,12 @@ namespace manifest
             }
             return DataTypes::CHAR;    // Default return value if dataId not found
         }
-        
+
         inline DataTypes GetDataTypeFromId(uint16_t dataId)
         {
             int boardId      = dataId / 1000;          // Determine board ID based on thousands place
             int dataTypeCode = (dataId / 100) % 10;    // Determine data type code based on hundreds place
-            
+
             // Determine the board namespace based on boardId
             switch (boardId)
             {
@@ -824,7 +825,7 @@ namespace manifest
                     // Invalid Board ID
                     break;
             }
-            
+
             // If dataId is not found in any namespace, return a default type
             return DataTypes::CHAR;
         }
