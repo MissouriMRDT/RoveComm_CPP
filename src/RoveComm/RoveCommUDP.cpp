@@ -44,7 +44,7 @@ namespace rovecomm
     struct RecvContext
     {
             OVERLAPPED overlapped;
-            RoveCommData data;
+            std::array<uint8_t, ROVECOMM_PACKET_MAX_DATA_SIZE> data;
             sockaddr_in addr;
             WSABUF wsabuf;
     };
@@ -90,7 +90,7 @@ namespace rovecomm
      ******************************************************************************/
     RoveCommUDP::~RoveCommUDP()
     {
-        CloseUDPSocket();
+        Close();
     }
 
     /******************************************************************************
@@ -107,7 +107,7 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    bool RoveCommUDP::InitUDPSocket(int nPort)
+    bool RoveCommUDP::Init(int nPort)
     {
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         WSADATA wsaData;
@@ -212,10 +212,10 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    ssize_t RoveCommUDP::SendUDPPacket(const RoveCommPacket<T>& stPacket, const char* cIPAddress, int nPort)
+    ssize_t RoveCommUDP::Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress, int nPort)
     {
         // Pack the RoveCommPacket into a RoveCommData structure
-        RoveCommData stData = PackPacket(stPacket);
+        std::vector<uint8_t> vData = PackPacket(stPacket);
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
         size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
 
@@ -226,15 +226,15 @@ namespace rovecomm
         saUDPClientAddr.sin_family = AF_INET;
 
         // Send the packet to all subscribers
-        for (const SubscriberInfo& stSubscriber : vSubscribers)
+        for (const auto& [szSubscriberIpAddress, nSubscriberPort] : vSubscribers)
         {
             // Assemble client address.
-            saUDPClientAddr.sin_port = htons(stSubscriber.nPort);
-            inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &saUDPClientAddr.sin_addr);
+            saUDPClientAddr.sin_port = htons(nSubscriberPort);
+            inet_pton(AF_INET, szSubscriberIpAddress.c_str(), &saUDPClientAddr.sin_addr);
             // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
             std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
             // Send data.
-            if (sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
+            if (sendto(m_nUDPSocket, reinterpret_cast<char*>(&spData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr)) == -1)
             {
                 // Handle and print error message.
                 perror("Failed to send data to UDP client socket subscriber.");
@@ -244,14 +244,14 @@ namespace rovecomm
         }
 
         // Send the packet to the specified IP address and port.
-        if (std::strcmp(cIPAddress, "0.0.0.0") && nPort != 0)
+        if (szIPAddress != "0.0.0.0" && nPort != 0)
         {
             saUDPClientAddr.sin_port = htons(nPort);
             inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
 
             // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
             std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
-            return sendto(m_nUDPSocket, reinterpret_cast<char*>(&stData), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
+            return sendto(m_nUDPSocket, reinterpret_cast<char*>(vData.data()), siDataSize, 0, (struct sockaddr*) &saUDPClientAddr, sizeof(saUDPClientAddr));
         }
 
         return -1;
@@ -259,26 +259,26 @@ namespace rovecomm
         // Use sendmmsg to send the same packet to multiple destinations in one call.
         std::vector<sockaddr_in> vDestinations;
         // Add all subscribers.
-        for (const SubscriberInfo& stSubscriber : vSubscribers)
+        for (const auto& [szSubscriberIpAddress, nSubscriberPort] : seSubscribers)
         {
             // Assemble client address.
             sockaddr_in stdAddr{};
             stdAddr.sin_family = AF_INET;
-            stdAddr.sin_port   = htons(stSubscriber.nPort);
+            stdAddr.sin_port   = htons(nSubscriberPort);
             // Convert the IP address to binary form.
-            inet_pton(AF_INET, stSubscriber.szIPAddress.c_str(), &stdAddr.sin_addr);
+            inet_pton(AF_INET, szSubscriberIpAddress.c_str(), &stdAddr.sin_addr);
             // Add the subscriber to the list of destinations.
             vDestinations.push_back(stdAddr);
         }
         // Add the specified destination if provided.
-        if (std::strcmp(cIPAddress, "0.0.0.0") != 0 && nPort != 0)
+        if (szIPAddress != "0.0.0.0" && nPort != 0)
         {
             // Assemble client address.
             sockaddr_in stdAddr{};
             stdAddr.sin_family = AF_INET;
             stdAddr.sin_port   = htons(nPort);
             // Convert the IP address to binary form.
-            inet_pton(AF_INET, cIPAddress, &stdAddr.sin_addr);
+            inet_pton(AF_INET, szIPAddress.c_str(), &stdAddr.sin_addr);
             // Add the specified destination to the list of destinations.
             vDestinations.push_back(stdAddr);
         }
@@ -297,7 +297,7 @@ namespace rovecomm
         for (size_t siIter = 0; siIter < siCount; siIter++)
         {
             // Set the data to be sent.
-            vIOVecs[siIter].iov_base = reinterpret_cast<char*>(&stData);
+            vIOVecs[siIter].iov_base = reinterpret_cast<char*>(vData.data());
             vIOVecs[siIter].iov_len  = siDataSize;
             memset(&vMsgVec[siIter], 0, sizeof(struct mmsghdr));
             // Set the destination address.
@@ -346,58 +346,21 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    void RoveCommUDP::AddUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback, const uint16_t& unCondition)
+    void RoveCommUDP::On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback)
     {
         // Acquire a write lock to protect the callback vectors.
         std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
         // Add the callback function to the vector of UDP callbacks for the specified data type
-        if constexpr (std::is_same_v<T, uint8_t>)
-        {
-            // Add the callback function to the vector of uint8_t callbacks
-            udp::vUInt8Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, int8_t>)
-        {
-            // Add the callback function to the vector of int8_t callbacks
-            udp::vInt8Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, uint16_t>)
-        {
-            // Add the callback function to the vector of uint16_t callbacks
-            udp::vUInt16Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, int16_t>)
-        {
-            // Add the callback function to the vector of int16_t callbacks
-            udp::vInt16Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, uint32_t>)
-        {
-            // Add the callback function to the vector of uint32_t callbacks
-            udp::vUInt32Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, int32_t>)
-        {
-            // Add the callback function to the vector of int32_t callbacks
-            udp::vInt32Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, float>)
-        {
-            // Add the callback function to the vector of float callbacks
-            udp::vFloatCallbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, double>)
-        {
-            // Add the callback function to the vector of double callbacks
-            udp::vDoubleCallbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, char>)
-        {
-            // Add the callback function to the vector of char callbacks
-            udp::vCharCallbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
+        // Note: C++ will default initialize a new vector if no entry is found.
+        RoveCommRegistry<T>::umCallbackMap[unDataId].push_back(fnCallback);
     }
+
+    // template<typename T>
+    // void On(const std::string& szBoardName, const std::string& szPacketName, std::function<void(const RoveCommPacket<T>&)> fnCallback)
+    // {
+    //     On(unDataId, fnCallback);
+    // }
 
     /******************************************************************************
      * @brief Remove a callback function from the list of UDP callbacks. The callback
@@ -413,84 +376,13 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    void RoveCommUDP::RemoveUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback)
+    void RoveCommUDP::Clear(const uint16_t unDataId)
     {
         // Acquire a write lock to protect the callback vectors.
         std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
         // Remove the callback function from the vector of UDP callbacks for the specified data type
-        if constexpr (std::is_same_v<T, uint8_t>)
-        {
-            // Remove the callback function from the vector of uint8_t callbacks
-            udp::vUInt8Callbacks.erase(std::remove_if(udp::vUInt8Callbacks.begin(),
-                                                      udp::vUInt8Callbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       udp::vUInt8Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, int8_t>)
-        {
-            // Remove the callback function from the vector of int8_t callbacks
-            udp::vInt8Callbacks.erase(std::remove_if(udp::vInt8Callbacks.begin(),
-                                                     udp::vInt8Callbacks.end(),
-                                                     [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                      udp::vInt8Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, uint16_t>)
-        {
-            // Remove the callback function from the vector of uint16_t callbacks
-            udp::vUInt16Callbacks.erase(std::remove_if(udp::vUInt16Callbacks.begin(),
-                                                       udp::vUInt16Callbacks.end(),
-                                                       [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                        udp::vUInt16Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, int16_t>)
-        {
-            // Remove the callback function from the vector of int16_t callbacks
-            udp::vInt16Callbacks.erase(std::remove_if(udp::vInt16Callbacks.begin(),
-                                                      udp::vInt16Callbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       udp::vInt16Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, uint32_t>)
-        {
-            // Remove the callback function from the vector of uint32_t callbacks
-            udp::vUInt32Callbacks.erase(std::remove_if(udp::vUInt32Callbacks.begin(),
-                                                       udp::vUInt32Callbacks.end(),
-                                                       [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                        udp::vUInt32Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, int32_t>)
-        {
-            // Remove the callback function from the vector of int32_t callbacks
-            udp::vInt32Callbacks.erase(std::remove_if(udp::vInt32Callbacks.begin(),
-                                                      udp::vInt32Callbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       udp::vInt32Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, float>)
-        {
-            // Remove the callback function from the vector of float callbacks
-            udp::vFloatCallbacks.erase(std::remove_if(udp::vFloatCallbacks.begin(),
-                                                      udp::vFloatCallbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       udp::vFloatCallbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, double>)
-        {
-            // Remove the callback function from the vector of double callbacks
-            udp::vDoubleCallbacks.erase(std::remove_if(udp::vDoubleCallbacks.begin(),
-                                                       udp::vDoubleCallbacks.end(),
-                                                       [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                        udp::vDoubleCallbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, char>)
-        {
-            // Remove the callback function from the vector of char callbacks
-            udp::vCharCallbacks.erase(std::remove_if(udp::vCharCallbacks.begin(),
-                                                     udp::vCharCallbacks.end(),
-                                                     [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                      udp::vCharCallbacks.end());
-        }
+        std::erase_if(RoveCommRegistry<T>::umCallbackMap, [unDataId](const auto& stdEntry) { return stdEntry.first == unDataId; });
     }
 
     /******************************************************************************
@@ -502,7 +394,7 @@ namespace rovecomm
      *
      * @tparam T - The type of data that the callback function will be invoked with.
      *             This can be any of the types defined in the manifest.
-     * @param stData - The received RoveCommData that is to be processed.
+     * @param spData - The received RoveCommData that is to be processed.
      * @param vCallbacks - The list of callback functions that are to be invoked when
      *                    a packet with the specified data id is received.
      * @param saClientAddr - The address of the client that sent the packet.
@@ -514,40 +406,37 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    void RoveCommUDP::ProcessPacket(const RoveCommData& stData,
-                                    const std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>>& vCallbacks,
-                                    const sockaddr_in& saClientAddr)
+    void RoveCommUDP::ProcessPacket(std::span<const uint8_t> spData, const sockaddr_in& saClientAddr)
     {
         // Unpack the received data into a RoveCommPacket
-        RoveCommPacket<T> stPacket = UnpackData<T>(stData);
+        RoveCommPacket<T> stPacket = UnpackData<T>(spData);
 
         // Create a SubscriberInfo struct to store the client address
-        SubscriberInfo stSubscriber;
-        stSubscriber.szIPAddress = inet_ntoa(saClientAddr.sin_addr);
-        stSubscriber.nPort       = ntohs(saClientAddr.sin_port);
+        std::string szIPAddress = inet_ntoa(saClientAddr.sin_addr);
+        int nPort               = ntohs(saClientAddr.sin_port);
 
         // Check if the received packet is a subscribe or unsubscribe packet
         if (stPacket.unDataId == manifest::System::SUBSCRIBE_DATA_ID)
         {
-            AddSubscriber(stSubscriber.szIPAddress, stSubscriber.nPort);
+            AddSubscriber(szIPAddress, nPort);
         }
         else if (stPacket.unDataId == manifest::System::UNSUBSCRIBE_DATA_ID)
         {
-            RemoveSubscriber(stSubscriber.szIPAddress, stSubscriber.nPort);
+            RemoveSubscriber(szIPAddress, nPort);
         }
 
         // Acquire a read lock to protect the callback vectors.
         std::shared_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
         // Invoke registered callbacks
-        for (const std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>& tpCallbackInfo : vCallbacks)
+        for (const auto& [unDataId, vCallbacks] : RoveCommRegistry<T>::umCallbackMap)
         {
-            const std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>& fnCallback = std::get<0>(tpCallbackInfo);
-            const uint32_t& unCondition                                                         = std::get<1>(tpCallbackInfo);
-
-            if (unCondition == stPacket.unDataId)
+            if (unDataId == stPacket.unDataId)
             {
-                fnCallback(stPacket, saClientAddr);
+                for (const auto& fnCallback : vCallbacks)
+                {
+                    fnCallback(stPacket);
+                }
             }
         }
     }
@@ -565,7 +454,7 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    void RoveCommUDP::ReceiveUDPPacketAndCallback()
+    void RoveCommUDP::ReceiveAndCallback()
     {
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         // Create a batch of RecvContext structures to receive multiple packets at once.
@@ -576,19 +465,19 @@ namespace rovecomm
         for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
         {
             ZeroMemory(&rcContexts[siIter].overlapped, sizeof(OVERLAPPED));
-            rcContexts[siIter].wsabuf.buf = reinterpret_cast<char*>(&rcContexts[siIter].data);
-            rcContexts[siIter].wsabuf.len = sizeof(RoveCommData);
+            rcContexts[siIter].wsabuf.buf = reinterpret_cast<char*>(rcContexts[siIter].data.data());
+            rcContexts[siIter].wsabuf.len = sizeof(rcContexts[siIter].data);
             int nAddrLen                  = sizeof(rcContexts[siIter].addr);
             DWORD stdFlags                = 0;
             int nRet                      = WSARecvFrom(m_nUDPSocket,
-                                   &rcContexts[siIter].wsabuf,
-                                   1,
-                                   NULL,
-                                   &stdFlags,
-                                   reinterpret_cast<sockaddr*>(&rcContexts[siIter].addr),
-                                   &nAddrLen,
-                                   &rcContexts[siIter].overlapped,
-                                   NULL);
+                                                        &rcContexts[siIter].wsabuf,
+                                                        1,
+                                                        NULL,
+                                                        &stdFlags,
+                                                        reinterpret_cast<sockaddr*>(&rcContexts[siIter].addr),
+                                                        &nAddrLen,
+                                                        &rcContexts[siIter].overlapped,
+                                                        NULL);
             if (nRet == SOCKET_ERROR)
             {
                 int nErr = WSAGetLastError();
@@ -633,30 +522,30 @@ namespace rovecomm
             RecvContext* pContext = CONTAINING_RECORD(stdLPOverlapped, RecvContext, overlapped);
 
             // Process the received data.
-            RoveCommData& stData      = pContext->data;
-            sockaddr_in& saClientAddr = pContext->addr;
+            std::array<uint8_t, ROVECOMM_PACKET_MAX_DATA_SIZE>& spData = pContext->data;
+            sockaddr_in& saClientAddr                                  = pContext->addr;
 
             // Extract data id and data type from the packet.
-            uint16_t unDataId             = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
-            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(stData.unBytes[5]);
+            uint16_t unDataId             = (static_cast<uint16_t>(spData.unBytes[1]) << 8) | static_cast<uint16_t>(spData.unBytes[2]);
+            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(spData.unBytes[5]);
 
             switch (eDataType)
             {
-                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(stData, udp::vUInt8Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(stData, udp::vInt8Callbacks, saClientAddr); break;
-                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(stData, udp::vUInt16Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(stData, udp::vInt16Callbacks, saClientAddr); break;
-                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(stData, udp::vUInt32Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(stData, udp::vInt32Callbacks, saClientAddr); break;
-                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(stData, udp::vFloatCallbacks, saClientAddr); break;
-                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(stData, udp::vDoubleCallbacks, saClientAddr); break;
-                case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, udp::vCharCallbacks, saClientAddr); break;
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(spData, udp::vUInt8Callbacks, saClientAddr); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(spData, udp::vInt8Callbacks, saClientAddr); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(spData, udp::vUInt16Callbacks, saClientAddr); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(spData, udp::vInt16Callbacks, saClientAddr); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(spData, udp::vUInt32Callbacks, saClientAddr); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(spData, udp::vInt32Callbacks, saClientAddr); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(spData, udp::vFloatCallbacks, saClientAddr); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(spData, udp::vDoubleCallbacks, saClientAddr); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(spData, udp::vCharCallbacks, saClientAddr); break;
             }
 
             // Re-post the asynchronous receive for this context.
             ZeroMemory(&pContext->overlapped, sizeof(OVERLAPPED));
-            pContext->wsabuf.buf = reinterpret_cast<char*>(&pContext->data);
-            pContext->wsabuf.len = sizeof(RoveCommData);
+            pContext->wsabuf.buf = reinterpret_cast<char*>(pContext->data.data());
+            pContext->wsabuf.len = sizeof(pContext->data);
             int nAddrLen         = sizeof(pContext->addr);
             DWORD stdFlags       = 0;
             int nRet =
@@ -673,7 +562,7 @@ namespace rovecomm
 #else
         // Create a batch of RoveCommData structures to receive multiple packets at once.
         constexpr size_t BATCH_SIZE = 32;
-        RoveCommData aDataBatch[BATCH_SIZE];
+        std::array<uint8_t, ROVECOMM_PACKET_MAX_DATA_SIZE> aDataBatch[BATCH_SIZE];
         struct iovec aIOVecs[BATCH_SIZE];
         struct mmsghdr aMsgVec[BATCH_SIZE];
         sockaddr_in aAddrs[BATCH_SIZE];
@@ -682,8 +571,8 @@ namespace rovecomm
         memset(aMsgVec, 0, sizeof(aMsgVec));
         for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
         {
-            aIOVecs[siIter].iov_base            = &aDataBatch[siIter];
-            aIOVecs[siIter].iov_len             = sizeof(RoveCommData);
+            aIOVecs[siIter].iov_base            = aDataBatch[siIter].data();
+            aIOVecs[siIter].iov_len             = sizeof(*aDataBatch);
             aMsgVec[siIter].msg_hdr.msg_iov     = &aIOVecs[siIter];
             aMsgVec[siIter].msg_hdr.msg_iovlen  = 1;
             aMsgVec[siIter].msg_hdr.msg_name    = &aAddrs[siIter];
@@ -697,6 +586,7 @@ namespace rovecomm
         int nRet = recvmmsg(m_nUDPSocket, aMsgVec, BATCH_SIZE, MSG_DONTWAIT, nullptr);
         if (nRet < 0)
         {
+            // Still waiting for data or connection return without error.
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
                 perror("Failed to receive data from UDP socket using recvmmsg.");
@@ -710,24 +600,28 @@ namespace rovecomm
         for (int nIter = 0; nIter < nRet; nIter++)
         {
             // Get the data and client address from the received packet.
-            RoveCommData& stData      = aDataBatch[nIter];
+            size_t siBytesReceived = aMsgVec[nIter].msg_len;
+            if (siBytesReceived < ROVECOMM_PACKET_HEADER_SIZE)
+            {
+                throw std::runtime_error("Not enough data to parse RoveCommPacket header.");
+            }
+            std::span<uint8_t> aData{aDataBatch[nIter].data(), siBytesReceived};
             sockaddr_in& saClientAddr = aAddrs[nIter];
-
             // Extract the data id and data type from the packet.
-            uint16_t unDataId             = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
-            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(stData.unBytes[5]);
+            uint16_t unDataId             = (static_cast<uint16_t>(aData[1]) << 8) | static_cast<uint16_t>(aData[2]);
+            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(aData[5]);
 
             switch (eDataType)
             {
-                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(stData, udp::vUInt8Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(stData, udp::vInt8Callbacks, saClientAddr); break;
-                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(stData, udp::vUInt16Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(stData, udp::vInt16Callbacks, saClientAddr); break;
-                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(stData, udp::vUInt32Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(stData, udp::vInt32Callbacks, saClientAddr); break;
-                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(stData, udp::vFloatCallbacks, saClientAddr); break;
-                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(stData, udp::vDoubleCallbacks, saClientAddr); break;
-                case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, udp::vCharCallbacks, saClientAddr); break;
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(aData, saClientAddr); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(aData, saClientAddr); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(aData, saClientAddr); break;
             }
         }
 #endif
@@ -743,21 +637,12 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-08
      ******************************************************************************/
-    void RoveCommUDP::AddSubscriber(const std::string& szIPAddress, const int& nPort)
+    void RoveCommUDP::AddSubscriber(const std::string& szIPAddress, const int nPort)
     {
-        if (vSubscribers.size() < ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS)
+        if (seSubscribers.size() < ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS)
         {
-            // Check if the subscriber is already in the list
-            for (const auto& subscriber : vSubscribers)
-            {
-                if (subscriber.szIPAddress == szIPAddress && subscriber.nPort == nPort)
-                {
-                    return;    // Subscriber already exists, no need to add again
-                }
-            }
-
             // Add new subscriber
-            vSubscribers.push_back({szIPAddress, nPort});
+            seSubscribers.insert({szIPAddress, nPort});
         }
     }
 
@@ -772,12 +657,10 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-08
      ******************************************************************************/
-    void RoveCommUDP::RemoveSubscriber(const std::string& szIPAddress, const int& nPort)
+    void RoveCommUDP::RemoveSubscriber(const std::string& szIPAddress, const int nPort)
     {
         // Find and remove the subscriber
-        vSubscribers.erase(
-            std::remove_if(vSubscribers.begin(), vSubscribers.end(), [&](const SubscriberInfo& info) { return info.szIPAddress == szIPAddress && info.nPort == nPort; }),
-            vSubscribers.end());
+        seSubscribers.erase({szIPAddress, nPort});
     }
 
     /******************************************************************************
@@ -812,7 +695,7 @@ namespace rovecomm
      ******************************************************************************/
     void RoveCommUDP::PooledLinearCode()
     {
-        ReceiveUDPPacketAndCallback();
+        ReceiveAndCallback();
     }
 
     /******************************************************************************
@@ -822,7 +705,7 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    void RoveCommUDP::CloseUDPSocket()
+    void RoveCommUDP::Close()
     {
         // Check if the socket is open
         if (m_nUDPSocket != -1)
@@ -841,40 +724,40 @@ namespace rovecomm
     }
 
     // Explicitly define template function types
-    template ssize_t RoveCommUDP::SendUDPPacket<uint8_t>(const RoveCommPacket<uint8_t>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<uint8_t>(const RoveCommPacket<uint8_t>&, const std::string&, int);
+    template void RoveCommUDP::On<uint8_t>(const uint16_t, std::function<void(const RoveCommPacket<uint8_t>&)>);
+    template void RoveCommUDP::Clear<uint8_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<int8_t>(const RoveCommPacket<int8_t>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<int8_t>(std::function<void(const RoveCommPacket<int8_t>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<int8_t>(std::function<void(const RoveCommPacket<int8_t>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<int8_t>(const RoveCommPacket<int8_t>&, const std::string&, int);
+    template void RoveCommUDP::On<int8_t>(const uint16_t, std::function<void(const RoveCommPacket<int8_t>&)>);
+    template void RoveCommUDP::Clear<int8_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<uint16_t>(const RoveCommPacket<uint16_t>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<uint16_t>(std::function<void(const RoveCommPacket<uint16_t>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<uint16_t>(std::function<void(const RoveCommPacket<uint16_t>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<uint16_t>(const RoveCommPacket<uint16_t>&, const std::string&, int);
+    template void RoveCommUDP::On<uint16_t>(const uint16_t, std::function<void(const RoveCommPacket<uint16_t>&)>);
+    template void RoveCommUDP::Clear<uint16_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<int16_t>(const RoveCommPacket<int16_t>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<int16_t>(std::function<void(const RoveCommPacket<int16_t>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<int16_t>(std::function<void(const RoveCommPacket<int16_t>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<int16_t>(const RoveCommPacket<int16_t>&, const std::string&, int);
+    template void RoveCommUDP::On<int16_t>(const uint16_t, std::function<void(const RoveCommPacket<int16_t>&)>);
+    template void RoveCommUDP::Clear<int16_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<uint32_t>(const RoveCommPacket<uint32_t>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<uint32_t>(std::function<void(const RoveCommPacket<uint32_t>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<uint32_t>(std::function<void(const RoveCommPacket<uint32_t>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<uint32_t>(const RoveCommPacket<uint32_t>&, const std::string&, int);
+    template void RoveCommUDP::On<uint32_t>(const uint16_t, std::function<void(const RoveCommPacket<uint32_t>&)>);
+    template void RoveCommUDP::Clear<uint32_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<int32_t>(const RoveCommPacket<int32_t>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<int32_t>(std::function<void(const RoveCommPacket<int32_t>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<int32_t>(std::function<void(const RoveCommPacket<int32_t>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<int32_t>(const RoveCommPacket<int32_t>&, const std::string&, int);
+    template void RoveCommUDP::On<int32_t>(const uint16_t, std::function<void(const RoveCommPacket<int32_t>&)>);
+    template void RoveCommUDP::Clear<int32_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<float>(const RoveCommPacket<float>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<float>(std::function<void(const RoveCommPacket<float>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<float>(std::function<void(const RoveCommPacket<float>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<float>(const RoveCommPacket<float>&, const std::string&, int);
+    template void RoveCommUDP::On<float>(const uint16_t, std::function<void(const RoveCommPacket<float>&)>);
+    template void RoveCommUDP::Clear<float>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<double>(const RoveCommPacket<double>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<double>(std::function<void(const RoveCommPacket<double>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<double>(std::function<void(const RoveCommPacket<double>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<double>(const RoveCommPacket<double>&, const std::string&, int);
+    template void RoveCommUDP::On<double>(const uint16_t, std::function<void(const RoveCommPacket<double>&)>);
+    template void RoveCommUDP::Clear<double>(const uint16_t);
 
-    template ssize_t RoveCommUDP::SendUDPPacket<char>(const RoveCommPacket<char>&, const char*, int);
-    template void RoveCommUDP::AddUDPCallback<char>(std::function<void(const RoveCommPacket<char>&, const sockaddr_in&)>, const uint16_t&);
-    template void RoveCommUDP::RemoveUDPCallback<char>(std::function<void(const RoveCommPacket<char>&, const sockaddr_in&)>);
+    template ssize_t RoveCommUDP::Send<char>(const RoveCommPacket<char>&, const std::string&, int);
+    template void RoveCommUDP::On<char>(const uint16_t, std::function<void(const RoveCommPacket<char>&)>);
+    template void RoveCommUDP::Clear<char>(const uint16_t);
 
 }    // namespace rovecomm

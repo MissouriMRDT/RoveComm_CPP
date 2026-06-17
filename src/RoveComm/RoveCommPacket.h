@@ -17,6 +17,7 @@
 /// \cond
 #include <cstdint>
 #include <cstring>
+#include <span>
 #include <vector>
 
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
@@ -73,33 +74,39 @@ namespace rovecomm
     struct RoveCommPacket
     {
         public:
-            uint16_t unDataId;
-            uint16_t unDataCount;
-            manifest::DataTypes eDataType;
-            std::vector<T> vData;
+            uint16_t unDataId{};
+            uint16_t unDataCount{};
+            manifest::DataTypes eDataType{};
+            std::vector<T> vData{};
     };
 
-    /******************************************************************************
-     * @brief The RoveCommData struct is used to store data in a packet format
-     *        for transmission over a network. This struct is used to store the
-     *        data in a byte array for transmission. The data is stored in a byte
-     *        array with the packet header and data.
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-07
-     ******************************************************************************/
-    struct RoveCommData
+    template<manifest::ManifestEntry entry>
+    RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> CreatePacket()
     {
-        public:
-            uint8_t unBytes[ROVECOMM_PACKET_HEADER_SIZE + sizeof(uint8_t) * ROVECOMM_PACKET_MAX_DATA_COUNT / 2];
-    };
+        RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> ret{.unDataId    = entry.DATA_ID,
+                                                                                                 .unDataCount = entry.DATA_COUNT,
+                                                                                                 .eDataType   = entry.DATA_TYPE};
+        ret.vData.resize(ret.unDataCount);
+        return ret;
+    }
+
+    template<manifest::ManifestEntry entry, typename... Args>
+    RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> CreatePacket(Args... args)
+    {
+        static_assert(sizeof...(Args) == entry.DATA_COUNT, "Check your data count.");
+        RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> ret{.unDataId    = entry.DATA_ID,
+                                                                                                 .unDataCount = entry.DATA_COUNT,
+                                                                                                 .eDataType   = entry.DATA_TYPE,
+                                                                                                 .vData       = {args...}};
+        return ret;
+    }
 
     // RoveCommPacket and RoveCommData packing and unpacking functions
     template<typename T>
-    RoveCommData PackPacket(const RoveCommPacket<T>& stPacket);
+    std::vector<uint8_t> PackPacket(const RoveCommPacket<T>& stPacket);
 
     template<typename T>
-    RoveCommPacket<T> UnpackData(const RoveCommData& stData);
+    RoveCommPacket<T> UnpackData(std::span<const uint8_t> stData);
 }    // namespace rovecomm
 
 #endif    // ROVECOMM_PACKET_H

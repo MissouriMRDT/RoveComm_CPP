@@ -12,7 +12,7 @@ author = "Missouri S&T - Mars Rover Design Team"
 organization = "Mars Rover Design Team"
 
 # Maps types from json to struct types
-type_to_struct = {
+type_to_enum = {
     "INT8_T"    : "DataTypes::INT8_T",
     "UINT8_T"   : "DataTypes::UINT8_T",
     "INT16_T"   : "DataTypes::INT16_T",
@@ -22,6 +22,30 @@ type_to_struct = {
     "FLOAT_T"   : "DataTypes::FLOAT_T",
     "DOUBLE_T"  : "DataTypes::DOUBLE_T",
     "CHAR"      : "DataTypes::CHAR",
+}
+
+type_to_size = {
+    "INT8_T"    : 1,
+    "UINT8_T"   : 1,
+    "INT16_T"   : 2,
+    "UINT16_T"  : 2,
+    "INT32_T"   : 4,
+    "UINT32_T"  : 4,
+    "FLOAT_T"   : 4,
+    "DOUBLE_T"  : 8,
+    "CHAR"      : 1,
+}
+
+type_to_c_type = {
+    "INT8_T"    : "int8_t",
+    "UINT8_T"   : "uint8_t",
+    "INT16_T"   : "int16_t",
+    "UINT16_T"  : "uint16_t",
+    "INT32_T"   : "int32_t",
+    "UINT32_T"  : "uint32_t",
+    "FLOAT_T"   : "float",
+    "DOUBLE_T"  : "double",
+    "CHAR"      : "char",
 }
 
 this = sys.modules[__name__]
@@ -53,15 +77,16 @@ def insert_packets(board, type):
 
         if (type == "Commands"):
             this.header_file.write(f"{generate_indent(2)}// Commands\n")
-            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> COMMANDS = {{\n")
-
+            this.header_file.write(f"{generate_indent(2)}namespace Commands\n")
+            this.header_file.write(f"{generate_indent(2)}{{\n")
         elif (type == "Telemetry"):
             this.header_file.write(f"{generate_indent(2)}// Telemetry\n")
-            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> TELEMETRY = {{\n")
+            this.header_file.write(f"{generate_indent(2)}namespace Telemetry\n")
+            this.header_file.write(f"{generate_indent(2)}{{\n")
         elif (type == "Error"):
             this.header_file.write(f"{generate_indent(2)}// Error\n")
-            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> ERROR = {{\n")
-
+            this.header_file.write(f"{generate_indent(2)}namespace Errors\n")
+            this.header_file.write(f"{generate_indent(2)}{{\n")
         for message in messages:
             dataId = this.manifest[board][type][message]["dataId"]
             dataCount = this.manifest[board][type][message]["dataCount"]
@@ -69,26 +94,29 @@ def insert_packets(board, type):
 
             # Data type doesn't exactly match the struct type
             dataType = this.manifest[board][type][message]["dataType"]
-            dataType = type_to_struct[dataType]
+            dataType = type_to_enum[dataType]
 
 
-            this.header_file.write(f"{generate_indent(3)}{{\"{message.upper()}\", ManifestEntry{{{dataId}, {dataCount}, {dataType}}}}},\n")
+            this.header_file.write(f"{generate_indent(3)}constexpr ManifestEntry {message.upper()}{{{dataId}, {dataCount}, {dataType}}};\n")
 
-        this.header_file.write(f"{generate_indent(2)}}};\n")
+        this.header_file.write(f"{generate_indent(2)}}}\n")
 
         if (type != "Error"):
             this.header_file.write("\n")
     else:
         if (type == "Commands"):
             this.header_file.write(f"{generate_indent(2)}// Commands\n")
-            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> COMMANDS = {{}};\n")
+            this.header_file.write(f"{generate_indent(2)}namespace Commands\n")
+            this.header_file.write(f"{generate_indent(2)}{{}}\n")
 
         elif (type == "Telemetry"):
             this.header_file.write(f"{generate_indent(2)}// Telemetry\n")
-            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> TELEMETRY = {{}};\n")
+            this.header_file.write(f"{generate_indent(2)}namespace Telemetry\n")
+            this.header_file.write(f"{generate_indent(2)}{{}}\n")
         elif (type == "Error"):
             this.header_file.write(f"{generate_indent(2)}// Error\n")
-            this.header_file.write(f"{generate_indent(2)}const std::map<std::string, ManifestEntry> ERROR = {{}};\n")
+            this.header_file.write(f"{generate_indent(2)}namespace Errors\n")
+            this.header_file.write(f"{generate_indent(2)}{{}}\n")
 
 def insert_enums(board):
     """
@@ -249,8 +277,8 @@ def find_board_and_data_id(json_file):
                     data_id = command['dataId'] // 1000
                     results.add((board_name, data_id))
             if 'Telemetry' in component:
-                for telemetry in data['RovecommManifest'][board_name]['Telemetry'].values():
-                    data_id = telemetry['dataId'] // 1000
+                for Telemetry in data['RovecommManifest'][board_name]['Telemetry'].values():
+                    data_id = Telemetry['dataId'] // 1000
                     results.add((board_name, data_id))
             if 'Error' in component:
                 for error in data['RovecommManifest'][board_name]['Error'].values():
@@ -264,53 +292,42 @@ def insert_helpers():
     This inserts the Helper Information that needs to be included in RoveComm
     """
 
-    # GetDataTypeFromMap function
-    this.header_file.write(f"{generate_indent(2)}inline DataTypes GetDataTypeFromMap(const std::map<std::string, ManifestEntry>& dataMap, uint16_t dataId)\n")
+    # DataTypeSize function
+    this.header_file.write(f"{generate_indent(2)}constexpr size_t DataTypeSize(manifest::DataTypes eDataType)\n")
     this.header_file.write(f"{generate_indent(2)}{{\n")
-    this.header_file.write(f"{generate_indent(3)}for (const auto& entry : dataMap)\n")
+    this.header_file.write(f"{generate_indent(3)}switch (eDataType)\n")
     this.header_file.write(f"{generate_indent(3)}{{\n")
-    this.header_file.write(f"{generate_indent(4)}if (entry.second.DATA_ID == dataId)\n")
-    this.header_file.write(f"{generate_indent(4)}{{\n")
-    this.header_file.write(f"{generate_indent(5)}return entry.second.DATA_TYPE;\n")
-    this.header_file.write(f"{generate_indent(4)}}}\n")
+    for data_type in type_to_enum.keys():
+        this.header_file.write(f"{generate_indent(4)}case manifest::{type_to_enum[data_type]}: return {type_to_size[data_type]};\n")
+    this.header_file.write(f"{generate_indent(4)}default: return 1;\n")
     this.header_file.write(f"{generate_indent(3)}}}\n")
-    this.header_file.write(f"{generate_indent(3)}return DataTypes::CHAR;{generate_indent(1)}// Default return value if dataId not found\n")
     this.header_file.write(f"{generate_indent(2)}}}\n")
 
-    # GetDataTypeFromMap function
+    # CToRoveCommType mapping
     this.header_file.write(f"{generate_indent(2)}\n")
-    this.header_file.write(f"{generate_indent(2)}inline DataTypes GetDataTypeFromId(uint16_t dataId)\n")
-    this.header_file.write(f"{generate_indent(2)}{{\n")
-    this.header_file.write(f"{generate_indent(3)}int boardId      = dataId / 1000;          // Determine board ID based on thousands place\n")
-    this.header_file.write(f"{generate_indent(3)}int dataTypeCode = (dataId / 100) % 10;    // Determine data type code based on hundreds place\n")
-    this.header_file.write(f"{generate_indent(3)}\n")
-    this.header_file.write(f"{generate_indent(3)}// Determine the board namespace based on boardId\n")
-    this.header_file.write(f"{generate_indent(3)}switch (boardId)\n")
-    this.header_file.write(f"{generate_indent(3)}{{\n")
-    board_and_data_ids = find_board_and_data_id("../../data/RoveComm/manifest.json")
-    for board_name, data_id in board_and_data_ids:
-        this.header_file.write(f"{generate_indent(4)}case {data_id}:{generate_indent(1)}// {board_name} Board\n")
-        this.header_file.write(f"{generate_indent(5)}if (dataTypeCode == 0)\n")
-        this.header_file.write(f"{generate_indent(5)}{{\n")
-        this.header_file.write(f"{generate_indent(6)}return GetDataTypeFromMap({board_name}::COMMANDS, dataId);\n")
-        this.header_file.write(f"{generate_indent(5)}}}\n")
-        this.header_file.write(f"{generate_indent(5)}else if (dataTypeCode == 1)\n")
-        this.header_file.write(f"{generate_indent(5)}{{\n")
-        this.header_file.write(f"{generate_indent(6)}return GetDataTypeFromMap({board_name}::TELEMETRY, dataId);\n")
-        this.header_file.write(f"{generate_indent(5)}}}\n")
-        this.header_file.write(f"{generate_indent(5)}else if (dataTypeCode == 2)\n")
-        this.header_file.write(f"{generate_indent(5)}{{\n")
-        this.header_file.write(f"{generate_indent(6)}return GetDataTypeFromMap({board_name}::ERROR, dataId);\n")
-        this.header_file.write(f"{generate_indent(5)}}}\n")
-        this.header_file.write(f"{generate_indent(5)}break;\n")
-    this.header_file.write(f"{generate_indent(4)}default:\n")
-    this.header_file.write(f"{generate_indent(5)}// Invalid Board ID\n")
-    this.header_file.write(f"{generate_indent(5)}break;\n")
-    this.header_file.write(f"{generate_indent(3)}}}\n")
-    this.header_file.write(f"{generate_indent(3)}\n")
-    this.header_file.write(f"{generate_indent(3)}// If dataId is not found in any namespace, return a default type\n")
-    this.header_file.write(f"{generate_indent(3)}return DataTypes::CHAR;\n")
-    this.header_file.write(f"{generate_indent(2)}}}\n")
+    this.header_file.write(f"{generate_indent(2)}template<typename T>\n")
+    this.header_file.write(f"{generate_indent(2)}struct CToRoveCommType\n")
+    this.header_file.write(f"{generate_indent(2)}{{}};\n\n")
+    for data_type, c_type in type_to_c_type.items():
+        this.header_file.write(f"{generate_indent(2)}template<>\n")
+        this.header_file.write(f"{generate_indent(2)}struct CToRoveCommType<{c_type}>\n")
+        this.header_file.write(f"{generate_indent(2)}{{\n")
+        this.header_file.write(f"{generate_indent(4)}static constexpr manifest::DataTypes TYPE = manifest::{type_to_enum[data_type]};\n")
+        this.header_file.write(f"{generate_indent(4)}static constexpr size_t SIZE              = {type_to_size[data_type]};\n")
+        this.header_file.write(f"{generate_indent(2)}}};\n\n")
+    
+    # RoveCommToCType mapping
+    this.header_file.write(f"{generate_indent(2)}\n")
+    this.header_file.write(f"{generate_indent(2)}template<manifest::DataTypes>\n")
+    this.header_file.write(f"{generate_indent(2)}struct RoveCommToCType\n")
+    this.header_file.write(f"{generate_indent(2)}{{}};\n\n")
+    for data_type, c_type in type_to_c_type.items():
+        this.header_file.write(f"{generate_indent(2)}template<>\n")
+        this.header_file.write(f"{generate_indent(2)}struct RoveCommToCType<manifest::{type_to_enum[data_type]}>\n")
+        this.header_file.write(f"{generate_indent(2)}{{\n")
+        this.header_file.write(f"{generate_indent(4)}using c_type                 = {c_type};\n")
+        this.header_file.write(f"{generate_indent(4)}static constexpr size_t SIZE = {type_to_size[data_type]};\n")
+        this.header_file.write(f"{generate_indent(2)}}};\n\n")
 
 def sanity_check(manifest):
     """
@@ -513,7 +530,7 @@ if __name__ == "__main__":
         # Insert IP Octets
         insert_address(board)
 
-        # Insert the commands, telemetry and error messages for this particular board
+        # Insert the Commands, Telemetry and error messages for this particular board
         insert_packets(board, "Commands")
         insert_packets(board, "Telemetry")
         insert_packets(board, "Error")

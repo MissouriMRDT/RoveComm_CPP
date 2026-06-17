@@ -50,6 +50,12 @@ namespace rovecomm
     class RoveCommTCP : AutonomyThread<void>
     {
         private:
+            template<typename T>
+            struct RoveCommRegistry
+            {
+                    static inline std::unordered_map<uint16_t, std::vector<std::function<void(const rovecomm::RoveCommPacket<T>&)>>> umCallbackMap{};
+            };
+
             // Private member variables
             std::atomic_int m_nTCPSocket;
             struct sockaddr_in m_saTCPServerAddr;
@@ -58,11 +64,16 @@ namespace rovecomm
             std::shared_mutex m_muCallbackMutex;
             std::mutex m_muSocketSendMutex;
 
+#ifdef BUILD_TESTS_MODE
+        public:
+#endif
+
             // Packet processing functions
             template<typename T>
-            void ProcessPacket(const RoveCommData& stData, const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<T>&)>, uint16_t>>& vCallbacks);
-            void ReceiveTCPPacketAndCallback();
+            void ProcessPacket(std::span<const uint8_t> stData);
+            void ReceiveAndCallback();
 
+        private:
             // AutonomyThread member functions
             void ThreadedContinuousCode() override;
             void PooledLinearCode() override;
@@ -74,32 +85,24 @@ namespace rovecomm
             ~RoveCommTCP();
 
             // Initialization
-            bool InitTCPSocket(const char* cIPAddress, int nPort);
+            bool Init(const std::string& szIPAddress, int nPort = 12000);
 
             // Data transmission
             template<typename T>
-            ssize_t SendTCPPacket(const RoveCommPacket<T>& stData, const char* cClientIPAddress, int nClientPort);
+            ssize_t Send(const RoveCommPacket<T>& stData, const std::string& szClientIPAddress, int nClientPort);
 
             // Callback management
             template<typename T>
-            void AddTCPCallback(std::function<void(const RoveCommPacket<T>&)> fnCallback, const uint16_t& unCondition);
+            void On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback);
 
             template<typename T>
-            void RemoveTCPCallback(std::function<void(const RoveCommPacket<T>&)> fnCallback);
+            void Clear(const uint16_t unDataId);
 
             // Deinitialization
-            void CloseTCPSocket();
+            void Close();
 
             // Selectively make inherited method public so we can get RoveCommNode FPS.
             using AutonomyThread::GetIPS;
-
-            // NOTE: These functions are for testing purposes only and should not be used in production code!
-            template<typename T>
-            void CallProcessPacket(const RoveCommData& stData,
-                                   const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<T>&)>, uint16_t>>& vCallbacks)
-            {
-                ProcessPacket(stData, vCallbacks);
-            }
     };
 }    // namespace rovecomm
 

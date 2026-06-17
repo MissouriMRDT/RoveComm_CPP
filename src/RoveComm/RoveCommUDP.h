@@ -25,7 +25,8 @@
 #include <functional>
 #include <iostream>
 #include <shared_mutex>
-#include <unordered_set>
+#include <set>
+#include <unordered_map>
 #include <vector>
 
 /// \endcond
@@ -55,25 +56,35 @@ namespace rovecomm
             HANDLE m_stdIOCP;
 #endif
 
+            template<typename T>
+            struct RoveCommRegistry
+            {
+                    static inline std::unordered_map<uint16_t, std::vector<std::function<void(const rovecomm::RoveCommPacket<T>&)>>> umCallbackMap;
+            };
+
             // Private member variables
             std::atomic_int m_nUDPSocket;
             struct sockaddr_in m_saUDPServerAddr;
-            std::vector<SubscriberInfo> vSubscribers;
+            using SubscriberInfo = std::pair<std::string, int>;
+            std::set<SubscriberInfo> seSubscribers;
             std::shared_mutex m_muCallbackMutex;
             std::mutex m_muSocketSendMutex;
             std::mutex m_muSocketReceiveMutex;
 
+#ifdef BUILD_TESTS_MODE
+        public:
+#endif
+
             // Packet processing functions
             template<typename T>
-            void ProcessPacket(const RoveCommData& stData,
-                               const std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>>& vCallbacks,
-                               const sockaddr_in& saClientAddr);
-            void ReceiveUDPPacketAndCallback();
+            void ProcessPacket(std::span<const uint8_t> stData, const sockaddr_in& saClientAddr);
+            void ReceiveAndCallback();
 
             // Subscriber management functions
-            void AddSubscriber(const std::string& szIPAddress, const int& nPort);
-            void RemoveSubscriber(const std::string& szIPAddress, const int& nPort);
+            void AddSubscriber(const std::string& szIPAddress, const int nPort);
+            void RemoveSubscriber(const std::string& szIPAddress, const int nPort);
 
+        private:
             // AutonomyThread member functions
             void ThreadedContinuousCode() override;
             void PooledLinearCode() override;
@@ -85,33 +96,34 @@ namespace rovecomm
             ~RoveCommUDP();
 
             // Initialization
-            bool InitUDPSocket(int nPort);
+            bool Init(int nPort = 11000);
 
             // Data transmission functions
             template<typename T>
-            ssize_t SendUDPPacket(const RoveCommPacket<T>& stPacket, const char* cIPAddress, int nPort);
+            ssize_t Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress, int nPort);
+
+            // template<typename T>
+            // ssize_t Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress);
 
             // Callback management functions
-            template<typename T>
-            void AddUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback, const uint16_t& unCondition);
 
             template<typename T>
-            void RemoveUDPCallback(std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)> fnCallback);
+            void On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback);
+
+            // template<typename T>
+            // void On(const std::string& szBoardName, const std::string& szPacketName, std::function<void(const RoveCommPacket<T>&)> fnCallback);
+
+            template<typename T>
+            void Clear(const uint16_t unDataId);
+
+            // template<typename T>
+            // void Clear(const std::string& szBoardName, const std::string& szPacketName);
 
             // Deinitialization
-            void CloseUDPSocket();
+            void Close();
 
             // Selectively make inherited method public so we can get RoveCommNode FPS.
             using AutonomyThread::GetIPS;
-
-            // NOTE: These functions are for testing purposes only and should not be used in production code!
-            template<typename T>
-            void CallProcessPacket(const RoveCommData& stData,
-                                   const std::vector<std::tuple<std::function<void(const RoveCommPacket<T>&, const sockaddr_in&)>, uint32_t>>& vCallbacks,
-                                   const sockaddr_in& saClientAddr)
-            {
-                ProcessPacket(stData, vCallbacks, saClientAddr);
-            }
     };
 
 }    // namespace rovecomm

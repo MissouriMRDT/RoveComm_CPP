@@ -56,14 +56,14 @@ namespace rovecomm
      ******************************************************************************/
     RoveCommTCP::~RoveCommTCP()
     {
-        CloseTCPSocket();
+        Close();
     }
 
     /******************************************************************************
      * @brief Initializes a TCP socket and binds it to the specified IP address and
      *        port. And then starts the threaded continuous code in AutonomyThread.
      *
-     * @param cIPAddress - The IP address to bind the socket to. If set to "", the
+     * @param szIPAddress - The IP address to bind the socket to. If set to "", the
      *                     socket will be bound to all available interfaces.
      * @param nPort - The port to bind the socket to. If set to 0, the OS will
      *                automatically assign an available port.
@@ -73,7 +73,7 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    bool RoveCommTCP::InitTCPSocket(const char* cIPAddress, int nPort)
+    bool RoveCommTCP::Init(const std::string& szIPAddress, int nPort)
     {
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         WSADATA wsaData;
@@ -115,7 +115,7 @@ namespace rovecomm
         // Configure the server address
         memset(&m_saTCPServerAddr, 0, sizeof(m_saTCPServerAddr));
         m_saTCPServerAddr.sin_family      = AF_INET;
-        m_saTCPServerAddr.sin_addr.s_addr = inet_addr(cIPAddress);
+        m_saTCPServerAddr.sin_addr.s_addr = inet_addr(szIPAddress.c_str());
         m_saTCPServerAddr.sin_port        = htons(nPort);
 
         // Bind the socket to the server address
@@ -158,7 +158,7 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    ssize_t RoveCommTCP::SendTCPPacket(const RoveCommPacket<T>& stPacket, const char* cClientIPAddress, int nClientPort)
+    ssize_t RoveCommTCP::Send(const RoveCommPacket<T>& stPacket, const std::string& szClientIPAddress, int nClientPort)
     {
         // Create a TCP socket
         int nClientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -175,7 +175,7 @@ namespace rovecomm
         saClientAddr.sin_port   = htons(nClientPort);
 
         // Convert IP address to binary form
-        if (inet_pton(AF_INET, cClientIPAddress, &saClientAddr.sin_addr) <= 0)
+        if (inet_pton(AF_INET, szClientIPAddress.c_str(), &saClientAddr.sin_addr) <= 0)
         {
             perror("Invalid address/ Address not supported");
             CLOSE_SOCKET(nClientSocket);
@@ -191,7 +191,7 @@ namespace rovecomm
         }
 
         // Pack the data
-        RoveCommData stData = PackPacket(stPacket);
+        std::vector<uint8_t> vData = PackPacket(stPacket);
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
         size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
 
@@ -201,7 +201,7 @@ namespace rovecomm
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         ssize_t siBytesSent = send(nClientSocket, reinterpret_cast<char*>(&stData), siDataSize, 0);
 #else
-        ssize_t siBytesSent = send(nClientSocket, &stData, siDataSize, 0);
+        ssize_t siBytesSent = send(nClientSocket, vData.data(), siDataSize, 0);
 #endif
         // Check if any bytes were sent.
         if (siBytesSent == -1)
@@ -233,57 +233,14 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    void RoveCommTCP::AddTCPCallback(std::function<void(const RoveCommPacket<T>&)> fnCallback, const uint16_t& unCondition)
+    void RoveCommTCP::On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback)
     {
         // Acquire a write lock to protect the callback vectors.
         std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
         // Add the callback function to the vector of TCP callbacks for the specified data type
-        if constexpr (std::is_same_v<T, uint8_t>)
-        {
-            // Add the callback function to the vector of uint8_t callbacks
-            tcp::vUInt8Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, int8_t>)
-        {
-            // Add the callback function to the vector of int8_t callbacks
-            tcp::vInt8Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, uint16_t>)
-        {
-            // Add the callback function to the vector of uint16_t callbacks
-            tcp::vUInt16Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, int16_t>)
-        {
-            // Add the callback function to the vector of int16_t callbacks
-            tcp::vInt16Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, uint32_t>)
-        {
-            // Add the callback function to the vector of uint32_t callbacks
-            tcp::vUInt32Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, int32_t>)
-        {
-            // Add the callback function to the vector of int32_t callbacks
-            tcp::vInt32Callbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, float>)
-        {
-            // Add the callback function to the vector of float callbacks
-            tcp::vFloatCallbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, double>)
-        {
-            // Add the callback function to the vector of double callbacks
-            tcp::vDoubleCallbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
-        else if constexpr (std::is_same_v<T, char>)
-        {
-            // Add the callback function to the vector of char callbacks
-            tcp::vCharCallbacks.push_back(std::make_tuple(fnCallback, unCondition));
-        }
+        // Note: C++ will default initialize a new vector if no entry is found.
+        RoveCommRegistry<T>::umCallbackMap[unDataId].push_back(fnCallback);
     }
 
     /******************************************************************************
@@ -301,84 +258,13 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    void RoveCommTCP::RemoveTCPCallback(std::function<void(const RoveCommPacket<T>&)> fnCallback)
+    void RoveCommTCP::Clear(const uint16_t unDataId)
     {
         // Acquire a write lock to protect the callback vectors.
         std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
-        // Remove the callback function from the appropriate vector based on the data type T
-        if constexpr (std::is_same_v<T, uint8_t>)
-        {
-            // Remove the callback function from the vector of uint8_t callbacks
-            tcp::vUInt8Callbacks.erase(std::remove_if(tcp::vUInt8Callbacks.begin(),
-                                                      tcp::vUInt8Callbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       tcp::vUInt8Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, int8_t>)
-        {
-            // Remove the callback function from the vector of int8_t callbacks
-            tcp::vInt8Callbacks.erase(std::remove_if(tcp::vInt8Callbacks.begin(),
-                                                     tcp::vInt8Callbacks.end(),
-                                                     [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                      tcp::vInt8Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, uint16_t>)
-        {
-            // Remove the callback function from the vector of uint16_t callbacks
-            tcp::vUInt16Callbacks.erase(std::remove_if(tcp::vUInt16Callbacks.begin(),
-                                                       tcp::vUInt16Callbacks.end(),
-                                                       [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                        tcp::vUInt16Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, int16_t>)
-        {
-            // Remove the callback function from the vector of int16_t callbacks
-            tcp::vInt16Callbacks.erase(std::remove_if(tcp::vInt16Callbacks.begin(),
-                                                      tcp::vInt16Callbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       tcp::vInt16Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, uint32_t>)
-        {
-            // Remove the callback function from the vector of uint32_t callbacks
-            tcp::vUInt32Callbacks.erase(std::remove_if(tcp::vUInt32Callbacks.begin(),
-                                                       tcp::vUInt32Callbacks.end(),
-                                                       [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                        tcp::vUInt32Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, int32_t>)
-        {
-            // Remove the callback function from the vector of int32_t callbacks
-            tcp::vInt32Callbacks.erase(std::remove_if(tcp::vInt32Callbacks.begin(),
-                                                      tcp::vInt32Callbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       tcp::vInt32Callbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, float>)
-        {
-            // Remove the callback function from the vector of float callbacks
-            tcp::vFloatCallbacks.erase(std::remove_if(tcp::vFloatCallbacks.begin(),
-                                                      tcp::vFloatCallbacks.end(),
-                                                      [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                       tcp::vFloatCallbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, double>)
-        {
-            // Remove the callback function from the vector of double callbacks
-            tcp::vDoubleCallbacks.erase(std::remove_if(tcp::vDoubleCallbacks.begin(),
-                                                       tcp::vDoubleCallbacks.end(),
-                                                       [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                        tcp::vDoubleCallbacks.end());
-        }
-        else if constexpr (std::is_same_v<T, char>)
-        {
-            // Remove the callback function from the vector of char callbacks
-            tcp::vCharCallbacks.erase(std::remove_if(tcp::vCharCallbacks.begin(),
-                                                     tcp::vCharCallbacks.end(),
-                                                     [&](const auto& tuple) { return std::get<0>(tuple).target_type() == fnCallback.target_type(); }),
-                                      tcp::vCharCallbacks.end());
-        }
+        // Remove the callback function from the vector of UDP callbacks for the specified data type
+        std::erase_if(RoveCommRegistry<T>::umCallbackMap, [unDataId](const auto& stdEntry) { return stdEntry.first == unDataId; });
     }
 
     /******************************************************************************
@@ -404,24 +290,23 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    void RoveCommTCP::ProcessPacket(const RoveCommData& stData,
-                                    const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<T>&)>, uint16_t>>& vCallbacks)
+    void RoveCommTCP::ProcessPacket(std::span<const uint8_t> spData)
     {
         // Create instance variables.
-        RoveCommPacket<T> stPacket = UnpackData<T>(stData);
+        RoveCommPacket<T> stPacket = UnpackData<T>(spData);
 
         // Acquire a read lock to protect the callback vectors.
         std::shared_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
         // Invoke registered callbacks
-        for (const std::tuple<std::function<void(const rovecomm::RoveCommPacket<T>&)>, uint16_t>& tpCallbackInfo : vCallbacks)
+        for (const auto& [unDataId, vCallbacks] : RoveCommRegistry<T>::umCallbackMap)
         {
-            const std::function<void(const rovecomm::RoveCommPacket<T>&)>& fnCallback = std::get<0>(tpCallbackInfo);
-            const uint16_t& unCondition                                               = std::get<1>(tpCallbackInfo);
-
-            if (unCondition == stPacket.unDataId)
+            if (unDataId == stPacket.unDataId)
             {
-                fnCallback(stPacket);
+                for (const auto& fnCallback : vCallbacks)
+                {
+                    fnCallback(stPacket);
+                }
             }
         }
     }
@@ -441,7 +326,7 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    void RoveCommTCP::ReceiveTCPPacketAndCallback()
+    void RoveCommTCP::ReceiveAndCallback()
     {
         if (m_nCurrentTCPClientSocket == -1)
         {
@@ -453,46 +338,53 @@ namespace rovecomm
         else
         {
             // Receive data from the client
-            RoveCommData stData;
+            std::array<uint8_t, ROVECOMM_PACKET_MAX_DATA_SIZE> aData;
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
-            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, reinterpret_cast<char*>(&stData), sizeof(stData), 0);
+            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, reinterpret_cast<char*>(aData.data()), sizeof(aData), 0);
 #else
-            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, &stData, sizeof(stData), MSG_DONTWAIT);
+            ssize_t siBytesReceived = recv(m_nCurrentTCPClientSocket, aData.data(), sizeof(aData), MSG_DONTWAIT);
 #endif
 
-            // Process the received packet and invoke the appropriate callback
-            if (siBytesReceived != -1)
+            if (siBytesReceived < 0)
             {
-                // Extract the data id from the received data
-                uint16_t unDataId = (static_cast<uint16_t>(stData.unBytes[1]) << 8) | static_cast<uint16_t>(stData.unBytes[2]);
-
-                // Determine the data type from the received data
-                // manifest::DataTypes eDataType = manifest::Helpers::GetDataTypeFromId(unDataId);
-                manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(stData.unBytes[5]);
-
-                // Convert RoveCommData to appropriate RoveCommPacket based on data type
-                switch (eDataType)
+                // Still waiting for data or connection return without error.
+                if (errno != EAGAIN && errno != EWOULDBLOCK)
                 {
-                    case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(stData, tcp::vUInt8Callbacks); break;
-                    case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(stData, tcp::vInt8Callbacks); break;
-                    case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(stData, tcp::vUInt16Callbacks); break;
-                    case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(stData, tcp::vInt16Callbacks); break;
-                    case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(stData, tcp::vUInt32Callbacks); break;
-                    case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(stData, tcp::vInt32Callbacks); break;
-                    case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(stData, tcp::vFloatCallbacks); break;
-                    case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(stData, tcp::vDoubleCallbacks); break;
-                    case manifest::DataTypes::CHAR: ProcessPacket<char>(stData, tcp::vCharCallbacks); break;
+                    perror("Failed to receive data from TCP socket using recv.");
                 }
-
-                // Close the client socket
-                CLOSE_SOCKET(m_nCurrentTCPClientSocket);
-                m_nCurrentTCPClientSocket = -1;
-            }
-            // Still waiting for data or connection return without error.
-            else if (siBytesReceived == -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-            {
                 return;
             }
+            // Process the received packet and invoke the appropriate callback
+
+            if (siBytesReceived < ROVECOMM_PACKET_HEADER_SIZE)
+            {
+                throw std::runtime_error("Not enough data to parse RoveCommPacket header.");
+            }
+            // Extract the data id from the received data
+            uint16_t unDataId = (static_cast<uint16_t>(aData[1]) << 8) | static_cast<uint16_t>(aData[2]);
+
+            // Determine the data type from the received data
+            // manifest::DataTypes eDataType = manifest::Helpers::GetDataTypeFromId(unDataId);
+            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(aData[5]);
+
+            // Convert RoveCommData to appropriate RoveCommPacket based on data type
+            switch (eDataType)
+            {
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(aData); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(aData); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(aData); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(aData); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(aData); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(aData); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(aData); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(aData); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(aData); break;
+            }
+
+            // Close the client socket
+            CLOSE_SOCKET(m_nCurrentTCPClientSocket);
+            m_nCurrentTCPClientSocket = -1;
+            // TODO: Keep connections open after recv()
         }
     }
 
@@ -509,7 +401,7 @@ namespace rovecomm
      ******************************************************************************/
     void RoveCommTCP::ThreadedContinuousCode()
     {
-        ReceiveTCPPacketAndCallback();
+        ReceiveAndCallback();
     }
 
     /******************************************************************************
@@ -530,7 +422,7 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    void RoveCommTCP::CloseTCPSocket()
+    void RoveCommTCP::Close()
     {
         // Check if the TCP socket is open
         if (m_nTCPSocket != -1)
@@ -549,41 +441,39 @@ namespace rovecomm
     }
 
     // Explicitly define template function types for TCP class
-    template ssize_t RoveCommTCP::SendTCPPacket<uint8_t>(const RoveCommPacket<uint8_t>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<uint8_t>(std::function<void(const RoveCommPacket<uint8_t>&)>);
-    template void RoveCommTCP::ProcessPacket<uint8_t>(const RoveCommData& stData,
-                                                      const std::vector<std::tuple<std::function<void(const rovecomm::RoveCommPacket<uint8_t>&)>, uint16_t>>& vCallbacks);
+    template ssize_t RoveCommTCP::Send<uint8_t>(const RoveCommPacket<uint8_t>&, const std::string&, int);
+    template void RoveCommTCP::On<uint8_t>(const uint16_t, std::function<void(const RoveCommPacket<uint8_t>&)>);
+    template void RoveCommTCP::Clear<uint8_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<int8_t>(const RoveCommPacket<int8_t>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<int8_t>(std::function<void(const RoveCommPacket<int8_t>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<int8_t>(std::function<void(const RoveCommPacket<int8_t>&)>);
+    template ssize_t RoveCommTCP::Send<int8_t>(const RoveCommPacket<int8_t>&, const std::string&, int);
+    template void RoveCommTCP::On<int8_t>(const uint16_t, std::function<void(const RoveCommPacket<int8_t>&)>);
+    template void RoveCommTCP::Clear<int8_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<uint16_t>(const RoveCommPacket<uint16_t>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<uint16_t>(std::function<void(const RoveCommPacket<uint16_t>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<uint16_t>(std::function<void(const RoveCommPacket<uint16_t>&)>);
+    template ssize_t RoveCommTCP::Send<uint16_t>(const RoveCommPacket<uint16_t>&, const std::string&, int);
+    template void RoveCommTCP::On<uint16_t>(const uint16_t, std::function<void(const RoveCommPacket<uint16_t>&)>);
+    template void RoveCommTCP::Clear<uint16_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<int16_t>(const RoveCommPacket<int16_t>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<int16_t>(std::function<void(const RoveCommPacket<int16_t>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<int16_t>(std::function<void(const RoveCommPacket<int16_t>&)>);
+    template ssize_t RoveCommTCP::Send<int16_t>(const RoveCommPacket<int16_t>&, const std::string&, int);
+    template void RoveCommTCP::On<int16_t>(const uint16_t, std::function<void(const RoveCommPacket<int16_t>&)>);
+    template void RoveCommTCP::Clear<int16_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<uint32_t>(const RoveCommPacket<uint32_t>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<uint32_t>(std::function<void(const RoveCommPacket<uint32_t>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<uint32_t>(std::function<void(const RoveCommPacket<uint32_t>&)>);
+    template ssize_t RoveCommTCP::Send<uint32_t>(const RoveCommPacket<uint32_t>&, const std::string&, int);
+    template void RoveCommTCP::On<uint32_t>(const uint16_t, std::function<void(const RoveCommPacket<uint32_t>&)>);
+    template void RoveCommTCP::Clear<uint32_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<int32_t>(const RoveCommPacket<int32_t>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<int32_t>(std::function<void(const RoveCommPacket<int32_t>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<int32_t>(std::function<void(const RoveCommPacket<int32_t>&)>);
+    template ssize_t RoveCommTCP::Send<int32_t>(const RoveCommPacket<int32_t>&, const std::string&, int);
+    template void RoveCommTCP::On<int32_t>(const uint16_t, std::function<void(const RoveCommPacket<int32_t>&)>);
+    template void RoveCommTCP::Clear<int32_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<float>(const RoveCommPacket<float>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<float>(std::function<void(const RoveCommPacket<float>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<float>(std::function<void(const RoveCommPacket<float>&)>);
+    template ssize_t RoveCommTCP::Send<float>(const RoveCommPacket<float>&, const std::string&, int);
+    template void RoveCommTCP::On<float>(const uint16_t, std::function<void(const RoveCommPacket<float>&)>);
+    template void RoveCommTCP::Clear<float>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<double>(const RoveCommPacket<double>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<double>(std::function<void(const RoveCommPacket<double>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<double>(std::function<void(const RoveCommPacket<double>&)>);
+    template ssize_t RoveCommTCP::Send<double>(const RoveCommPacket<double>&, const std::string&, int);
+    template void RoveCommTCP::On<double>(const uint16_t, std::function<void(const RoveCommPacket<double>&)>);
+    template void RoveCommTCP::Clear<double>(const uint16_t);
 
-    template ssize_t RoveCommTCP::SendTCPPacket<char>(const RoveCommPacket<char>&, const char*, int);
-    template void RoveCommTCP::AddTCPCallback<char>(std::function<void(const RoveCommPacket<char>&)>, const uint16_t&);
-    template void RoveCommTCP::RemoveTCPCallback<char>(std::function<void(const RoveCommPacket<char>&)>);
+    template ssize_t RoveCommTCP::Send<char>(const RoveCommPacket<char>&, const std::string&, int);
+    template void RoveCommTCP::On<char>(const uint16_t, std::function<void(const RoveCommPacket<char>&)>);
+    template void RoveCommTCP::Clear<char>(const uint16_t);
 }    // namespace rovecomm

@@ -44,7 +44,7 @@ TEST(RoveCommUDP, InitSocket)
             for (int i = 0; i < 3; ++i)
             {
                 // Initialize the UDP node
-                if (RoveCommUDPNode.InitUDPSocket(11000))
+                if (RoveCommUDPNode.Init(11000))
                 {
                     bInitSuccess = true;
                     break;
@@ -59,7 +59,7 @@ TEST(RoveCommUDP, InitSocket)
             EXPECT_TRUE(bInitSuccess);
 
             // Close the socket
-            RoveCommUDPNode.CloseUDPSocket();
+            RoveCommUDPNode.Close();
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)
@@ -89,7 +89,7 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             for (int nI = 0; nI < 3; ++nI)
             {
                 // Initialize the UDP node
-                if (RoveCommUDPNode.InitUDPSocket(11003))
+                if (RoveCommUDPNode.Init(11003))
                 {
                     bInitSuccess = true;
                     break;
@@ -137,13 +137,13 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<uint8_t>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<uint8_t>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 7) << "Failed to send small uint8_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<uint8_t>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<uint8_t>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 16) << "Failed to send medium uint8_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<uint8_t>(stLargePacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<uint8_t>(stLargePacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 106) << "Failed to send large uint8_t packet";
             }
 
@@ -177,13 +177,13 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<uint16_t>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<uint16_t>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 8) << "Failed to send small uint16_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<uint16_t>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<uint16_t>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 26) << "Failed to send medium uint16_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<uint16_t>(stLargePacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<uint16_t>(stLargePacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 106) << "Failed to send large uint16_t packet";
             }
 
@@ -207,10 +207,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<uint32_t>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<uint32_t>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 10) << "Failed to send small uint32_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<uint32_t>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<uint32_t>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 46) << "Failed to send medium uint32_t packet";
             }
 
@@ -234,10 +234,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<int8_t>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<int8_t>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 7) << "Failed to send small int8_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<int8_t>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<int8_t>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 16) << "Failed to send medium int8_t packet";
             }
 
@@ -261,10 +261,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<int16_t>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<int16_t>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 8) << "Failed to send small int16_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<int16_t>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<int16_t>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 26) << "Failed to send medium int16_t packet";
             }
 
@@ -288,10 +288,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<int32_t>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<int32_t>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 10) << "Failed to send small int32_t packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<int32_t>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<int32_t>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 46) << "Failed to send medium int32_t packet";
             }
 
@@ -315,10 +315,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<float>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<float>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 10) << "Failed to send small float packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<float>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<float>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 46) << "Failed to send medium float packet";
             }
 
@@ -342,10 +342,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<double>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<double>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 14) << "Failed to send small double packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<double>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<double>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 86) << "Failed to send medium double packet";
             }
 
@@ -381,18 +381,18 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.SendUDPPacket<char>(stSmallPacket, szIpAddr.c_str(), nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.Send<char>(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 7) << "Failed to send small char packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<char>(stMediumPacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<char>(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, szMessage.size() + 6) << "Failed to send medium char packet";
 
-                siBytesSent = RoveCommUDPNode.SendUDPPacket<char>(stLargePacket, szIpAddr.c_str(), nPort);
+                siBytesSent = RoveCommUDPNode.Send<char>(stLargePacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, szLoremIpsum.size() + 6) << "Failed to send large char packet";
             }
 
             // Close the socket
-            RoveCommUDPNode.CloseUDPSocket();
+            RoveCommUDPNode.Close();
         },
         3,         // 3 total attempts
         60000);    // 60 second timeout (60,000 ms) - increased for multiple packet tests
@@ -420,7 +420,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
             // Give the node three chances to initialize the socket
             for (int nI = 0; nI < 3; ++nI)
             {
-                if (RoveCommUDPNode.InitUDPSocket(11004))
+                if (RoveCommUDPNode.Init(11004))
                 {
                     bInitSuccess = true;
                     break;
@@ -460,20 +460,19 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 std::vector<uint8_t> vExpectedData = {1, 2, 3, 255};
 
                 // Add callback
-                RoveCommUDPNode.AddUDPCallback<uint8_t>(
-                    [&](const rovecomm::RoveCommPacket<uint8_t>& stPacket, const sockaddr_in& saAddress)
-                    {
-                        bUint8CallbackInvoked = true;
-                        EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                        EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
-                        EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::UINT8_T);
+                RoveCommUDPNode.On<uint8_t>(unTestDataId,
+                                            [&](const rovecomm::RoveCommPacket<uint8_t>& stPacket)
+                                            {
+                                                bUint8CallbackInvoked = true;
+                                                EXPECT_EQ(stPacket.unDataId, unTestDataId);
+                                                EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                                EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::UINT8_T);
 
-                        for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
-                        {
-                            EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
-                        }
-                    },
-                    unTestDataId);
+                                                for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
+                                                {
+                                                    EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
+                                                }
+                                            });
 
                 // Create packet and test callback
                 rovecomm::RoveCommPacket<uint8_t> stPacket;
@@ -483,10 +482,10 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 stPacket.vData       = vExpectedData;
 
                 // Pack the packet
-                rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
+                std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
 
                 // Process the packet
-                RoveCommUDPNode.CallProcessPacket<uint8_t>(stData, rovecomm::udp::vUInt8Callbacks, saUDPClientAddr);
+                RoveCommUDPNode.ProcessPacket<uint8_t>(vData, saUDPClientAddr);
             }
 
             // ======================== UINT16_T CALLBACK ========================
@@ -495,20 +494,19 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 std::vector<uint16_t> vExpectedData = {1000, 2000, 3000, 65535};
 
                 // Add callback
-                RoveCommUDPNode.AddUDPCallback<uint16_t>(
-                    [&](const rovecomm::RoveCommPacket<uint16_t>& stPacket, const sockaddr_in& saAddress)
-                    {
-                        bUint16CallbackInvoked = true;
-                        EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                        EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
-                        EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::UINT16_T);
+                RoveCommUDPNode.On<uint16_t>(unTestDataId,
+                                             [&](const rovecomm::RoveCommPacket<uint16_t>& stPacket)
+                                             {
+                                                 bUint16CallbackInvoked = true;
+                                                 EXPECT_EQ(stPacket.unDataId, unTestDataId);
+                                                 EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                                 EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::UINT16_T);
 
-                        for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
-                        {
-                            EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
-                        }
-                    },
-                    unTestDataId);
+                                                 for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
+                                                 {
+                                                     EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
+                                                 }
+                                             });
 
                 // Create packet and test callback
                 rovecomm::RoveCommPacket<uint16_t> stPacket;
@@ -518,10 +516,10 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 stPacket.vData       = vExpectedData;
 
                 // Pack the packet
-                rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
+                std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
 
                 // Process the packet
-                RoveCommUDPNode.CallProcessPacket<uint16_t>(stData, rovecomm::udp::vUInt16Callbacks, saUDPClientAddr);
+                RoveCommUDPNode.ProcessPacket<uint16_t>(vData, saUDPClientAddr);
             }
 
             // ======================== INT32_T CALLBACK ========================
@@ -530,20 +528,19 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 std::vector<int32_t> vExpectedData = {-100000, -1, 0, 1, 100000};
 
                 // Add callback
-                RoveCommUDPNode.AddUDPCallback<int32_t>(
-                    [&](const rovecomm::RoveCommPacket<int32_t>& stPacket, const sockaddr_in& saAddress)
-                    {
-                        bInt32CallbackInvoked = true;
-                        EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                        EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
-                        EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::INT32_T);
+                RoveCommUDPNode.On<int32_t>(unTestDataId,
+                                            [&](const rovecomm::RoveCommPacket<int32_t>& stPacket)
+                                            {
+                                                bInt32CallbackInvoked = true;
+                                                EXPECT_EQ(stPacket.unDataId, unTestDataId);
+                                                EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                                EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::INT32_T);
 
-                        for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
-                        {
-                            EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
-                        }
-                    },
-                    unTestDataId);
+                                                for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
+                                                {
+                                                    EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
+                                                }
+                                            });
 
                 // Create packet and test callback
                 rovecomm::RoveCommPacket<int32_t> stPacket;
@@ -553,10 +550,10 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 stPacket.vData       = vExpectedData;
 
                 // Pack the packet
-                rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
+                std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
 
                 // Process the packet
-                RoveCommUDPNode.CallProcessPacket<int32_t>(stData, rovecomm::udp::vInt32Callbacks, saUDPClientAddr);
+                RoveCommUDPNode.ProcessPacket<int32_t>(vData, saUDPClientAddr);
             }
 
             // ======================== FLOAT CALLBACK ========================
@@ -565,20 +562,19 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 std::vector<float> vExpectedData = {-3.14f, 0.0f, 2.718f, 1000.5f};
 
                 // Add callback
-                RoveCommUDPNode.AddUDPCallback<float>(
-                    [&](const rovecomm::RoveCommPacket<float>& stPacket, const sockaddr_in& saAddress)
-                    {
-                        bFloatCallbackInvoked = true;
-                        EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                        EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
-                        EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::FLOAT_T);
+                RoveCommUDPNode.On<float>(unTestDataId,
+                                          [&](const rovecomm::RoveCommPacket<float>& stPacket)
+                                          {
+                                              bFloatCallbackInvoked = true;
+                                              EXPECT_EQ(stPacket.unDataId, unTestDataId);
+                                              EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                              EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::FLOAT_T);
 
-                        for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
-                        {
-                            EXPECT_FLOAT_EQ(stPacket.vData[siI], vExpectedData[siI]);
-                        }
-                    },
-                    unTestDataId);
+                                              for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
+                                              {
+                                                  EXPECT_FLOAT_EQ(stPacket.vData[siI], vExpectedData[siI]);
+                                              }
+                                          });
 
                 // Create packet and test callback
                 rovecomm::RoveCommPacket<float> stPacket;
@@ -588,10 +584,10 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 stPacket.vData       = vExpectedData;
 
                 // Pack the packet
-                rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
+                std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
 
                 // Process the packet
-                RoveCommUDPNode.CallProcessPacket<float>(stData, rovecomm::udp::vFloatCallbacks, saUDPClientAddr);
+                RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
             }
 
             // ======================== CHAR CALLBACK ========================
@@ -601,20 +597,19 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 std::vector<char> vExpectedData(szMessage.begin(), szMessage.end());
 
                 // Add callback
-                RoveCommUDPNode.AddUDPCallback<char>(
-                    [&](const rovecomm::RoveCommPacket<char>& stPacket, const sockaddr_in& saAddress)
-                    {
-                        bCharCallbackInvoked = true;
-                        EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                        EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
-                        EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::CHAR);
+                RoveCommUDPNode.On<char>(unTestDataId,
+                                         [&](const rovecomm::RoveCommPacket<char>& stPacket)
+                                         {
+                                             bCharCallbackInvoked = true;
+                                             EXPECT_EQ(stPacket.unDataId, unTestDataId);
+                                             EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                             EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::CHAR);
 
-                        for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
-                        {
-                            EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
-                        }
-                    },
-                    unTestDataId);
+                                             for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
+                                             {
+                                                 EXPECT_EQ(stPacket.vData[siI], vExpectedData[siI]);
+                                             }
+                                         });
 
                 // Create packet and test callback
                 rovecomm::RoveCommPacket<char> stPacket;
@@ -624,10 +619,10 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 stPacket.vData       = vExpectedData;
 
                 // Pack the packet
-                rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
+                std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
 
                 // Process the packet
-                RoveCommUDPNode.CallProcessPacket<char>(stData, rovecomm::udp::vCharCallbacks, saUDPClientAddr);
+                RoveCommUDPNode.ProcessPacket<char>(vData, saUDPClientAddr);
             }
 
             // Check if all the callbacks were invoked
@@ -638,7 +633,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
             EXPECT_TRUE(bCharCallbackInvoked) << "char callback was not invoked";
 
             // Close the socket
-            RoveCommUDPNode.CloseUDPSocket();
+            RoveCommUDPNode.Close();
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)

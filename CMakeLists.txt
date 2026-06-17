@@ -34,7 +34,7 @@ endif()
 option(BUILD_WIN "Windows Cross-Compile Mode" OFF)
 
 ## Enable or Disable Tests Mode
-option(BUILD_TESTS_MODE "Enable Tests Mode" OFF)
+option(BUILD_TESTS_MODE "Enable Tests Mode" ON)
 
 ####################################################################################################################
 ##                                         Configuration Based on Options                                         ##
@@ -62,6 +62,7 @@ endif()
 ## Build Unit and Integration Tests
 if (BUILD_TESTS_MODE)
     enable_testing()
+    add_definitions(-DBUILD_TESTS_MODE)
 endif()
 
 message("-- RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")
