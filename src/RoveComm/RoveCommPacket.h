@@ -77,29 +77,8 @@ namespace rovecomm
             uint16_t unDataId{};
             uint16_t unDataCount{};
             manifest::DataTypes eDataType{};
-            std::vector<T> vData{};
+            std::vector<T> vData;
     };
-
-    template<manifest::ManifestEntry entry>
-    RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> CreatePacket()
-    {
-        RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> ret{.unDataId    = entry.DATA_ID,
-                                                                                                 .unDataCount = entry.DATA_COUNT,
-                                                                                                 .eDataType   = entry.DATA_TYPE};
-        ret.vData.resize(ret.unDataCount);
-        return ret;
-    }
-
-    template<manifest::ManifestEntry entry, typename... Args>
-    RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> CreatePacket(Args... args)
-    {
-        static_assert(sizeof...(Args) == entry.DATA_COUNT, "Check your data count.");
-        RoveCommPacket<typename manifest::Helpers::RoveCommToCType<entry.DATA_TYPE>::c_type> ret{.unDataId    = entry.DATA_ID,
-                                                                                                 .unDataCount = entry.DATA_COUNT,
-                                                                                                 .eDataType   = entry.DATA_TYPE,
-                                                                                                 .vData       = {args...}};
-        return ret;
-    }
 
     // RoveCommPacket and RoveCommData packing and unpacking functions
     template<typename T>
@@ -107,6 +86,48 @@ namespace rovecomm
 
     template<typename T>
     RoveCommPacket<T> UnpackData(std::span<const uint8_t> stData);
+
+    // Packet creation utilities
+
+    template<manifest::ManifestEntry Entry>
+    using EntryType = typename manifest::Helpers::RoveCommToCType<Entry.DATA_TYPE>::c_type;
+
+    template<manifest::ManifestEntry Entry>
+    RoveCommPacket<EntryType<Entry>> CreatePacket()
+    {
+        RoveCommPacket<EntryType<Entry>> ret{.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE};
+        ret.vData.resize(ret.unDataCount);
+        return ret;
+    }
+
+    template<manifest::ManifestEntry Entry, manifest::RoveCommType... Args>
+    RoveCommPacket<EntryType<Entry>> CreatePacket(Args... args)
+    {
+        // Assume that the user expects the data count to be exactly correct since they are entering the arguments directly.
+        // The runtime functions will extend or truncate the data as needed.
+        static_assert(sizeof...(Args) == Entry.DATA_COUNT, "The number of arguments provided does not match the data count specified in the manifest entry.");
+        return {.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE, .vData = {args...}};
+    }
+
+    template<manifest::ManifestEntry Entry>
+    RoveCommPacket<EntryType<Entry>> CreatePacket(std::span<const EntryType<Entry>> spData)
+    {
+        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId    = Entry.DATA_ID,
+                                                     .unDataCount = Entry.DATA_COUNT,
+                                                     .eDataType   = Entry.DATA_TYPE,
+                                                     .vData       = {spData.begin(), spData.end()}};
+        stPacket.vData.resize(Entry.DATA_COUNT);
+        return stPacket;
+    }
+
+    template<manifest::ManifestEntry Entry>
+    RoveCommPacket<EntryType<Entry>> CreatePacket(std::initializer_list<EntryType<Entry>> ilData)
+    {
+        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE, .vData = ilData};
+        stPacket.vData.resize(Entry.DATA_COUNT);
+        return stPacket;
+    }
+
 }    // namespace rovecomm
 
 #endif    // ROVECOMM_PACKET_H

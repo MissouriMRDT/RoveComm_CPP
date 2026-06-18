@@ -364,7 +364,6 @@ namespace rovecomm
             uint16_t unDataId = (static_cast<uint16_t>(aData[1]) << 8) | static_cast<uint16_t>(aData[2]);
 
             // Determine the data type from the received data
-            // manifest::DataTypes eDataType = manifest::Helpers::GetDataTypeFromId(unDataId);
             manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(aData[5]);
 
             // Convert RoveCommData to appropriate RoveCommPacket based on data type

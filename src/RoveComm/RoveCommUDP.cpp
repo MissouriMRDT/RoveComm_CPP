@@ -465,8 +465,8 @@ namespace rovecomm
         for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
         {
             ZeroMemory(&rcContexts[siIter].overlapped, sizeof(OVERLAPPED));
-            rcContexts[siIter].wsabuf.buf = reinterpret_cast<char*>(rcContexts[siIter].data.data());
-            rcContexts[siIter].wsabuf.len = sizeof(rcContexts[siIter].data);
+            rcContexts[siIter].wsabuf.buf = rcContexts[siIter].data.data();
+            rcContexts[siIter].wsabuf.len = rcContexts[siIter].data.size();
             int nAddrLen                  = sizeof(rcContexts[siIter].addr);
             DWORD stdFlags                = 0;
             int nRet                      = WSARecvFrom(m_nUDPSocket,
@@ -522,24 +522,24 @@ namespace rovecomm
             RecvContext* pContext = CONTAINING_RECORD(stdLPOverlapped, RecvContext, overlapped);
 
             // Process the received data.
-            std::array<uint8_t, ROVECOMM_PACKET_MAX_DATA_SIZE>& spData = pContext->data;
-            sockaddr_in& saClientAddr                                  = pContext->addr;
+            std::array<uint8_t, ROVECOMM_PACKET_MAX_DATA_SIZE>& aData = pContext->data;
+            sockaddr_in& saClientAddr                                 = pContext->addr;
 
             // Extract data id and data type from the packet.
-            uint16_t unDataId             = (static_cast<uint16_t>(spData.unBytes[1]) << 8) | static_cast<uint16_t>(spData.unBytes[2]);
-            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(spData.unBytes[5]);
+            uint16_t unDataId             = (static_cast<uint16_t>(aData[1]) << 8) | static_cast<uint16_t>(aData[2]);
+            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(aData[5]);
 
             switch (eDataType)
             {
-                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(spData, udp::vUInt8Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(spData, udp::vInt8Callbacks, saClientAddr); break;
-                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(spData, udp::vUInt16Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(spData, udp::vInt16Callbacks, saClientAddr); break;
-                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(spData, udp::vUInt32Callbacks, saClientAddr); break;
-                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(spData, udp::vInt32Callbacks, saClientAddr); break;
-                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(spData, udp::vFloatCallbacks, saClientAddr); break;
-                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(spData, udp::vDoubleCallbacks, saClientAddr); break;
-                case manifest::DataTypes::CHAR: ProcessPacket<char>(spData, udp::vCharCallbacks, saClientAddr); break;
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(aData, saClientAddr); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(aData, saClientAddr); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(aData, saClientAddr); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(aData, saClientAddr); break;
             }
 
             // Re-post the asynchronous receive for this context.
@@ -572,7 +572,7 @@ namespace rovecomm
         for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
         {
             aIOVecs[siIter].iov_base            = aDataBatch[siIter].data();
-            aIOVecs[siIter].iov_len             = sizeof(*aDataBatch);
+            aIOVecs[siIter].iov_len             = (*aDataBatch).size();
             aMsgVec[siIter].msg_hdr.msg_iov     = &aIOVecs[siIter];
             aMsgVec[siIter].msg_hdr.msg_iovlen  = 1;
             aMsgVec[siIter].msg_hdr.msg_name    = &aAddrs[siIter];

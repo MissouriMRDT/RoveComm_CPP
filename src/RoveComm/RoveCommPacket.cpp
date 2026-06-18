@@ -46,7 +46,7 @@ namespace rovecomm
         size_t siPacketSize = ROVECOMM_PACKET_HEADER_SIZE + stPacket.unDataCount * manifest::Helpers::DataTypeSize(stPacket.eDataType);
         if (siPacketSize > ROVECOMM_PACKET_MAX_DATA_SIZE)
         {
-            throw std::runtime_error("RoveComm Packet Exceeds Maximum Packet Size!");
+            throw std::runtime_error("RoveComm Packet Exceeds Maximum Packet Size.");
         }
         std::vector<uint8_t> vData;
         vData.reserve(siPacketSize);

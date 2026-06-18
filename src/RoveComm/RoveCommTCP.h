@@ -15,7 +15,6 @@
 
 #include "ExternalIncludes.h"
 #include "RoveCommConsts.h"
-#include "RoveCommGlobals.h"
 #include "RoveCommManifest.h"
 #include "RoveCommPacket.h"
 
@@ -85,18 +84,46 @@ namespace rovecomm
             ~RoveCommTCP();
 
             // Initialization
-            bool Init(const std::string& szIPAddress, int nPort = 12000);
+            bool Init(const std::string& szIPAddress = "0.0.0.0", int nPort = manifest::General::ETHERNET_TCP_PORT);
 
             // Data transmission
             template<typename T>
             ssize_t Send(const RoveCommPacket<T>& stData, const std::string& szClientIPAddress, int nClientPort);
 
+            template<typename manifest::ManifestEntry Entry>
+            ssize_t Send(std::span<const EntryType<Entry>> spData,
+                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
+                         int nPort                      = manifest::General::ETHERNET_TCP_PORT)
+            {
+                return Send(rovecomm::CreatePacket<Entry>(spData), szIPAddress, nPort);
+            }
+
+            template<typename manifest::ManifestEntry Entry>
+            ssize_t Send(std::initializer_list<EntryType<Entry>> ilData,
+                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
+                         int nPort                      = manifest::General::ETHERNET_TCP_PORT)
+            {
+                return Send(rovecomm::CreatePacket<Entry>(ilData), szIPAddress, nPort);
+            }
+
             // Callback management
             template<typename T>
             void On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback);
 
+            template<typename manifest::ManifestEntry Entry>
+            void On(std::function<void(const RoveCommPacket<EntryType<Entry>>&)> fnCallback)
+            {
+                On(Entry.DATA_ID, fnCallback);
+            }
+
             template<typename T>
             void Clear(const uint16_t unDataId);
+
+            template<typename manifest::ManifestEntry Entry>
+            void Clear()
+            {
+                Clear<typename manifest::Helpers::RoveCommToCType<Entry.DATA_TYPE>::c_type>(Entry.DATA_ID);
+            }
 
             // Deinitialization
             void Close();

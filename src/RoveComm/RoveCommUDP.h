@@ -14,7 +14,6 @@
 
 #include "ExternalIncludes.h"
 #include "RoveCommConsts.h"
-#include "RoveCommGlobals.h"
 #include "RoveCommManifest.h"
 #include "RoveCommPacket.h"
 
@@ -96,28 +95,47 @@ namespace rovecomm
             ~RoveCommUDP();
 
             // Initialization
-            bool Init(int nPort = 11000);
+            bool Init(int nPort = manifest::General::ETHERNET_UDP_PORT);
 
             // Data transmission functions
             template<typename T>
-            ssize_t Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress, int nPort);
+            ssize_t Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress = "0.0.0.0", int nPort = manifest::General::ETHERNET_UDP_PORT);
 
-            // template<typename T>
-            // ssize_t Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress);
+            template<typename manifest::ManifestEntry Entry>
+            ssize_t Send(std::span<const EntryType<Entry>> spData,
+                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
+                         int nPort                      = manifest::General::ETHERNET_UDP_PORT)
+            {
+                return Send(rovecomm::CreatePacket<Entry>(spData), szIPAddress, nPort);
+            }
+
+            template<typename manifest::ManifestEntry Entry>
+            ssize_t Send(std::initializer_list<EntryType<Entry>> ilData,
+                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
+                         int nPort                      = manifest::General::ETHERNET_UDP_PORT)
+            {
+                return Send(rovecomm::CreatePacket<Entry>(ilData), szIPAddress, nPort);
+            }
 
             // Callback management functions
 
             template<typename T>
             void On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback);
 
-            // template<typename T>
-            // void On(const std::string& szBoardName, const std::string& szPacketName, std::function<void(const RoveCommPacket<T>&)> fnCallback);
+            template<typename manifest::ManifestEntry Entry>
+            void On(std::function<void(const RoveCommPacket<EntryType<Entry>>&)> fnCallback)
+            {
+                On(Entry.DATA_ID, fnCallback);
+            }
 
             template<typename T>
             void Clear(const uint16_t unDataId);
 
-            // template<typename T>
-            // void Clear(const std::string& szBoardName, const std::string& szPacketName);
+            template<typename manifest::ManifestEntry Entry>
+            void Clear()
+            {
+                Clear<EntryType<Entry>>(Entry.DATA_ID);
+            }
 
             // Deinitialization
             void Close();
