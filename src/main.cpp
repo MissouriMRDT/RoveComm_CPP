@@ -103,15 +103,21 @@ int main()
 
     // Add the callback functions for UINT8_T data type to the UDP and TCP nodes
     pRoveCommUDP_Node.On<STARTAUTONOMY>(fnUDPCallback);
-    pRoveCommUDP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "UDP Callback 2\n"; });
+    // pRoveCommUDP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "UDP Callback 2\n"; });
     pRoveCommTCP_Node.On<STARTAUTONOMY>(fnTCPCallback);
-    pRoveCommTCP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "TCP Callback 2\n"; });
+    // pRoveCommTCP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "TCP Callback 2\n"; });
 
     // pRoveCommUDP_Node.Send<STARTAUTONOMY>({200}); // This would send to 192.168.3.100 by default
 
     // Send the packet to the localhost
     pRoveCommUDP_Node.Send<STARTAUTONOMY>({200}, "127.0.0.1", 11000);
     pRoveCommTCP_Node.Send<STARTAUTONOMY>({200}, "127.0.0.1", 12000);
+
+    for (int i = 0; i < 10; i++)
+        pRoveCommUDP_Node.Send<STARTAUTONOMY>({201});
+
+    for (int i = 0; i < 10; i++)
+        pRoveCommUDP_Node.Send(rovecomm::CreatePacket<STARTAUTONOMY>(202));
 
     // Wait for packets to be processed.
     std::this_thread::sleep_for(std::chrono::milliseconds(500));

@@ -100,21 +100,21 @@ TEST(RoveCommUtils, ManifestHelpers)
     // Find a board that has commands, telemetry, and errors for testing
     auto itValidEntry = std::find_if(manifest::BOARDS.begin(),
                                      manifest::BOARDS.end(),
-                                     [](const auto& pair) { return !pair.second.COMMANDS.empty() && !pair.second.TELEMETRY.empty() && !pair.second.ERRORS.empty(); });
-
+                                     [](const auto& stBoard) { return !stBoard.COMMANDS.empty() && !stBoard.TELEMETRY.empty() && !stBoard.ERRORS.empty(); });
     ASSERT_NE(itValidEntry, manifest::BOARDS.end()) << "No valid board entry found in manifest for testing.";
 
-    const auto& [szName, stBoard]                      = *itValidEntry;
+    const auto& stBoard                                = *itValidEntry;
     const auto& stCommand                              = stBoard.COMMANDS.front();
     const auto& stTelemetry                            = stBoard.TELEMETRY.front();
     const auto& stError                                = stBoard.ERRORS.front();
 
     const std::optional<manifest::BoardEntry> stResult = manifest::Helpers::FindBoardById(stCommand.DATA_ID);
     EXPECT_NE(stResult, std::nullopt);
-    EXPECT_STREQ(stResult->ADDRESS.IP_STR().c_str(), stBoard.ADDRESS.IP_STR().c_str());
+    EXPECT_EQ(stResult->ADDRESS.IP_STR(), stBoard.ADDRESS.IP_STR());
 
-    const std::optional<manifest::ManifestEntry> stEntryResult = manifest::Helpers::FindEntryById(stCommand.DATA_ID + 1000);
-    EXPECT_EQ(stEntryResult, std::nullopt);
+    const uint16_t unInvalidBoardId                         = static_cast<int>(manifest::BOARDS.back().BOARD_ID) + 1;
+    const std::optional<manifest::BoardEntry> stBoardResult = manifest::Helpers::FindBoardById(unInvalidBoardId);
+    EXPECT_EQ(stBoardResult, std::nullopt);
 
     const std::optional<manifest::ManifestEntry> stCommandResult = manifest::Helpers::FindEntryById(stCommand.DATA_ID);
     EXPECT_NE(stCommandResult, std::nullopt);
@@ -137,4 +137,14 @@ TEST(RoveCommUtils, ManifestHelpers)
     uint16_t unInvalidDataId                                     = stBoard.COMMANDS.back().DATA_ID + 1;
     const std::optional<manifest::ManifestEntry> stInvalidResult = manifest::Helpers::FindEntryById(unInvalidDataId);
     EXPECT_EQ(stInvalidResult, std::nullopt);
+
+    // Test conversion between AddressEntry and string
+    const manifest::AddressEntry stAddressFromString{"192.168.1.100"};
+    const manifest::AddressEntry stAddress{192, 168, 1, 100};
+    EXPECT_EQ(stAddressFromString.FIRST_OCTET, 192);
+    EXPECT_EQ(stAddressFromString.SECOND_OCTET, 168);
+    EXPECT_EQ(stAddressFromString.THIRD_OCTET, 1);
+    EXPECT_EQ(stAddressFromString.FOURTH_OCTET, 100);
+    EXPECT_EQ(stAddressFromString.IP_STR(), "192.168.1.100");
+    EXPECT_EQ(stAddressFromString, stAddress);
 }

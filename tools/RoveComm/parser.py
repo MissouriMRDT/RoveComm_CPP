@@ -153,6 +153,7 @@ def insert_includes():
     out += "#ifndef MANIFEST_H\n"
     out += "#define MANIFEST_H\n"
     out += "\n"
+    out += "#include <charconv>\n"
     out += "#include <map>\n"
     out += "#include <stdint.h>\n"
     out += "#include <string>\n"
@@ -219,16 +220,21 @@ def insert_address_struct():
     out += generate_indent(3) + "constexpr AddressEntry(int first, int second, int third, int fourth) noexcept :\n"
     out += generate_indent(4) + "FIRST_OCTET(first), SECOND_OCTET(second), THIRD_OCTET(third), FOURTH_OCTET(fourth)\n"
     out += generate_indent(3) + "{}\n\n"
-    out += generate_indent(3) + "AddressEntry(std::string_view ip)\n"
+    out += generate_indent(3) + "template<std::convertible_to<std::string_view> T>\n"
+    out += generate_indent(3) + "AddressEntry(T tIP)\n"
     out += generate_indent(3) + "{\n"
-    out += generate_indent(4) + "size_t pos1  = ip.find('.');\n"
-    out += generate_indent(4) + "size_t pos2  = ip.find('.', pos1 + 1);\n"
-    out += generate_indent(4) + "size_t pos3  = ip.find('.', pos2 + 1);\n"
-    out += generate_indent(4) + "FIRST_OCTET  = std::stoi(std::string(ip.substr(0, pos1)));\n"
-    out += generate_indent(4) + "SECOND_OCTET = std::stoi(std::string(ip.substr(pos1 + 1, pos2 - pos1 - 1)));\n"
-    out += generate_indent(4) + "THIRD_OCTET  = std::stoi(std::string(ip.substr(pos2 + 1, pos3 - pos2 - 1)));\n"
-    out += generate_indent(4) + "FOURTH_OCTET = std::stoi(std::string(ip.substr(pos3 + 1)));\n"
+    out += generate_indent(4) + "std::string_view svIP{tIP};\n"
+    out += generate_indent(4) + "size_t pos1 = svIP.find('.');\n"
+    out += generate_indent(4) + "size_t pos2 = svIP.find('.', pos1 + 1);\n"
+    out += generate_indent(4) + "size_t pos3 = svIP.find('.', pos2 + 1);\n"
+    out += generate_indent(4) + "std::from_chars(svIP.data(), svIP.data() + pos1, FIRST_OCTET);\n"
+    out += generate_indent(4) + "std::from_chars(svIP.data() + pos1 + 1, svIP.data() + pos2, SECOND_OCTET);\n"
+    out += generate_indent(4) + "std::from_chars(svIP.data() + pos2 + 1, svIP.data() + pos3, THIRD_OCTET);\n"
+    out += generate_indent(4) + "std::from_chars(svIP.data() + pos3 + 1, svIP.data() + svIP.size(), FOURTH_OCTET);\n"
     out += generate_indent(3) + "}\n\n"
+    out += generate_indent(3) + "// clang-format off\n"
+    out += generate_indent(3) + "constexpr auto operator<=> (const AddressEntry&) const = default;\n"
+    out += generate_indent(3) + "// clang-format on\n\n"
     out += generate_indent(3) + "std::string IP_STR() const\n"
     out += generate_indent(3) + "{\n"
     out += generate_indent(4) + "return std::to_string(FIRST_OCTET) + \".\" + std::to_string(SECOND_OCTET) + \".\" + std::to_string(THIRD_OCTET) + \".\" + std::to_string(FOURTH_OCTET);\n"
@@ -253,6 +259,19 @@ def insert_manifest_struct():
 
     return out
 
+def insert_board_enum():
+    """
+    This inserts the BoardID enum
+    """
+    out = generate_indent(1) + "enum class BoardID\n"
+    out += generate_indent(1) + "{\n"
+    for board_name, board_id in this.board_and_data_ids:
+        out += f"{generate_indent(2)}{board_name.upper()} = {board_id},\n"
+    out += generate_indent(1) + "};\n"
+    out += "\n"
+
+    return out
+
 def insert_board_struct():
     """
     This inserts the ManifestEntry struct
@@ -260,6 +279,7 @@ def insert_board_struct():
     out = generate_indent(1) + "struct BoardEntry\n"
     out += generate_indent(1) + "{\n"
     out += generate_indent(2) + "public:\n"
+    out += generate_indent(3) + "BoardID BOARD_ID;\n"
     out += generate_indent(3) + "AddressEntry ADDRESS;\n"
     out += generate_indent(3) + "std::vector<ManifestEntry> COMMANDS, TELEMETRY, ERRORS;\n"
     out += generate_indent(1) + "};\n"
@@ -332,27 +352,26 @@ def find_board_and_data_id(json_file):
 
     return sorted(results, key=lambda x: x[1])
 
-def insert_boards_map():
-    this.header_file.write(f"{generate_indent(1)}const std::map<std::string, BoardEntry> BOARDS\n")
-    this.header_file.write(f"{generate_indent(1)}{{\n")
+def insert_boards_list():
+    this.header_file.write(f"{generate_indent(1)}const std::vector<BoardEntry> BOARDS{{\n")
     for board_name, board_id in this.board_and_data_ids:
-        this.header_file.write(f"{generate_indent(2)}{{\"{board_name}\",\n")
-        this.header_file.write(f"{generate_indent(2)}{{manifest::{board_name}::IP_ADDRESS,\n")
         this.header_file.write(f"{generate_indent(2)}{{\n")
+        this.header_file.write(f"{generate_indent(3)}BoardID::{board_name.upper()},\n")
+        this.header_file.write(f"{generate_indent(3)}{board_name}::IP_ADDRESS,\n")
+        this.header_file.write(f"{generate_indent(3)}{{\n")
         if "Commands" in this.manifest[board_name]:
             for command in this.manifest[board_name]["Commands"]:
-                this.header_file.write(f"{generate_indent(4)}manifest::{board_name}::Commands::{command.upper()},\n")
-        this.header_file.write(f"{generate_indent(2)}}},\n")
-        this.header_file.write(f"{generate_indent(2)}{{\n")
+                this.header_file.write(f"{generate_indent(4)}{board_name}::Commands::{command.upper()},\n")
+        this.header_file.write(f"{generate_indent(3)}}},\n")
+        this.header_file.write(f"{generate_indent(3)}{{\n")
         if "Telemetry" in this.manifest[board_name]:
             for telem in this.manifest[board_name]["Telemetry"]:
-                this.header_file.write(f"{generate_indent(4)}manifest::{board_name}::Telemetry::{telem.upper()},\n")
+                this.header_file.write(f"{generate_indent(4)}{board_name}::Telemetry::{telem.upper()},\n")
         this.header_file.write(f"{generate_indent(2)}}},\n")
         this.header_file.write(f"{generate_indent(2)}{{\n")
         if "Error" in this.manifest[board_name]:
             for error in this.manifest[board_name]["Error"]:
-                this.header_file.write(f"{generate_indent(4)}manifest::{board_name}::Errors::{error.upper()},\n")
-        this.header_file.write(f"{generate_indent(2)}}},\n")
+                this.header_file.write(f"{generate_indent(4)}{board_name}::Errors::{error.upper()},\n")
         this.header_file.write(f"{generate_indent(2)}}},\n")
         this.header_file.write(f"{generate_indent(1)}}},\n")
     this.header_file.write(f"{generate_indent(0)}}};\n")
@@ -365,13 +384,15 @@ def insert_helpers():
     # FindBoardById function
     this.header_file.write(f"{generate_indent(2)}inline std::optional<BoardEntry> FindBoardById(uint16_t unDataId)\n")
     this.header_file.write(f"{generate_indent(2)}{{\n")
-    this.header_file.write(f"{generate_indent(3)}switch (unDataId / 1000)\n")
+    this.header_file.write(f"{generate_indent(3)}switch (static_cast<BoardID>(unDataId / 1000))\n")
     this.header_file.write(f"{generate_indent(3)}{{\n")
+    board_index = 0
     for board_name, board_id in this.board_and_data_ids:
-        this.header_file.write(f"{generate_indent(4)}case {board_id}: return BOARDS.at(\"{board_name}\");\n")
+        this.header_file.write(f"{generate_indent(4)}case BoardID::{board_name.upper()}: return BOARDS[{board_index}];\n")
+        board_index += 1
     this.header_file.write(f"{generate_indent(3)}}}\n")
     this.header_file.write(f"{generate_indent(3)}return {{}};\n")
-    this.header_file.write(f"{generate_indent(2)}}}\n")
+    this.header_file.write(f"{generate_indent(2)}}}\n\n")
 
 
     # FindEntryById function
@@ -402,12 +423,12 @@ def insert_helpers():
 
 
     # DataTypeSize function
-    this.header_file.write(f"{generate_indent(2)}constexpr size_t DataTypeSize(manifest::DataTypes eDataType)\n")
+    this.header_file.write(f"{generate_indent(2)}constexpr size_t DataTypeSize(DataTypes eDataType)\n")
     this.header_file.write(f"{generate_indent(2)}{{\n")
     this.header_file.write(f"{generate_indent(3)}switch (eDataType)\n")
     this.header_file.write(f"{generate_indent(3)}{{\n")
     for data_type in type_to_enum.keys():
-        this.header_file.write(f"{generate_indent(4)}case manifest::{type_to_enum[data_type]}: return {type_to_size[data_type]};\n")
+        this.header_file.write(f"{generate_indent(4)}case {type_to_enum[data_type]}: return {type_to_size[data_type]};\n")
     this.header_file.write(f"{generate_indent(4)}default: return 1;\n")
     this.header_file.write(f"{generate_indent(3)}}}\n")
     this.header_file.write(f"{generate_indent(2)}}}\n")
@@ -421,18 +442,18 @@ def insert_helpers():
         this.header_file.write(f"{generate_indent(2)}template<>\n")
         this.header_file.write(f"{generate_indent(2)}struct CToRoveCommType<{c_type}>\n")
         this.header_file.write(f"{generate_indent(2)}{{\n")
-        this.header_file.write(f"{generate_indent(4)}static constexpr manifest::DataTypes TYPE = manifest::{type_to_enum[data_type]};\n")
+        this.header_file.write(f"{generate_indent(4)}static constexpr DataTypes TYPE = {type_to_enum[data_type]};\n")
         this.header_file.write(f"{generate_indent(4)}static constexpr size_t SIZE              = {type_to_size[data_type]};\n")
         this.header_file.write(f"{generate_indent(2)}}};\n\n")
     
     # RoveCommToCType mapping
     this.header_file.write(f"{generate_indent(2)}\n")
-    this.header_file.write(f"{generate_indent(2)}template<manifest::DataTypes>\n")
+    this.header_file.write(f"{generate_indent(2)}template<DataTypes>\n")
     this.header_file.write(f"{generate_indent(2)}struct RoveCommToCType\n")
     this.header_file.write(f"{generate_indent(2)}{{}};\n\n")
     for data_type, c_type in type_to_c_type.items():
         this.header_file.write(f"{generate_indent(2)}template<>\n")
-        this.header_file.write(f"{generate_indent(2)}struct RoveCommToCType<manifest::{type_to_enum[data_type]}>\n")
+        this.header_file.write(f"{generate_indent(2)}struct RoveCommToCType<{type_to_enum[data_type]}>\n")
         this.header_file.write(f"{generate_indent(2)}{{\n")
         this.header_file.write(f"{generate_indent(4)}using c_type                 = {c_type};\n")
         this.header_file.write(f"{generate_indent(4)}static constexpr size_t SIZE = {type_to_size[data_type]};\n")
@@ -631,6 +652,19 @@ if __name__ == "__main__":
     for line in insert_manifest_struct():
         this.header_file.write(line)
 
+    ## Add BoardID Enum
+    lines_index = 0
+    lines = generate_doxygen_block("Board ID Enumeration for RoveComm.").split("\n")
+    for line in lines:
+        if lines_index < len(lines) - 1:
+            this.header_file.write(generate_indent(1) + line + "\n")
+        else:
+            this.header_file.write(generate_indent(1) + line + "\n")
+
+        lines_index += 1
+    for line in insert_board_enum():
+        this.header_file.write(line)
+
     ## Add BoardEntry Struct
     lines_index = 0
     lines = generate_doxygen_block("Board Entry Object for RoveComm.").split("\n")
@@ -731,7 +765,7 @@ if __name__ == "__main__":
             this.header_file.write(generate_indent(1) + line + "\n")
 
         lines_index += 1
-    insert_boards_map()
+    insert_boards_list()
 
     ## Add Helpers Namespace
     this.header_file.write(f"{generate_indent(2)}\n")

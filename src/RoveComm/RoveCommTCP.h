@@ -84,26 +84,26 @@ namespace rovecomm
             ~RoveCommTCP();
 
             // Initialization
-            bool Init(const std::string& szIPAddress = "0.0.0.0", int nPort = manifest::General::ETHERNET_TCP_PORT);
+            bool Init(const manifest::AddressEntry& stIPAddress = {0, 0, 0, 0}, int nPort = manifest::General::ETHERNET_TCP_PORT);
 
             // Data transmission
             template<typename T>
-            ssize_t Send(const RoveCommPacket<T>& stData, const std::string& szClientIPAddress, int nClientPort);
+            ssize_t Send(const RoveCommPacket<T>& stData, const manifest::AddressEntry& stClientIPAddress, int nClientPort);
 
             template<typename manifest::ManifestEntry Entry>
             ssize_t Send(std::span<const EntryType<Entry>> spData,
-                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
-                         int nPort                      = manifest::General::ETHERNET_TCP_PORT)
+                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS,
+                         int nPort                                 = manifest::General::ETHERNET_TCP_PORT)
             {
-                return Send(rovecomm::CreatePacket<Entry>(spData), szIPAddress, nPort);
+                return Send(rovecomm::CreatePacket<Entry>(spData), stIPAddress, nPort);
             }
 
             template<typename manifest::ManifestEntry Entry>
             ssize_t Send(std::initializer_list<EntryType<Entry>> ilData,
-                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
-                         int nPort                      = manifest::General::ETHERNET_TCP_PORT)
+                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS,
+                         int nPort                                 = manifest::General::ETHERNET_TCP_PORT)
             {
-                return Send(rovecomm::CreatePacket<Entry>(ilData), szIPAddress, nPort);
+                return Send(rovecomm::CreatePacket<Entry>(ilData), stIPAddress, nPort);
             }
 
             // Callback management

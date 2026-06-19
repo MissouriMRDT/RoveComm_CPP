@@ -64,7 +64,7 @@ namespace rovecomm
             // Private member variables
             std::atomic_int m_nUDPSocket;
             struct sockaddr_in m_saUDPServerAddr;
-            using SubscriberInfo = std::pair<std::string, int>;
+            using SubscriberInfo = std::pair<manifest::AddressEntry, int>;
             std::set<SubscriberInfo> seSubscribers;
             std::shared_mutex m_muCallbackMutex;
             std::mutex m_muSocketSendMutex;
@@ -80,8 +80,8 @@ namespace rovecomm
             void ReceiveAndCallback();
 
             // Subscriber management functions
-            void AddSubscriber(const std::string& szIPAddress, const int nPort);
-            void RemoveSubscriber(const std::string& szIPAddress, const int nPort);
+            void AddSubscriber(const std::string& stIPAddress, const int nPort);
+            void RemoveSubscriber(const std::string& stIPAddress, const int nPort);
 
         private:
             // AutonomyThread member functions
@@ -99,22 +99,22 @@ namespace rovecomm
 
             // Data transmission functions
             template<typename T>
-            ssize_t Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress = "0.0.0.0", int nPort = manifest::General::ETHERNET_UDP_PORT);
+            ssize_t Send(const RoveCommPacket<T>& stPacket, const manifest::AddressEntry& stIPAddress = {0, 0, 0, 0}, int nPort = manifest::General::ETHERNET_UDP_PORT);
 
             template<typename manifest::ManifestEntry Entry>
             ssize_t Send(std::span<const EntryType<Entry>> spData,
-                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
-                         int nPort                      = manifest::General::ETHERNET_UDP_PORT)
+                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS,
+                         int nPort                                 = manifest::General::ETHERNET_UDP_PORT)
             {
-                return Send(rovecomm::CreatePacket<Entry>(spData), szIPAddress, nPort);
+                return Send(rovecomm::CreatePacket<Entry>(spData), stIPAddress, nPort);
             }
 
             template<typename manifest::ManifestEntry Entry>
             ssize_t Send(std::initializer_list<EntryType<Entry>> ilData,
-                         const std::string& szIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS.IP_STR(),
-                         int nPort                      = manifest::General::ETHERNET_UDP_PORT)
+                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS,
+                         int nPort                                 = manifest::General::ETHERNET_UDP_PORT)
             {
-                return Send(rovecomm::CreatePacket<Entry>(ilData), szIPAddress, nPort);
+                return Send(rovecomm::CreatePacket<Entry>(ilData), stIPAddress, nPort);
             }
 
             // Callback management functions

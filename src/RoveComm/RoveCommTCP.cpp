@@ -63,7 +63,7 @@ namespace rovecomm
      * @brief Initializes a TCP socket and binds it to the specified IP address and
      *        port. And then starts the threaded continuous code in AutonomyThread.
      *
-     * @param szIPAddress - The IP address to bind the socket to. If set to "", the
+     * @param stIPAddress - The IP address to bind the socket to. If set to "", the
      *                     socket will be bound to all available interfaces.
      * @param nPort - The port to bind the socket to. If set to 0, the OS will
      *                automatically assign an available port.
@@ -73,7 +73,7 @@ namespace rovecomm
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
-    bool RoveCommTCP::Init(const std::string& szIPAddress, int nPort)
+    bool RoveCommTCP::Init(const manifest::AddressEntry& stIPAddress, int nPort)
     {
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         WSADATA wsaData;
@@ -114,9 +114,10 @@ namespace rovecomm
 
         // Configure the server address
         memset(&m_saTCPServerAddr, 0, sizeof(m_saTCPServerAddr));
-        m_saTCPServerAddr.sin_family      = AF_INET;
-        m_saTCPServerAddr.sin_addr.s_addr = inet_addr(szIPAddress.c_str());
-        m_saTCPServerAddr.sin_port        = htons(nPort);
+        m_saTCPServerAddr.sin_family = AF_INET;
+        m_saTCPServerAddr.sin_addr.s_addr =
+            htonl(stIPAddress.FIRST_OCTET << 24 | stIPAddress.SECOND_OCTET << 16 | stIPAddress.THIRD_OCTET << 8 | stIPAddress.FOURTH_OCTET);
+        m_saTCPServerAddr.sin_port = htons(nPort);
 
         // Bind the socket to the server address
         if (bind(m_nTCPSocket.load(), (struct sockaddr*) &m_saTCPServerAddr, sizeof(m_saTCPServerAddr)) == -1)
@@ -149,7 +150,7 @@ namespace rovecomm
      *             following: uint8_t, int8_t, uint16_t, int16_t, uint32_t,
      *             int32_t, float, double, or char.
      * @param stData - The RoveCommPacket to send over the TCP socket.
-     * @param cClientIPAddress - The IP address of the client to send the packet to.
+     * @param stClientIPAddress - The IP address of the client to send the packet to.
      * @param nClientPort - The port of the client to send the packet to.
      * @return ssize_t - The number of bytes sent over the TCP socket. Returns -1
      *                   if an error occurred.
@@ -158,7 +159,7 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    ssize_t RoveCommTCP::Send(const RoveCommPacket<T>& stPacket, const std::string& szClientIPAddress, int nClientPort)
+    ssize_t RoveCommTCP::Send(const RoveCommPacket<T>& stPacket, const manifest::AddressEntry& stClientIPAddress, int nClientPort)
     {
         // Create a TCP socket
         int nClientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -173,15 +174,8 @@ namespace rovecomm
         memset(&saClientAddr, 0, sizeof(saClientAddr));
         saClientAddr.sin_family = AF_INET;
         saClientAddr.sin_port   = htons(nClientPort);
-
-        // Convert IP address to binary form
-        if (inet_pton(AF_INET, szClientIPAddress.c_str(), &saClientAddr.sin_addr) <= 0)
-        {
-            perror("Invalid address/ Address not supported");
-            CLOSE_SOCKET(nClientSocket);
-            return -1;
-        }
-
+        saClientAddr.sin_addr.s_addr =
+            htonl(stClientIPAddress.FIRST_OCTET << 24 | stClientIPAddress.SECOND_OCTET << 16 | stClientIPAddress.THIRD_OCTET << 8 | stClientIPAddress.FOURTH_OCTET);
         // Connect to the client
         if (connect(nClientSocket, (struct sockaddr*) &saClientAddr, sizeof(saClientAddr)) == -1)
         {
@@ -440,39 +434,39 @@ namespace rovecomm
     }
 
     // Explicitly define template function types for TCP class
-    template ssize_t RoveCommTCP::Send<uint8_t>(const RoveCommPacket<uint8_t>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<uint8_t>(const RoveCommPacket<uint8_t>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<uint8_t>(const uint16_t, std::function<void(const RoveCommPacket<uint8_t>&)>);
     template void RoveCommTCP::Clear<uint8_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<int8_t>(const RoveCommPacket<int8_t>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<int8_t>(const RoveCommPacket<int8_t>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<int8_t>(const uint16_t, std::function<void(const RoveCommPacket<int8_t>&)>);
     template void RoveCommTCP::Clear<int8_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<uint16_t>(const RoveCommPacket<uint16_t>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<uint16_t>(const RoveCommPacket<uint16_t>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<uint16_t>(const uint16_t, std::function<void(const RoveCommPacket<uint16_t>&)>);
     template void RoveCommTCP::Clear<uint16_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<int16_t>(const RoveCommPacket<int16_t>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<int16_t>(const RoveCommPacket<int16_t>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<int16_t>(const uint16_t, std::function<void(const RoveCommPacket<int16_t>&)>);
     template void RoveCommTCP::Clear<int16_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<uint32_t>(const RoveCommPacket<uint32_t>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<uint32_t>(const RoveCommPacket<uint32_t>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<uint32_t>(const uint16_t, std::function<void(const RoveCommPacket<uint32_t>&)>);
     template void RoveCommTCP::Clear<uint32_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<int32_t>(const RoveCommPacket<int32_t>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<int32_t>(const RoveCommPacket<int32_t>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<int32_t>(const uint16_t, std::function<void(const RoveCommPacket<int32_t>&)>);
     template void RoveCommTCP::Clear<int32_t>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<float>(const RoveCommPacket<float>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<float>(const RoveCommPacket<float>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<float>(const uint16_t, std::function<void(const RoveCommPacket<float>&)>);
     template void RoveCommTCP::Clear<float>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<double>(const RoveCommPacket<double>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<double>(const RoveCommPacket<double>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<double>(const uint16_t, std::function<void(const RoveCommPacket<double>&)>);
     template void RoveCommTCP::Clear<double>(const uint16_t);
 
-    template ssize_t RoveCommTCP::Send<char>(const RoveCommPacket<char>&, const std::string&, int);
+    template ssize_t RoveCommTCP::Send<char>(const RoveCommPacket<char>&, const manifest::AddressEntry&, int);
     template void RoveCommTCP::On<char>(const uint16_t, std::function<void(const RoveCommPacket<char>&)>);
     template void RoveCommTCP::Clear<char>(const uint16_t);
 }    // namespace rovecomm

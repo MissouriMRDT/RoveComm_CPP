@@ -15,6 +15,7 @@
 #ifndef MANIFEST_H
 #define MANIFEST_H
 
+#include <charconv>
 #include <map>
 #include <stdint.h>
 #include <string>
@@ -69,16 +70,22 @@ namespace manifest
                 FIRST_OCTET(first), SECOND_OCTET(second), THIRD_OCTET(third), FOURTH_OCTET(fourth)
             {}
 
-            AddressEntry(std::string_view ip)
+            template<std::convertible_to<std::string_view> T>
+            AddressEntry(T tIP)
             {
-                size_t pos1  = ip.find('.');
-                size_t pos2  = ip.find('.', pos1 + 1);
-                size_t pos3  = ip.find('.', pos2 + 1);
-                FIRST_OCTET  = std::stoi(std::string(ip.substr(0, pos1)));
-                SECOND_OCTET = std::stoi(std::string(ip.substr(pos1 + 1, pos2 - pos1 - 1)));
-                THIRD_OCTET  = std::stoi(std::string(ip.substr(pos2 + 1, pos3 - pos2 - 1)));
-                FOURTH_OCTET = std::stoi(std::string(ip.substr(pos3 + 1)));
+                std::string_view svIP{tIP};
+                size_t pos1 = svIP.find('.');
+                size_t pos2 = svIP.find('.', pos1 + 1);
+                size_t pos3 = svIP.find('.', pos2 + 1);
+                std::from_chars(svIP.data(), svIP.data() + pos1, FIRST_OCTET);
+                std::from_chars(svIP.data() + pos1 + 1, svIP.data() + pos2, SECOND_OCTET);
+                std::from_chars(svIP.data() + pos2 + 1, svIP.data() + pos3, THIRD_OCTET);
+                std::from_chars(svIP.data() + pos3 + 1, svIP.data() + svIP.size(), FOURTH_OCTET);
             }
+
+            // clang-format off
+            constexpr auto operator<=> (const AddressEntry&) const = default;
+            // clang-format on
 
             std::string IP_STR() const
             {
@@ -101,6 +108,28 @@ namespace manifest
     };
 
     /******************************************************************************
+     * @brief Board ID Enumeration for RoveComm.
+     *
+     * @author Missouri S&T - Mars Rover Design Team
+     * @date 2026-06-18
+     ******************************************************************************/
+    enum class BoardID
+    {
+        CORE            = 3,
+        PMS             = 4,
+        NAV             = 6,
+        SIGNALSTACK     = 7,
+        ARM             = 8,
+        AUGER           = 9,
+        AUTONOMY        = 11,
+        CAMERA1         = 12,
+        CAMERA2         = 13,
+        CAMERASERVER    = 14,
+        RAMAN           = 16,
+        ROVESOSIMULATOR = 99,
+    };
+
+    /******************************************************************************
      * @brief Board Entry Object for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
@@ -109,6 +138,7 @@ namespace manifest
     struct BoardEntry
     {
         public:
+            BoardID BOARD_ID;
             AddressEntry ADDRESS;
             std::vector<ManifestEntry> COMMANDS, TELEMETRY, ERRORS;
     };
@@ -858,281 +888,257 @@ namespace manifest
      * @author Missouri S&T - Mars Rover Design Team
      * @date 2026-06-18
      ******************************************************************************/
-    const std::map<std::string, BoardEntry> BOARDS{
+    const std::vector<BoardEntry> BOARDS{
         {
-            "Core",
+            BoardID::CORE,
+            Core::IP_ADDRESS,
             {
-                manifest::Core::IP_ADDRESS,
-                {
-                    manifest::Core::Commands::DRIVELEFTRIGHT,
-                    manifest::Core::Commands::DRIVEINDIVIDUAL,
-                    manifest::Core::Commands::WATCHDOGOVERRIDE,
-                    manifest::Core::Commands::LEFTGIMBAL,
-                    manifest::Core::Commands::RIGHTGIMBAL,
-                    manifest::Core::Commands::BACKGIMBAL,
-                    manifest::Core::Commands::LEDRGB,
-                    manifest::Core::Commands::BACKIMAGE,
-                    manifest::Core::Commands::INTERNALRGB,
-                    manifest::Core::Commands::INTERNALIMAGE,
-                    manifest::Core::Commands::STATEDISPLAY,
-                    manifest::Core::Commands::BRIGHTNESS,
-                    manifest::Core::Commands::SETWATCHDOGMODE,
-                    manifest::Core::Commands::LEDTEXT,
-                },
-                {
-                    manifest::Core::Telemetry::MOTORSPEEDS,
-                    manifest::Core::Telemetry::MOTORCURRENTS,
-                    manifest::Core::Telemetry::VESCCURRENTS,
-                    manifest::Core::Telemetry::IMUDATA,
-                    manifest::Core::Telemetry::ACCELEROMETERDATA,
-                    manifest::Core::Telemetry::THERMAL,
-                },
-                {
-                    manifest::Core::Errors::VESCFAULT,
-                },
+                Core::Commands::DRIVELEFTRIGHT,
+                Core::Commands::DRIVEINDIVIDUAL,
+                Core::Commands::WATCHDOGOVERRIDE,
+                Core::Commands::LEFTGIMBAL,
+                Core::Commands::RIGHTGIMBAL,
+                Core::Commands::BACKGIMBAL,
+                Core::Commands::LEDRGB,
+                Core::Commands::BACKIMAGE,
+                Core::Commands::INTERNALRGB,
+                Core::Commands::INTERNALIMAGE,
+                Core::Commands::STATEDISPLAY,
+                Core::Commands::BRIGHTNESS,
+                Core::Commands::SETWATCHDOGMODE,
+                Core::Commands::LEDTEXT,
+            },
+            {
+                Core::Telemetry::MOTORSPEEDS,
+                Core::Telemetry::MOTORCURRENTS,
+                Core::Telemetry::VESCCURRENTS,
+                Core::Telemetry::IMUDATA,
+                Core::Telemetry::ACCELEROMETERDATA,
+                Core::Telemetry::THERMAL,
+            },
+            {
+                Core::Errors::VESCFAULT,
             },
         },
         {
-            "PMS",
+            BoardID::PMS,
+            PMS::IP_ADDRESS,
             {
-                manifest::PMS::IP_ADDRESS,
-                {
-                    manifest::PMS::Commands::ESTOP,
-                    manifest::PMS::Commands::SUICIDE,
-                    manifest::PMS::Commands::REBOOT,
-                    manifest::PMS::Commands::ENABLEBUS,
-                    manifest::PMS::Commands::DISABLEBUS,
-                    manifest::PMS::Commands::SETBUS,
-                },
-                {
-                    manifest::PMS::Telemetry::CURRENTANDVOLTAGE,
-                    manifest::PMS::Telemetry::BUSSTATUS,
-                },
-                {
-                    manifest::PMS::Errors::PACKOVERCURRENT,
-                    manifest::PMS::Errors::CELLUNDERVOLTAGE,
-                    manifest::PMS::Errors::CELLCRITICAL,
-                    manifest::PMS::Errors::AUXOVERCURRENT,
-                },
+                PMS::Commands::ESTOP,
+                PMS::Commands::SUICIDE,
+                PMS::Commands::REBOOT,
+                PMS::Commands::ENABLEBUS,
+                PMS::Commands::DISABLEBUS,
+                PMS::Commands::SETBUS,
+            },
+            {
+                PMS::Telemetry::CURRENTANDVOLTAGE,
+                PMS::Telemetry::BUSSTATUS,
+            },
+            {
+                PMS::Errors::PACKOVERCURRENT,
+                PMS::Errors::CELLUNDERVOLTAGE,
+                PMS::Errors::CELLCRITICAL,
+                PMS::Errors::AUXOVERCURRENT,
             },
         },
         {
-            "Nav",
+            BoardID::NAV,
+            Nav::IP_ADDRESS,
+            {},
             {
-                manifest::Nav::IP_ADDRESS,
-                {},
-                {
-                    manifest::Nav::Telemetry::GPSLATLONALT,
-                    manifest::Nav::Telemetry::COMPASSDATA,
-                    manifest::Nav::Telemetry::SATELLITECOUNTDATA,
-                },
-                {
-                    manifest::Nav::Errors::GPSLOCKERROR,
-                },
+                Nav::Telemetry::GPSLATLONALT,
+                Nav::Telemetry::COMPASSDATA,
+                Nav::Telemetry::SATELLITECOUNTDATA,
+            },
+            {
+                Nav::Errors::GPSLOCKERROR,
             },
         },
         {
-            "SignalStack",
+            BoardID::SIGNALSTACK,
+            SignalStack::IP_ADDRESS,
             {
-                manifest::SignalStack::IP_ADDRESS,
-                {
-                    manifest::SignalStack::Commands::OPENLOOP,
-                    manifest::SignalStack::Commands::SETANGLETARGET,
-                    manifest::SignalStack::Commands::SETGPSTARGET,
-                    manifest::SignalStack::Commands::WATCHDOGOVERRIDE,
-                },
-                {
-                    manifest::SignalStack::Telemetry::COMPASSANGLE,
-                },
-                {},
+                SignalStack::Commands::OPENLOOP,
+                SignalStack::Commands::SETANGLETARGET,
+                SignalStack::Commands::SETGPSTARGET,
+                SignalStack::Commands::WATCHDOGOVERRIDE,
+            },
+            {
+                SignalStack::Telemetry::COMPASSANGLE,
+            },
+            {},
+        },
+        {
+            BoardID::ARM,
+            Arm::IP_ADDRESS,
+            {
+                Arm::Commands::OPENLOOP,
+                Arm::Commands::TARGETANGLE,
+                Arm::Commands::TARGETANGLEINCREMENT,
+                Arm::Commands::GRIPPEROPENLOOP,
+                Arm::Commands::IKPOSITION,
+                Arm::Commands::IKPOSITIONINCREMENT,
+                Arm::Commands::IKPOSEINCREMENT,
+                Arm::Commands::LASER,
+                Arm::Commands::LINEARSERVO,
+                Arm::Commands::CACHE,
+                Arm::Commands::WATCHDOGOVERRIDE,
+                Arm::Commands::LIMITSWITCHOVERRIDE,
+                Arm::Commands::CLOSEDLOOPOVERRIDE,
+                Arm::Commands::CALIBRATEENCODER,
+                Arm::Commands::SOFTLIMITOVERRIDE,
+                Arm::Commands::ARMGIMBAL1,
+                Arm::Commands::ARMGIMBAL2,
+            },
+            {
+                Arm::Telemetry::POSITION,
+                Arm::Telemetry::LIMITSWITCH,
+                Arm::Telemetry::SOFTLIMIT,
+                Arm::Telemetry::SMOCOPING,
+            },
+            {},
+        },
+        {
+            BoardID::AUGER,
+            Auger::IP_ADDRESS,
+            {
+                Auger::Commands::AUGERAXIS,
+                Auger::Commands::LIMITSWITCHOVERRIDE,
+                Auger::Commands::CALIBRATEENCODER,
+                Auger::Commands::AUGER,
+                Auger::Commands::WATCHDOGOVERRIDE,
+                Auger::Commands::LED,
+                Auger::Commands::AUGERSERVO,
+                Auger::Commands::AUGERGIMBAL,
+            },
+            {
+                Auger::Telemetry::POSITION,
+                Auger::Telemetry::AUGERSPEED,
+                Auger::Telemetry::LIMITSWITCH,
+                Auger::Telemetry::ENVIRONMENTAL,
+                Auger::Telemetry::AUGERCURRENT,
+                Auger::Telemetry::SMOCOPING,
+            },
+            {},
+        },
+        {
+            BoardID::AUTONOMY,
+            Autonomy::IP_ADDRESS,
+            {
+                Autonomy::Commands::STARTAUTONOMY,
+                Autonomy::Commands::DISABLEAUTONOMY,
+                Autonomy::Commands::ADDPOSITIONLEG,
+                Autonomy::Commands::ADDMARKERLEG,
+                Autonomy::Commands::ADDOBJECTLEG,
+                Autonomy::Commands::CLEARWAYPOINTS,
+                Autonomy::Commands::SETMAXSPEED,
+                Autonomy::Commands::SETMINTRAVSCORE,
+                Autonomy::Commands::SETBETABIAS,
+                Autonomy::Commands::SETLOGGINGLEVELS,
+                Autonomy::Commands::ADDOBSTACLE,
+                Autonomy::Commands::CLEAROBSTACLES,
+            },
+            {
+                Autonomy::Telemetry::CURRENTSTATE,
+                Autonomy::Telemetry::STATEDISPLAY,
+                Autonomy::Telemetry::THREADFPS,
+                Autonomy::Telemetry::PATHWAYPOINTS,
+                Autonomy::Telemetry::TIMEREMAINING,
+            },
+            {},
+        },
+        {
+            BoardID::CAMERA1,
+            Camera1::IP_ADDRESS,
+            {
+                Camera1::Commands::TAKEPICTURE,
+                Camera1::Commands::TOGGLESTREAM,
+                Camera1::Commands::SETFFMPEGARGUMENTS,
+                Camera1::Commands::SETPICTUREARGUMENTS,
+                Camera1::Commands::SETBRIGHTNESS,
+                Camera1::Commands::SETCONTRAST,
+            },
+            {
+                Camera1::Telemetry::AVAILABLECAMERAS,
+                Camera1::Telemetry::STREAMINGCAMERAS,
+                Camera1::Telemetry::PICTURETAKEN,
+                Camera1::Telemetry::UTILIZATION,
+            },
+            {},
+        },
+        {
+            BoardID::CAMERA2,
+            Camera2::IP_ADDRESS,
+            {
+                Camera2::Commands::TAKEPICTURE,
+                Camera2::Commands::TOGGLESTREAM,
+                Camera2::Commands::SETFFMPEGARGUMENTS,
+                Camera2::Commands::SETPICTUREARGUMENTS,
+                Camera2::Commands::SETBRIGHTNESS,
+                Camera2::Commands::SETCONTRAST,
+            },
+            {
+                Camera2::Telemetry::AVAILABLECAMERAS,
+                Camera2::Telemetry::STREAMINGCAMERAS,
+                Camera2::Telemetry::PICTURETAKEN,
+                Camera2::Telemetry::UTILIZATION,
+            },
+            {},
+        },
+        {
+            BoardID::CAMERASERVER,
+            CameraServer::IP_ADDRESS,
+            {
+                CameraServer::Commands::TAKEPHOTO,
+                CameraServer::Commands::TOGGLESTREAM,
+                CameraServer::Commands::ADJUSTBRIGHTNESS,
+                CameraServer::Commands::ADJUSTCONTRAST,
+                CameraServer::Commands::ADJUSTSATURATION,
+                CameraServer::Commands::ADJUSTHUE,
+                CameraServer::Commands::SETWHITEBALANCE,
+                CameraServer::Commands::ADJUSTBACKLIGHTCONTRAST,
+                CameraServer::Commands::SETEXPOSURE,
+            },
+            {
+                CameraServer::Telemetry::AVAILABLECAMERAS,
+                CameraServer::Telemetry::STREAMINGCAMERAS,
+                CameraServer::Telemetry::PICTURETAKEN,
+            },
+            {
+                CameraServer::Errors::CAMERAUNAVAILABLE,
             },
         },
         {
-            "Arm",
+            BoardID::RAMAN,
+            Raman::IP_ADDRESS,
             {
-                manifest::Arm::IP_ADDRESS,
-                {
-                    manifest::Arm::Commands::OPENLOOP,
-                    manifest::Arm::Commands::TARGETANGLE,
-                    manifest::Arm::Commands::TARGETANGLEINCREMENT,
-                    manifest::Arm::Commands::GRIPPEROPENLOOP,
-                    manifest::Arm::Commands::IKPOSITION,
-                    manifest::Arm::Commands::IKPOSITIONINCREMENT,
-                    manifest::Arm::Commands::IKPOSEINCREMENT,
-                    manifest::Arm::Commands::LASER,
-                    manifest::Arm::Commands::LINEARSERVO,
-                    manifest::Arm::Commands::CACHE,
-                    manifest::Arm::Commands::WATCHDOGOVERRIDE,
-                    manifest::Arm::Commands::LIMITSWITCHOVERRIDE,
-                    manifest::Arm::Commands::CLOSEDLOOPOVERRIDE,
-                    manifest::Arm::Commands::CALIBRATEENCODER,
-                    manifest::Arm::Commands::SOFTLIMITOVERRIDE,
-                    manifest::Arm::Commands::ARMGIMBAL1,
-                    manifest::Arm::Commands::ARMGIMBAL2,
-                },
-                {
-                    manifest::Arm::Telemetry::POSITION,
-                    manifest::Arm::Telemetry::LIMITSWITCH,
-                    manifest::Arm::Telemetry::SOFTLIMIT,
-                    manifest::Arm::Telemetry::SMOCOPING,
-                },
-                {},
+                Raman::Commands::INSTRUMENTSAXIS,
+                Raman::Commands::LIMITSWITCHOVERRIDE,
+                Raman::Commands::CALIBRATEENCODER,
+                Raman::Commands::WATCHDOGOVERRIDE,
+                Raman::Commands::LASER,
+                Raman::Commands::REQUESTRAMANREADING,
             },
+            {
+                Raman::Telemetry::POSITION,
+                Raman::Telemetry::LIMITSWITCH,
+                Raman::Telemetry::RAMANREADING_PART1,
+                Raman::Telemetry::RAMANREADING_PART2,
+                Raman::Telemetry::RAMANREADING_PART3,
+                Raman::Telemetry::RAMANREADING_PART4,
+                Raman::Telemetry::SMOCOPING,
+            },
+            {},
         },
         {
-            "Auger",
+            BoardID::ROVESOSIMULATOR,
+            RoveSoSimulator::IP_ADDRESS,
+            {},
             {
-                manifest::Auger::IP_ADDRESS,
-                {
-                    manifest::Auger::Commands::AUGERAXIS,
-                    manifest::Auger::Commands::LIMITSWITCHOVERRIDE,
-                    manifest::Auger::Commands::CALIBRATEENCODER,
-                    manifest::Auger::Commands::AUGER,
-                    manifest::Auger::Commands::WATCHDOGOVERRIDE,
-                    manifest::Auger::Commands::LED,
-                    manifest::Auger::Commands::AUGERSERVO,
-                    manifest::Auger::Commands::AUGERGIMBAL,
-                },
-                {
-                    manifest::Auger::Telemetry::POSITION,
-                    manifest::Auger::Telemetry::AUGERSPEED,
-                    manifest::Auger::Telemetry::LIMITSWITCH,
-                    manifest::Auger::Telemetry::ENVIRONMENTAL,
-                    manifest::Auger::Telemetry::AUGERCURRENT,
-                    manifest::Auger::Telemetry::SMOCOPING,
-                },
-                {},
+                RoveSoSimulator::Telemetry::IMU,
             },
-        },
-        {
-            "Autonomy",
-            {
-                manifest::Autonomy::IP_ADDRESS,
-                {
-                    manifest::Autonomy::Commands::STARTAUTONOMY,
-                    manifest::Autonomy::Commands::DISABLEAUTONOMY,
-                    manifest::Autonomy::Commands::ADDPOSITIONLEG,
-                    manifest::Autonomy::Commands::ADDMARKERLEG,
-                    manifest::Autonomy::Commands::ADDOBJECTLEG,
-                    manifest::Autonomy::Commands::CLEARWAYPOINTS,
-                    manifest::Autonomy::Commands::SETMAXSPEED,
-                    manifest::Autonomy::Commands::SETMINTRAVSCORE,
-                    manifest::Autonomy::Commands::SETBETABIAS,
-                    manifest::Autonomy::Commands::SETLOGGINGLEVELS,
-                    manifest::Autonomy::Commands::ADDOBSTACLE,
-                    manifest::Autonomy::Commands::CLEAROBSTACLES,
-                },
-                {
-                    manifest::Autonomy::Telemetry::CURRENTSTATE,
-                    manifest::Autonomy::Telemetry::STATEDISPLAY,
-                    manifest::Autonomy::Telemetry::THREADFPS,
-                    manifest::Autonomy::Telemetry::PATHWAYPOINTS,
-                    manifest::Autonomy::Telemetry::TIMEREMAINING,
-                },
-                {},
-            },
-        },
-        {
-            "Camera1",
-            {
-                manifest::Camera1::IP_ADDRESS,
-                {
-                    manifest::Camera1::Commands::TAKEPICTURE,
-                    manifest::Camera1::Commands::TOGGLESTREAM,
-                    manifest::Camera1::Commands::SETFFMPEGARGUMENTS,
-                    manifest::Camera1::Commands::SETPICTUREARGUMENTS,
-                    manifest::Camera1::Commands::SETBRIGHTNESS,
-                    manifest::Camera1::Commands::SETCONTRAST,
-                },
-                {
-                    manifest::Camera1::Telemetry::AVAILABLECAMERAS,
-                    manifest::Camera1::Telemetry::STREAMINGCAMERAS,
-                    manifest::Camera1::Telemetry::PICTURETAKEN,
-                    manifest::Camera1::Telemetry::UTILIZATION,
-                },
-                {},
-            },
-        },
-        {
-            "Camera2",
-            {
-                manifest::Camera2::IP_ADDRESS,
-                {
-                    manifest::Camera2::Commands::TAKEPICTURE,
-                    manifest::Camera2::Commands::TOGGLESTREAM,
-                    manifest::Camera2::Commands::SETFFMPEGARGUMENTS,
-                    manifest::Camera2::Commands::SETPICTUREARGUMENTS,
-                    manifest::Camera2::Commands::SETBRIGHTNESS,
-                    manifest::Camera2::Commands::SETCONTRAST,
-                },
-                {
-                    manifest::Camera2::Telemetry::AVAILABLECAMERAS,
-                    manifest::Camera2::Telemetry::STREAMINGCAMERAS,
-                    manifest::Camera2::Telemetry::PICTURETAKEN,
-                    manifest::Camera2::Telemetry::UTILIZATION,
-                },
-                {},
-            },
-        },
-        {
-            "CameraServer",
-            {
-                manifest::CameraServer::IP_ADDRESS,
-                {
-                    manifest::CameraServer::Commands::TAKEPHOTO,
-                    manifest::CameraServer::Commands::TOGGLESTREAM,
-                    manifest::CameraServer::Commands::ADJUSTBRIGHTNESS,
-                    manifest::CameraServer::Commands::ADJUSTCONTRAST,
-                    manifest::CameraServer::Commands::ADJUSTSATURATION,
-                    manifest::CameraServer::Commands::ADJUSTHUE,
-                    manifest::CameraServer::Commands::SETWHITEBALANCE,
-                    manifest::CameraServer::Commands::ADJUSTBACKLIGHTCONTRAST,
-                    manifest::CameraServer::Commands::SETEXPOSURE,
-                },
-                {
-                    manifest::CameraServer::Telemetry::AVAILABLECAMERAS,
-                    manifest::CameraServer::Telemetry::STREAMINGCAMERAS,
-                    manifest::CameraServer::Telemetry::PICTURETAKEN,
-                },
-                {
-                    manifest::CameraServer::Errors::CAMERAUNAVAILABLE,
-                },
-            },
-        },
-        {
-            "Raman",
-            {
-                manifest::Raman::IP_ADDRESS,
-                {
-                    manifest::Raman::Commands::INSTRUMENTSAXIS,
-                    manifest::Raman::Commands::LIMITSWITCHOVERRIDE,
-                    manifest::Raman::Commands::CALIBRATEENCODER,
-                    manifest::Raman::Commands::WATCHDOGOVERRIDE,
-                    manifest::Raman::Commands::LASER,
-                    manifest::Raman::Commands::REQUESTRAMANREADING,
-                },
-                {
-                    manifest::Raman::Telemetry::POSITION,
-                    manifest::Raman::Telemetry::LIMITSWITCH,
-                    manifest::Raman::Telemetry::RAMANREADING_PART1,
-                    manifest::Raman::Telemetry::RAMANREADING_PART2,
-                    manifest::Raman::Telemetry::RAMANREADING_PART3,
-                    manifest::Raman::Telemetry::RAMANREADING_PART4,
-                    manifest::Raman::Telemetry::SMOCOPING,
-                },
-                {},
-            },
-        },
-        {
-            "RoveSoSimulator",
-            {
-                manifest::RoveSoSimulator::IP_ADDRESS,
-                {},
-                {
-                    manifest::RoveSoSimulator::Telemetry::IMU,
-                },
-                {},
-            },
+            {},
         },
     };
 
@@ -1146,20 +1152,20 @@ namespace manifest
     {
         inline std::optional<BoardEntry> FindBoardById(uint16_t unDataId)
         {
-            switch (unDataId / 1000)
+            switch (static_cast<BoardID>(unDataId / 1000))
             {
-                case 3: return BOARDS.at("Core");
-                case 4: return BOARDS.at("PMS");
-                case 6: return BOARDS.at("Nav");
-                case 7: return BOARDS.at("SignalStack");
-                case 8: return BOARDS.at("Arm");
-                case 9: return BOARDS.at("Auger");
-                case 11: return BOARDS.at("Autonomy");
-                case 12: return BOARDS.at("Camera1");
-                case 13: return BOARDS.at("Camera2");
-                case 14: return BOARDS.at("CameraServer");
-                case 16: return BOARDS.at("Raman");
-                case 99: return BOARDS.at("RoveSoSimulator");
+                case BoardID::CORE: return BOARDS[0];
+                case BoardID::PMS: return BOARDS[1];
+                case BoardID::NAV: return BOARDS[2];
+                case BoardID::SIGNALSTACK: return BOARDS[3];
+                case BoardID::ARM: return BOARDS[4];
+                case BoardID::AUGER: return BOARDS[5];
+                case BoardID::AUTONOMY: return BOARDS[6];
+                case BoardID::CAMERA1: return BOARDS[7];
+                case BoardID::CAMERA2: return BOARDS[8];
+                case BoardID::CAMERASERVER: return BOARDS[9];
+                case BoardID::RAMAN: return BOARDS[10];
+                case BoardID::ROVESOSIMULATOR: return BOARDS[11];
             }
             return {};
         }
@@ -1189,19 +1195,19 @@ namespace manifest
             return {};
         }
 
-        constexpr size_t DataTypeSize(manifest::DataTypes eDataType)
+        constexpr size_t DataTypeSize(DataTypes eDataType)
         {
             switch (eDataType)
             {
-                case manifest::DataTypes::INT8_T: return 1;
-                case manifest::DataTypes::UINT8_T: return 1;
-                case manifest::DataTypes::INT16_T: return 2;
-                case manifest::DataTypes::UINT16_T: return 2;
-                case manifest::DataTypes::INT32_T: return 4;
-                case manifest::DataTypes::UINT32_T: return 4;
-                case manifest::DataTypes::FLOAT_T: return 4;
-                case manifest::DataTypes::DOUBLE_T: return 8;
-                case manifest::DataTypes::CHAR: return 1;
+                case DataTypes::INT8_T: return 1;
+                case DataTypes::UINT8_T: return 1;
+                case DataTypes::INT16_T: return 2;
+                case DataTypes::UINT16_T: return 2;
+                case DataTypes::INT32_T: return 4;
+                case DataTypes::UINT32_T: return 4;
+                case DataTypes::FLOAT_T: return 4;
+                case DataTypes::DOUBLE_T: return 8;
+                case DataTypes::CHAR: return 1;
                 default: return 1;
             }
         }
@@ -1213,128 +1219,128 @@ namespace manifest
         template<>
         struct CToRoveCommType<int8_t>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::INT8_T;
-                static constexpr size_t SIZE              = 1;
+                static constexpr DataTypes TYPE = DataTypes::INT8_T;
+                static constexpr size_t SIZE    = 1;
         };
 
         template<>
         struct CToRoveCommType<uint8_t>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::UINT8_T;
-                static constexpr size_t SIZE              = 1;
+                static constexpr DataTypes TYPE = DataTypes::UINT8_T;
+                static constexpr size_t SIZE    = 1;
         };
 
         template<>
         struct CToRoveCommType<int16_t>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::INT16_T;
-                static constexpr size_t SIZE              = 2;
+                static constexpr DataTypes TYPE = DataTypes::INT16_T;
+                static constexpr size_t SIZE    = 2;
         };
 
         template<>
         struct CToRoveCommType<uint16_t>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::UINT16_T;
-                static constexpr size_t SIZE              = 2;
+                static constexpr DataTypes TYPE = DataTypes::UINT16_T;
+                static constexpr size_t SIZE    = 2;
         };
 
         template<>
         struct CToRoveCommType<int32_t>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::INT32_T;
-                static constexpr size_t SIZE              = 4;
+                static constexpr DataTypes TYPE = DataTypes::INT32_T;
+                static constexpr size_t SIZE    = 4;
         };
 
         template<>
         struct CToRoveCommType<uint32_t>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::UINT32_T;
-                static constexpr size_t SIZE              = 4;
+                static constexpr DataTypes TYPE = DataTypes::UINT32_T;
+                static constexpr size_t SIZE    = 4;
         };
 
         template<>
         struct CToRoveCommType<float>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::FLOAT_T;
-                static constexpr size_t SIZE              = 4;
+                static constexpr DataTypes TYPE = DataTypes::FLOAT_T;
+                static constexpr size_t SIZE    = 4;
         };
 
         template<>
         struct CToRoveCommType<double>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::DOUBLE_T;
-                static constexpr size_t SIZE              = 8;
+                static constexpr DataTypes TYPE = DataTypes::DOUBLE_T;
+                static constexpr size_t SIZE    = 8;
         };
 
         template<>
         struct CToRoveCommType<char>
         {
-                static constexpr manifest::DataTypes TYPE = manifest::DataTypes::CHAR;
-                static constexpr size_t SIZE              = 1;
+                static constexpr DataTypes TYPE = DataTypes::CHAR;
+                static constexpr size_t SIZE    = 1;
         };
 
-        template<manifest::DataTypes>
+        template<DataTypes>
         struct RoveCommToCType
         {};
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::INT8_T>
+        struct RoveCommToCType<DataTypes::INT8_T>
         {
                 using c_type                 = int8_t;
                 static constexpr size_t SIZE = 1;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::UINT8_T>
+        struct RoveCommToCType<DataTypes::UINT8_T>
         {
                 using c_type                 = uint8_t;
                 static constexpr size_t SIZE = 1;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::INT16_T>
+        struct RoveCommToCType<DataTypes::INT16_T>
         {
                 using c_type                 = int16_t;
                 static constexpr size_t SIZE = 2;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::UINT16_T>
+        struct RoveCommToCType<DataTypes::UINT16_T>
         {
                 using c_type                 = uint16_t;
                 static constexpr size_t SIZE = 2;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::INT32_T>
+        struct RoveCommToCType<DataTypes::INT32_T>
         {
                 using c_type                 = int32_t;
                 static constexpr size_t SIZE = 4;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::UINT32_T>
+        struct RoveCommToCType<DataTypes::UINT32_T>
         {
                 using c_type                 = uint32_t;
                 static constexpr size_t SIZE = 4;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::FLOAT_T>
+        struct RoveCommToCType<DataTypes::FLOAT_T>
         {
                 using c_type                 = float;
                 static constexpr size_t SIZE = 4;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::DOUBLE_T>
+        struct RoveCommToCType<DataTypes::DOUBLE_T>
         {
                 using c_type                 = double;
                 static constexpr size_t SIZE = 8;
         };
 
         template<>
-        struct RoveCommToCType<manifest::DataTypes::CHAR>
+        struct RoveCommToCType<DataTypes::CHAR>
         {
                 using c_type                 = char;
                 static constexpr size_t SIZE = 1;

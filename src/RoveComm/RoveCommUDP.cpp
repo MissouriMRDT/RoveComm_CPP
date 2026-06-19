@@ -212,7 +212,7 @@ namespace rovecomm
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    ssize_t RoveCommUDP::Send(const RoveCommPacket<T>& stPacket, const std::string& szIPAddress, int nPort)
+    ssize_t RoveCommUDP::Send(const RoveCommPacket<T>& stPacket, const manifest::AddressEntry& stIPAddress, int nPort)
     {
         // Pack the RoveCommPacket into a RoveCommData structure
         std::vector<uint8_t> vData = PackPacket(stPacket);
@@ -226,11 +226,12 @@ namespace rovecomm
         saUDPClientAddr.sin_family = AF_INET;
 
         // Send the packet to all subscribers
-        for (const auto& [szSubscriberIpAddress, nSubscriberPort] : vSubscribers)
+        for (const auto& [stSubscriberIPAddress, nSubscriberPort] : vSubscribers)
         {
             // Assemble client address.
-            saUDPClientAddr.sin_port = htons(nSubscriberPort);
-            inet_pton(AF_INET, szSubscriberIpAddress.c_str(), &saUDPClientAddr.sin_addr);
+            saUDPClientAddr.sin_port        = htons(nSubscriberPort);
+            saUDPClientAddr.sin_addr.s_addr = htonl(stSubscriberIPAddress.FIRST_OCTET << 24 | stSubscriberIPAddress.SECOND_OCTET << 16 |
+                                                    stSubscriberIPAddress.THIRD_OCTET << 8 | stSubscriberIPAddress.FOURTH_OCTET);
             // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
             std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
             // Send data.
@@ -244,10 +245,11 @@ namespace rovecomm
         }
 
         // Send the packet to the specified IP address and port.
-        if (szIPAddress != "0.0.0.0" && nPort != 0)
+        if (stIPAddress != manifest::AddressEntry{0, 0, 0, 0} && nPort != 0)
         {
             saUDPClientAddr.sin_port = htons(nPort);
-            inet_pton(AF_INET, cIPAddress, &saUDPClientAddr.sin_addr);
+            saUDPClientAddr.sin_addr.s_addr =
+                htonl(stIPAddress.FIRST_OCTET << 24 | stIPAddress.SECOND_OCTET << 16 | stIPAddress.THIRD_OCTET << 8 | stIPAddress.FOURTH_OCTET);
 
             // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
             std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);
@@ -259,26 +261,27 @@ namespace rovecomm
         // Use sendmmsg to send the same packet to multiple destinations in one call.
         std::vector<sockaddr_in> vDestinations;
         // Add all subscribers.
-        for (const auto& [szSubscriberIpAddress, nSubscriberPort] : seSubscribers)
+        for (const auto& [stSubscriberIPAddress, nSubscriberPort] : seSubscribers)
         {
             // Assemble client address.
             sockaddr_in stdAddr{};
             stdAddr.sin_family = AF_INET;
             stdAddr.sin_port   = htons(nSubscriberPort);
             // Convert the IP address to binary form.
-            inet_pton(AF_INET, szSubscriberIpAddress.c_str(), &stdAddr.sin_addr);
+            stdAddr.sin_addr.s_addr = htonl(stSubscriberIPAddress.FIRST_OCTET << 24 | stSubscriberIPAddress.SECOND_OCTET << 16 | stSubscriberIPAddress.THIRD_OCTET << 8 |
+                                            stSubscriberIPAddress.FOURTH_OCTET);
             // Add the subscriber to the list of destinations.
             vDestinations.push_back(stdAddr);
         }
         // Add the specified destination if provided.
-        if (szIPAddress != "0.0.0.0" && nPort != 0)
+        if (stIPAddress != manifest::AddressEntry{0, 0, 0, 0} && nPort != 0)
         {
             // Assemble client address.
             sockaddr_in stdAddr{};
             stdAddr.sin_family = AF_INET;
             stdAddr.sin_port   = htons(nPort);
             // Convert the IP address to binary form.
-            inet_pton(AF_INET, szIPAddress.c_str(), &stdAddr.sin_addr);
+            stdAddr.sin_addr.s_addr = htonl(stIPAddress.FIRST_OCTET << 24 | stIPAddress.SECOND_OCTET << 16 | stIPAddress.THIRD_OCTET << 8 | stIPAddress.FOURTH_OCTET);
             // Add the specified destination to the list of destinations.
             vDestinations.push_back(stdAddr);
         }
@@ -412,17 +415,17 @@ namespace rovecomm
         RoveCommPacket<T> stPacket = UnpackData<T>(spData);
 
         // Create a SubscriberInfo struct to store the client address
-        std::string szIPAddress = inet_ntoa(saClientAddr.sin_addr);
-        int nPort               = ntohs(saClientAddr.sin_port);
+        std::string t = inet_ntoa(saClientAddr.sin_addr);
+        int nPort     = ntohs(saClientAddr.sin_port);
 
         // Check if the received packet is a subscribe or unsubscribe packet
         if (stPacket.unDataId == manifest::System::SUBSCRIBE_DATA_ID)
         {
-            AddSubscriber(szIPAddress, nPort);
+            AddSubscriber(t, nPort);
         }
         else if (stPacket.unDataId == manifest::System::UNSUBSCRIBE_DATA_ID)
         {
-            RemoveSubscriber(szIPAddress, nPort);
+            RemoveSubscriber(t, nPort);
         }
 
         // Acquire a read lock to protect the callback vectors.
@@ -631,18 +634,18 @@ namespace rovecomm
      * @brief Add a subscriber to the list of subscribers. The subscriber will
      *        receive all packets that are sent to the specified IP address and port.
      *
-     * @param szIPAddress - The IP address of the subscriber.
+     * @param t - The IP address of the subscriber.
      * @param nPort - The port that the subscriber is listening on.
      *
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-08
      ******************************************************************************/
-    void RoveCommUDP::AddSubscriber(const std::string& szIPAddress, const int nPort)
+    void RoveCommUDP::AddSubscriber(const std::string& t, const int nPort)
     {
         if (seSubscribers.size() < ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS)
         {
             // Add new subscriber
-            seSubscribers.insert({szIPAddress, nPort});
+            seSubscribers.insert({t, nPort});
         }
     }
 
@@ -651,16 +654,16 @@ namespace rovecomm
      *        no longer receive packets that are sent to the specified IP address and
      *        port.
      *
-     * @param szIPAddress - The IP address of the subscriber.
+     * @param t - The IP address of the subscriber.
      * @param nPort - The port that the subscriber is listening on.
      *
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-08
      ******************************************************************************/
-    void RoveCommUDP::RemoveSubscriber(const std::string& szIPAddress, const int nPort)
+    void RoveCommUDP::RemoveSubscriber(const std::string& t, const int nPort)
     {
         // Find and remove the subscriber
-        seSubscribers.erase({szIPAddress, nPort});
+        seSubscribers.erase({t, nPort});
     }
 
     /******************************************************************************
@@ -724,39 +727,39 @@ namespace rovecomm
     }
 
     // Explicitly define template function types
-    template ssize_t RoveCommUDP::Send<uint8_t>(const RoveCommPacket<uint8_t>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<uint8_t>(const RoveCommPacket<uint8_t>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<uint8_t>(const uint16_t, std::function<void(const RoveCommPacket<uint8_t>&)>);
     template void RoveCommUDP::Clear<uint8_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<int8_t>(const RoveCommPacket<int8_t>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<int8_t>(const RoveCommPacket<int8_t>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<int8_t>(const uint16_t, std::function<void(const RoveCommPacket<int8_t>&)>);
     template void RoveCommUDP::Clear<int8_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<uint16_t>(const RoveCommPacket<uint16_t>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<uint16_t>(const RoveCommPacket<uint16_t>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<uint16_t>(const uint16_t, std::function<void(const RoveCommPacket<uint16_t>&)>);
     template void RoveCommUDP::Clear<uint16_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<int16_t>(const RoveCommPacket<int16_t>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<int16_t>(const RoveCommPacket<int16_t>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<int16_t>(const uint16_t, std::function<void(const RoveCommPacket<int16_t>&)>);
     template void RoveCommUDP::Clear<int16_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<uint32_t>(const RoveCommPacket<uint32_t>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<uint32_t>(const RoveCommPacket<uint32_t>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<uint32_t>(const uint16_t, std::function<void(const RoveCommPacket<uint32_t>&)>);
     template void RoveCommUDP::Clear<uint32_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<int32_t>(const RoveCommPacket<int32_t>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<int32_t>(const RoveCommPacket<int32_t>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<int32_t>(const uint16_t, std::function<void(const RoveCommPacket<int32_t>&)>);
     template void RoveCommUDP::Clear<int32_t>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<float>(const RoveCommPacket<float>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<float>(const RoveCommPacket<float>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<float>(const uint16_t, std::function<void(const RoveCommPacket<float>&)>);
     template void RoveCommUDP::Clear<float>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<double>(const RoveCommPacket<double>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<double>(const RoveCommPacket<double>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<double>(const uint16_t, std::function<void(const RoveCommPacket<double>&)>);
     template void RoveCommUDP::Clear<double>(const uint16_t);
 
-    template ssize_t RoveCommUDP::Send<char>(const RoveCommPacket<char>&, const std::string&, int);
+    template ssize_t RoveCommUDP::Send<char>(const RoveCommPacket<char>&, const manifest::AddressEntry&, int);
     template void RoveCommUDP::On<char>(const uint16_t, std::function<void(const RoveCommPacket<char>&)>);
     template void RoveCommUDP::Clear<char>(const uint16_t);
 
