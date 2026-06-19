@@ -103,40 +103,34 @@ TEST(RoveCommUtils, ManifestHelpers)
                                      [](const auto& stBoard) { return !stBoard.COMMANDS.empty() && !stBoard.TELEMETRY.empty() && !stBoard.ERRORS.empty(); });
     ASSERT_NE(itValidEntry, manifest::BOARDS.end()) << "No valid board entry found in manifest for testing.";
 
-    const auto& stBoard                                = *itValidEntry;
-    const auto& stCommand                              = stBoard.COMMANDS.front();
-    const auto& stTelemetry                            = stBoard.TELEMETRY.front();
-    const auto& stError                                = stBoard.ERRORS.front();
+    const auto& stBoard                  = *itValidEntry;
+    const auto& stCommand                = stBoard.COMMANDS.front();
+    const auto& stTelemetry              = stBoard.TELEMETRY.front();
+    const auto& stError                  = stBoard.ERRORS.front();
 
-    const std::optional<manifest::BoardEntry> stResult = manifest::Helpers::FindBoardById(stCommand.DATA_ID);
-    EXPECT_NE(stResult, std::nullopt);
-    EXPECT_EQ(stResult->ADDRESS.IP_STR(), stBoard.ADDRESS.IP_STR());
+    const manifest::BoardEntry& stResult = manifest::Helpers::FindBoardById(stCommand.DATA_ID);
+    EXPECT_EQ(stResult.ADDRESS.IP_STR(), stBoard.ADDRESS.IP_STR());
 
-    const uint16_t unInvalidBoardId                         = static_cast<int>(manifest::BOARDS.back().BOARD_ID) + 1;
-    const std::optional<manifest::BoardEntry> stBoardResult = manifest::Helpers::FindBoardById(unInvalidBoardId);
-    EXPECT_EQ(stBoardResult, std::nullopt);
+    const uint16_t unInvalidBoardId = static_cast<int>(manifest::BOARDS.back().BOARD_ID) + 1;
+    EXPECT_THROW(manifest::Helpers::FindBoardById(unInvalidBoardId), std::invalid_argument);
 
-    const std::optional<manifest::ManifestEntry> stCommandResult = manifest::Helpers::FindEntryById(stCommand.DATA_ID);
-    EXPECT_NE(stCommandResult, std::nullopt);
-    EXPECT_EQ(stCommandResult->DATA_ID, stCommand.DATA_ID);
-    EXPECT_EQ(stCommandResult->DATA_COUNT, stCommand.DATA_COUNT);
-    EXPECT_EQ(stCommandResult->DATA_TYPE, stCommand.DATA_TYPE);
+    const manifest::ManifestEntry& stCommandResult = manifest::Helpers::FindEntryById(stCommand.DATA_ID);
+    EXPECT_EQ(stCommandResult.DATA_ID, stCommand.DATA_ID);
+    EXPECT_EQ(stCommandResult.DATA_COUNT, stCommand.DATA_COUNT);
+    EXPECT_EQ(stCommandResult.DATA_TYPE, stCommand.DATA_TYPE);
 
-    const std::optional<manifest::ManifestEntry> stTelemetryResult = manifest::Helpers::FindEntryById(stTelemetry.DATA_ID);
-    EXPECT_NE(stTelemetryResult, std::nullopt);
-    EXPECT_EQ(stTelemetryResult->DATA_ID, stTelemetry.DATA_ID);
-    EXPECT_EQ(stTelemetryResult->DATA_COUNT, stTelemetry.DATA_COUNT);
-    EXPECT_EQ(stTelemetryResult->DATA_TYPE, stTelemetry.DATA_TYPE);
+    const manifest::ManifestEntry& stTelemetryResult = manifest::Helpers::FindEntryById(stTelemetry.DATA_ID);
+    EXPECT_EQ(stTelemetryResult.DATA_ID, stTelemetry.DATA_ID);
+    EXPECT_EQ(stTelemetryResult.DATA_COUNT, stTelemetry.DATA_COUNT);
+    EXPECT_EQ(stTelemetryResult.DATA_TYPE, stTelemetry.DATA_TYPE);
 
-    const std::optional<manifest::ManifestEntry> stErrorResult = manifest::Helpers::FindEntryById(stError.DATA_ID);
-    EXPECT_NE(stErrorResult, std::nullopt);
-    EXPECT_EQ(stErrorResult->DATA_ID, stError.DATA_ID);
-    EXPECT_EQ(stErrorResult->DATA_COUNT, stError.DATA_COUNT);
-    EXPECT_EQ(stErrorResult->DATA_TYPE, stError.DATA_TYPE);
+    const manifest::ManifestEntry& stErrorResult = manifest::Helpers::FindEntryById(stError.DATA_ID);
+    EXPECT_EQ(stErrorResult.DATA_ID, stError.DATA_ID);
+    EXPECT_EQ(stErrorResult.DATA_COUNT, stError.DATA_COUNT);
+    EXPECT_EQ(stErrorResult.DATA_TYPE, stError.DATA_TYPE);
 
-    uint16_t unInvalidDataId                                     = stBoard.COMMANDS.back().DATA_ID + 1;
-    const std::optional<manifest::ManifestEntry> stInvalidResult = manifest::Helpers::FindEntryById(unInvalidDataId);
-    EXPECT_EQ(stInvalidResult, std::nullopt);
+    uint16_t unInvalidDataId = stBoard.COMMANDS.back().DATA_ID + 1;
+    EXPECT_THROW(manifest::Helpers::FindEntryById(unInvalidDataId), std::invalid_argument);
 
     // Test conversion between AddressEntry and string
     const manifest::AddressEntry stAddressFromString{"192.168.1.100"};

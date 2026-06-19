@@ -154,7 +154,7 @@ def insert_includes():
     out += "#define MANIFEST_H\n"
     out += "\n"
     out += "#include <charconv>\n"
-    out += "#include <map>\n"
+    out += "#include <stdexcept>\n"
     out += "#include <stdint.h>\n"
     out += "#include <string>\n"
     out += "#include <vector>\n"
@@ -382,7 +382,7 @@ def insert_helpers():
     """
 
     # FindBoardById function
-    this.header_file.write(f"{generate_indent(2)}inline std::optional<BoardEntry> FindBoardById(uint16_t unDataId)\n")
+    this.header_file.write(f"{generate_indent(2)}inline const BoardEntry& FindBoardById(uint16_t unDataId)\n")
     this.header_file.write(f"{generate_indent(2)}{{\n")
     this.header_file.write(f"{generate_indent(3)}switch (static_cast<BoardID>(unDataId / 1000))\n")
     this.header_file.write(f"{generate_indent(3)}{{\n")
@@ -391,35 +391,31 @@ def insert_helpers():
         this.header_file.write(f"{generate_indent(4)}case BoardID::{board_name.upper()}: return BOARDS[{board_index}];\n")
         board_index += 1
     this.header_file.write(f"{generate_indent(3)}}}\n")
-    this.header_file.write(f"{generate_indent(3)}return {{}};\n")
+    this.header_file.write(f"{generate_indent(3)}throw std::invalid_argument(\"Board ID not found in manifest\");\n")
     this.header_file.write(f"{generate_indent(2)}}}\n\n")
 
 
     # FindEntryById function
-    this.header_file.write(f"{generate_indent(2)}inline std::optional<ManifestEntry> FindEntryById(uint16_t unDataId)\n")
+    this.header_file.write(f"{generate_indent(2)}inline const ManifestEntry& FindEntryById(uint16_t unDataId)\n")
     this.header_file.write(f"{generate_indent(2)}{{\n")
-    this.header_file.write(f"{generate_indent(3)}std::optional<BoardEntry> board = FindBoardById(unDataId);\n")
-    this.header_file.write(f"{generate_indent(3)}if (!board)\n")
-    this.header_file.write(f"{generate_indent(3)}{{\n")
-    this.header_file.write(f"{generate_indent(4)}return {{}};\n")
-    this.header_file.write(f"{generate_indent(3)}}}\n")
-    this.header_file.write(f"{generate_indent(3)}if (auto it = std::find_if(board->COMMANDS.begin(), board->COMMANDS.end(), [unDataId](const auto& entry) {{ return entry.DATA_ID == unDataId; }});\n")
-    this.header_file.write(f"{generate_indent(4)}it != board->COMMANDS.end())\n")
+    this.header_file.write(f"{generate_indent(3)}const BoardEntry& stBoard = FindBoardById(unDataId);\n")
+    this.header_file.write(f"{generate_indent(3)}if (auto it = std::find_if(stBoard.COMMANDS.begin(), stBoard.COMMANDS.end(), [unDataId](const auto& stBoard) {{ return stBoard.DATA_ID == unDataId; }});\n")
+    this.header_file.write(f"{generate_indent(4)}it != stBoard.COMMANDS.end())\n")
     this.header_file.write(f"{generate_indent(3)}{{\n")
     this.header_file.write(f"{generate_indent(4)}return *it;\n")
     this.header_file.write(f"{generate_indent(3)}}}\n")
-    this.header_file.write(f"{generate_indent(3)}if (auto it = std::find_if(board->TELEMETRY.begin(), board->TELEMETRY.end(), [unDataId](const auto& entry) {{ return entry.DATA_ID == unDataId; }});\n")
-    this.header_file.write(f"{generate_indent(4)}it != board->TELEMETRY.end())\n")
+    this.header_file.write(f"{generate_indent(3)}if (auto it = std::find_if(stBoard.TELEMETRY.begin(), stBoard.TELEMETRY.end(), [unDataId](const auto& stBoard) {{ return stBoard.DATA_ID == unDataId; }});\n")
+    this.header_file.write(f"{generate_indent(4)}it != stBoard.TELEMETRY.end())\n")
     this.header_file.write(f"{generate_indent(3)}{{\n")
     this.header_file.write(f"{generate_indent(4)}return *it;\n")
     this.header_file.write(f"{generate_indent(3)}}}\n")
-    this.header_file.write(f"{generate_indent(3)}if (auto it = std::find_if(board->ERRORS.begin(), board->ERRORS.end(), [unDataId](const auto& entry) {{ return entry.DATA_ID == unDataId; }});\n")
-    this.header_file.write(f"{generate_indent(4)}it != board->ERRORS.end())\n")
+    this.header_file.write(f"{generate_indent(3)}if (auto it = std::find_if(stBoard.ERRORS.begin(), stBoard.ERRORS.end(), [unDataId](const auto& stBoard) {{ return stBoard.DATA_ID == unDataId; }});\n")
+    this.header_file.write(f"{generate_indent(4)}it != stBoard.ERRORS.end())\n")
     this.header_file.write(f"{generate_indent(3)}{{\n")
     this.header_file.write(f"{generate_indent(4)}return *it;\n")
     this.header_file.write(f"{generate_indent(3)}}}\n")
-    this.header_file.write(f"{generate_indent(3)}return {{}};\n")
-    this.header_file.write(f"{generate_indent(2)}}}\n")
+    this.header_file.write(f"{generate_indent(3)}throw std::invalid_argument(\"Data ID not found in manifest\");\n")
+    this.header_file.write(f"{generate_indent(2)}}}\n\n")
 
 
     # DataTypeSize function

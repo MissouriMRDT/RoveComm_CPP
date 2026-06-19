@@ -92,7 +92,7 @@ namespace rovecomm
 
             template<typename manifest::ManifestEntry Entry>
             ssize_t Send(std::span<const EntryType<Entry>> spData,
-                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS,
+                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).ADDRESS,
                          int nPort                                 = manifest::General::ETHERNET_TCP_PORT)
             {
                 return Send(rovecomm::CreatePacket<Entry>(spData), stIPAddress, nPort);
@@ -100,7 +100,7 @@ namespace rovecomm
 
             template<typename manifest::ManifestEntry Entry>
             ssize_t Send(std::initializer_list<EntryType<Entry>> ilData,
-                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).value().ADDRESS,
+                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).ADDRESS,
                          int nPort                                 = manifest::General::ETHERNET_TCP_PORT)
             {
                 return Send(rovecomm::CreatePacket<Entry>(ilData), stIPAddress, nPort);

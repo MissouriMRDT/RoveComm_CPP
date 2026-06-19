@@ -16,7 +16,7 @@
 #define MANIFEST_H
 
 #include <charconv>
-#include <map>
+#include <stdexcept>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -1150,7 +1150,7 @@ namespace manifest
      ******************************************************************************/
     namespace Helpers
     {
-        inline std::optional<BoardEntry> FindBoardById(uint16_t unDataId)
+        inline const BoardEntry& FindBoardById(uint16_t unDataId)
         {
             switch (static_cast<BoardID>(unDataId / 1000))
             {
@@ -1167,32 +1167,28 @@ namespace manifest
                 case BoardID::RAMAN: return BOARDS[10];
                 case BoardID::ROVESOSIMULATOR: return BOARDS[11];
             }
-            return {};
+            throw std::invalid_argument("Board ID not found in manifest");
         }
 
-        inline std::optional<ManifestEntry> FindEntryById(uint16_t unDataId)
+        inline const ManifestEntry& FindEntryById(uint16_t unDataId)
         {
-            std::optional<BoardEntry> board = FindBoardById(unDataId);
-            if (!board)
-            {
-                return {};
-            }
-            if (auto it = std::find_if(board->COMMANDS.begin(), board->COMMANDS.end(), [unDataId](const auto& entry) { return entry.DATA_ID == unDataId; });
-                it != board->COMMANDS.end())
+            const BoardEntry& stBoard = FindBoardById(unDataId);
+            if (auto it = std::find_if(stBoard.COMMANDS.begin(), stBoard.COMMANDS.end(), [unDataId](const auto& stBoard) { return stBoard.DATA_ID == unDataId; });
+                it != stBoard.COMMANDS.end())
             {
                 return *it;
             }
-            if (auto it = std::find_if(board->TELEMETRY.begin(), board->TELEMETRY.end(), [unDataId](const auto& entry) { return entry.DATA_ID == unDataId; });
-                it != board->TELEMETRY.end())
+            if (auto it = std::find_if(stBoard.TELEMETRY.begin(), stBoard.TELEMETRY.end(), [unDataId](const auto& stBoard) { return stBoard.DATA_ID == unDataId; });
+                it != stBoard.TELEMETRY.end())
             {
                 return *it;
             }
-            if (auto it = std::find_if(board->ERRORS.begin(), board->ERRORS.end(), [unDataId](const auto& entry) { return entry.DATA_ID == unDataId; });
-                it != board->ERRORS.end())
+            if (auto it = std::find_if(stBoard.ERRORS.begin(), stBoard.ERRORS.end(), [unDataId](const auto& stBoard) { return stBoard.DATA_ID == unDataId; });
+                it != stBoard.ERRORS.end())
             {
                 return *it;
             }
-            return {};
+            throw std::invalid_argument("Data ID not found in manifest");
         }
 
         constexpr size_t DataTypeSize(DataTypes eDataType)
