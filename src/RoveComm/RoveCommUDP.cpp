@@ -525,24 +525,24 @@ namespace rovecomm
             RecvContext* pContext = CONTAINING_RECORD(stdLPOverlapped, RecvContext, overlapped);
 
             // Process the received data.
-            std::array<uint8_t, ROVECOMM_PACKET_MAX_DATA_SIZE>& aData = pContext->data;
-            sockaddr_in& saClientAddr                                 = pContext->addr;
+            std::span<uint8_t> spData{pContext->data.data(), stdNumberOfBytesTransferred};
+            sockaddr_in& saClientAddr = pContext->addr;
 
             // Extract data id and data type from the packet.
-            uint16_t unDataId             = (static_cast<uint16_t>(aData[1]) << 8) | static_cast<uint16_t>(aData[2]);
-            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(aData[5]);
+            uint16_t unDataId             = (static_cast<uint16_t>(spData[1]) << 8) | static_cast<uint16_t>(spData[2]);
+            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(spData[5]);
 
             switch (eDataType)
             {
-                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(aData, saClientAddr); break;
-                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(aData, saClientAddr); break;
-                case manifest::DataTypes::CHAR: ProcessPacket<char>(aData, saClientAddr); break;
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(spData, saClientAddr); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(spData, saClientAddr); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(spData, saClientAddr); break;
             }
 
             // Re-post the asynchronous receive for this context.
@@ -575,7 +575,7 @@ namespace rovecomm
         for (size_t siIter = 0; siIter < BATCH_SIZE; siIter++)
         {
             aIOVecs[siIter].iov_base            = aDataBatch[siIter].data();
-            aIOVecs[siIter].iov_len             = (*aDataBatch).size();
+            aIOVecs[siIter].iov_len             = aDataBatch[siIter].size();
             aMsgVec[siIter].msg_hdr.msg_iov     = &aIOVecs[siIter];
             aMsgVec[siIter].msg_hdr.msg_iovlen  = 1;
             aMsgVec[siIter].msg_hdr.msg_name    = &aAddrs[siIter];
@@ -608,23 +608,23 @@ namespace rovecomm
             {
                 throw std::runtime_error("Not enough data to parse RoveCommPacket header.");
             }
-            std::span<uint8_t> aData{aDataBatch[nIter].data(), siBytesReceived};
+            std::span<uint8_t> spData{aDataBatch[nIter].data(), siBytesReceived};
             sockaddr_in& saClientAddr = aAddrs[nIter];
             // Extract the data id and data type from the packet.
-            uint16_t unDataId             = (static_cast<uint16_t>(aData[1]) << 8) | static_cast<uint16_t>(aData[2]);
-            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(aData[5]);
+            uint16_t unDataId             = (static_cast<uint16_t>(spData[1]) << 8) | static_cast<uint16_t>(spData[2]);
+            manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(spData[5]);
 
             switch (eDataType)
             {
-                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(aData, saClientAddr); break;
-                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(aData, saClientAddr); break;
-                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(aData, saClientAddr); break;
-                case manifest::DataTypes::CHAR: ProcessPacket<char>(aData, saClientAddr); break;
+                case manifest::DataTypes::UINT8_T: ProcessPacket<uint8_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::INT8_T: ProcessPacket<int8_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::UINT16_T: ProcessPacket<uint16_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::INT16_T: ProcessPacket<int16_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::UINT32_T: ProcessPacket<uint32_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::INT32_T: ProcessPacket<int32_t>(spData, saClientAddr); break;
+                case manifest::DataTypes::FLOAT_T: ProcessPacket<float>(spData, saClientAddr); break;
+                case manifest::DataTypes::DOUBLE_T: ProcessPacket<double>(spData, saClientAddr); break;
+                case manifest::DataTypes::CHAR: ProcessPacket<char>(spData, saClientAddr); break;
             }
         }
 #endif

@@ -172,7 +172,7 @@ namespace rovecomm
         // Loop through data.
         static_assert(std::is_arithmetic<T>::value);
         std::span<const uint8_t> spData = spBytes.subspan(ROVECOMM_PACKET_HEADER_SIZE);
-        for (uint16_t unIt = 0; unIt < stPacket.unDataCount;)
+        for (uint16_t unIt = 0; unIt < stPacket.unDataCount * manifest::Helpers::DataTypeSize(stPacket.eDataType);)
         {
             // INT8_T, UINT8_T, CHAR
             if constexpr (manifest::Helpers::CToRoveCommType<T>::SIZE == 1)

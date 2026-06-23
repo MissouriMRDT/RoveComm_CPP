@@ -546,6 +546,39 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                 RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
             }
 
+            // ======================== DOUBLE CALLBACK ========================
+            {
+                // Test data
+                std::vector<double> vExpectedData = {-3.14, 0.0, 2.718, 1000.5};
+
+                // Add callback
+                RoveCommUDPNode.On<double>(unTestDataId,
+                                           [&](const rovecomm::RoveCommPacket<double>& stPacket)
+                                           {
+                                               bDoubleCallbackInvoked = true;
+                                               EXPECT_EQ(stPacket.unDataId, unTestDataId);
+                                               EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                               EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::DOUBLE_T);
+
+                                               for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
+                                               {
+                                                   EXPECT_DOUBLE_EQ(stPacket.vData[siI], vExpectedData[siI]);
+                                               }
+                                           });
+
+                // Create packet and test callback
+                rovecomm::RoveCommPacket<double> stPacket{.unDataId    = unTestDataId,
+                                                          .unDataCount = static_cast<uint16_t>(vExpectedData.size()),
+                                                          .eDataType   = manifest::DataTypes::DOUBLE_T,
+                                                          .vData       = vExpectedData};
+
+                // Pack the packet
+                std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
+
+                // Process the packet
+                RoveCommUDPNode.ProcessPacket<double>(vData, saUDPClientAddr);
+            }
+
             // ======================== CHAR CALLBACK ========================
             {
                 // Test data - "Hello"
