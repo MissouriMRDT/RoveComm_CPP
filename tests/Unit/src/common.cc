@@ -87,6 +87,49 @@ TEST(RoveCommUtils, PacketUtils)
     }
 }
 
+TEST(RoveCommUtils, PacketPacking)
+{
+    constexpr manifest::ManifestEntry stTestUInt32Entry{
+        .DATA_ID    = 1000,
+        .DATA_COUNT = 1,
+        .DATA_TYPE  = manifest::DataTypes::UINT32_T,
+    };
+    rovecomm::RoveCommPacket<uint32_t> stUInt32Packet = rovecomm::CreatePacket<stTestUInt32Entry>(uint32_t{0x01234567});
+    std::vector<uint8_t> vPackedData                  = rovecomm::PackPacket(stUInt32Packet);
+
+    EXPECT_EQ(vPackedData.size(), rovecomm::ROVECOMM_PACKET_HEADER_SIZE + stTestUInt32Entry.DATA_COUNT * sizeof(uint32_t));
+
+    std::span<const uint8_t> spPackedUInt32Data(vPackedData.data() + rovecomm::ROVECOMM_PACKET_HEADER_SIZE, stTestUInt32Entry.DATA_COUNT * sizeof(uint32_t));
+    EXPECT_EQ(spPackedUInt32Data[0], 0x01);
+    EXPECT_EQ(spPackedUInt32Data[1], 0x23);
+    EXPECT_EQ(spPackedUInt32Data[2], 0x45);
+    EXPECT_EQ(spPackedUInt32Data[3], 0x67);
+
+    rovecomm::RoveCommPacket<uint32_t> stUnpackedPacket = rovecomm::UnpackData<uint32_t>(vPackedData);
+    EXPECT_EQ(stUnpackedPacket.unDataId, stTestUInt32Entry.DATA_ID);
+    EXPECT_EQ(stUnpackedPacket.unDataCount, stTestUInt32Entry.DATA_COUNT);
+    EXPECT_EQ(stUnpackedPacket.eDataType, stTestUInt32Entry.DATA_TYPE);
+    EXPECT_EQ(stUnpackedPacket.vData.size(), stTestUInt32Entry.DATA_COUNT);
+    EXPECT_EQ(stUnpackedPacket.vData[0], 0x01234567);
+
+    constexpr manifest::ManifestEntry stTestFloatEntry{
+        .DATA_ID    = 1000,
+        .DATA_COUNT = 1,
+        .DATA_TYPE  = manifest::DataTypes::FLOAT_T,
+    };
+
+    rovecomm::RoveCommPacket<float> stFloatPacket = rovecomm::CreatePacket<stTestFloatEntry>(3.14f);
+    std::vector<uint8_t> vPackedFloatData         = rovecomm::PackPacket(stFloatPacket);
+    EXPECT_EQ(vPackedFloatData.size(), rovecomm::ROVECOMM_PACKET_HEADER_SIZE + stTestFloatEntry.DATA_COUNT * sizeof(float));
+
+    rovecomm::RoveCommPacket<float> stUnpackedFloatPacket = rovecomm::UnpackData<float>(vPackedFloatData);
+    EXPECT_EQ(stUnpackedFloatPacket.unDataId, stTestFloatEntry.DATA_ID);
+    EXPECT_EQ(stUnpackedFloatPacket.unDataCount, stTestFloatEntry.DATA_COUNT);
+    EXPECT_EQ(stUnpackedFloatPacket.eDataType, stTestFloatEntry.DATA_TYPE);
+    EXPECT_EQ(stUnpackedFloatPacket.vData.size(), stTestFloatEntry.DATA_COUNT);
+    EXPECT_FLOAT_EQ(stUnpackedFloatPacket.vData[0], 3.14f);
+}
+
 /******************************************************************************
  * @brief Main function for running the tests.
  *

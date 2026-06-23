@@ -128,6 +128,22 @@ namespace rovecomm
                 On(Entry.DATA_ID, fnCallback);
             }
 
+            ssize_t Subscribe(const manifest::AddressEntry& stIPAddress, int nPort = manifest::General::ETHERNET_UDP_PORT)
+            {
+                return Send(
+                    RoveCommPacket<uint8_t>{.unDataId = manifest::System::SUBSCRIBE_DATA_ID, .unDataCount = 0, .eDataType = manifest::DataTypes::UINT8_T, .vData = {}},
+                    stIPAddress,
+                    nPort);
+            }
+
+            ssize_t Unsubscribe(const manifest::AddressEntry& stIPAddress, int nPort = manifest::General::ETHERNET_UDP_PORT)
+            {
+                return Send(
+                    RoveCommPacket<uint8_t>{.unDataId = manifest::System::UNSUBSCRIBE_DATA_ID, .unDataCount = 0, .eDataType = manifest::DataTypes::UINT8_T, .vData = {}},
+                    stIPAddress,
+                    nPort);
+            }
+
             template<typename T>
             void Clear(const uint16_t unDataId);
 

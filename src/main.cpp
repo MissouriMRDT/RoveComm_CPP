@@ -33,6 +33,7 @@ using namespace rovecomm;
  ******************************************************************************/
 int main()
 {
+    using namespace std::literals::chrono_literals;
     // Print Software Header
     std::ifstream fHeaderText("../data/ASCII/v3.txt");
     std::string szHeaderText;
@@ -113,14 +114,8 @@ int main()
     pRoveCommUDP_Node.Send<STARTAUTONOMY>({200}, "127.0.0.1", 11000);
     pRoveCommTCP_Node.Send<STARTAUTONOMY>({200}, "127.0.0.1", 12000);
 
-    for (int i = 0; i < 10; i++)
-        pRoveCommUDP_Node.Send<STARTAUTONOMY>({201});
-
-    for (int i = 0; i < 10; i++)
-        pRoveCommUDP_Node.Send(rovecomm::CreatePacket<STARTAUTONOMY>(202));
-
     // Wait for packets to be processed.
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(500ms);
 
     // Remove the callback functions for UINT8_T data type from the UDP and TCP nodes
     pRoveCommUDP_Node.Clear<STARTAUTONOMY>();
@@ -134,7 +129,43 @@ int main()
     pRoveCommTCP_Node.Send(stPacket, "127.0.0.1", 12000);
 
     // Wait for packets to be processed.
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(500ms);
+
+    // Open remote UDP node to subscribe to the local UDP node.
+    RoveCommUDP pRemoteRoveCommUDP_Node;
+    if (pRemoteRoveCommUDP_Node.Init(11003))
+    {
+        std::cout << "Remote UDP Node Initialized." << std::endl;
+    }
+
+    pRemoteRoveCommUDP_Node.Subscribe("127.0.0.1", 11000);
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
+
+    pRemoteRoveCommUDP_Node.On<STARTAUTONOMY>(
+        [](const auto& stPacket)
+        {
+            (void) stPacket;
+            std::cout << "Remote UDP Callback" << std::endl;
+        });
+
+    // Will send to subscribers, including the remote node
+    pRoveCommUDP_Node.Send<STARTAUTONOMY>({200});
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
+
+    pRemoteRoveCommUDP_Node.Unsubscribe("127.0.0.1", 11000);
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
+
+    // Callback should not be invoked since we unsubscribed the remote node.
+    pRoveCommUDP_Node.Send<STARTAUTONOMY>({200});
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
 
     // Close the UDP and TCP sockets
     pRoveCommUDP_Node.Close();

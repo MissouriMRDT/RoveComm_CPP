@@ -95,9 +95,9 @@ namespace rovecomm
     template<manifest::ManifestEntry Entry>
     RoveCommPacket<EntryType<Entry>> CreatePacket()
     {
-        RoveCommPacket<EntryType<Entry>> ret{.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE};
-        ret.vData.resize(ret.unDataCount);
-        return ret;
+        RoveCommPacket<EntryType<Entry>> stPacket{.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE, .vData = {}};
+        stPacket.vData.resize(stPacket.unDataCount);
+        return stPacket;
     }
 
     template<manifest::ManifestEntry Entry, manifest::RoveCommType... Args>
