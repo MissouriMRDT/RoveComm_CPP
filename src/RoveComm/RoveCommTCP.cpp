@@ -187,7 +187,7 @@ namespace rovecomm
         // Pack the data
         std::vector<uint8_t> vData = PackPacket(stPacket);
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
-        size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
+        size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + stPacket.GetDataSize();
 
         // Acquire a write lock on the socket send mutex to protect the socket, which is shared between threads, but not thread-safe.
         std::unique_lock<std::mutex> lkSocketSendLock(m_muSocketSendMutex);

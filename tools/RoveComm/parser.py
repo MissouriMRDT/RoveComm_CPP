@@ -213,10 +213,10 @@ def insert_address_struct():
     out = generate_indent(1) + "struct AddressEntry\n"
     out += generate_indent(1) + "{\n"
     out += generate_indent(2) + "public:\n"
-    out += generate_indent(3) + "int FIRST_OCTET;\n"
-    out += generate_indent(3) + "int SECOND_OCTET;\n"
-    out += generate_indent(3) + "int THIRD_OCTET;\n"
-    out += generate_indent(3) + "int FOURTH_OCTET;\n\n"
+    out += generate_indent(3) + "int FIRST_OCTET{};\n"
+    out += generate_indent(3) + "int SECOND_OCTET{};\n"
+    out += generate_indent(3) + "int THIRD_OCTET{};\n"
+    out += generate_indent(3) + "int FOURTH_OCTET{};\n\n"
     out += generate_indent(3) + "constexpr AddressEntry(int first, int second, int third, int fourth) noexcept :\n"
     out += generate_indent(4) + "FIRST_OCTET(first), SECOND_OCTET(second), THIRD_OCTET(third), FOURTH_OCTET(fourth)\n"
     out += generate_indent(3) + "{}\n\n"
@@ -624,7 +624,7 @@ if __name__ == "__main__":
 
     ## Add AddressEntry Struct
     lines_index = 0
-    lines = generate_doxygen_block("IP Address Object for RoveComm.").split("\n")
+    lines = generate_doxygen_block("IP Address Object for RoveComm. Default is 0.0.0.0").split("\n")
     for line in lines:
         if lines_index < len(lines) - 1:
             this.header_file.write(generate_indent(1) + line + "\n")

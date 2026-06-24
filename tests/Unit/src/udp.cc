@@ -110,20 +110,17 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             // ======================== UINT8_T TESTS ========================
             {
                 // Small packet (1 element)
-                rovecomm::RoveCommPacket<uint8_t> stSmallPacket{.unDataId    = unTestDataId,
-                                                                .unDataCount = 1,
-                                                                .eDataType   = manifest::DataTypes::UINT8_T,
-                                                                .vData       = {UINT8_MAX}};
+                rovecomm::RoveCommPacket<uint8_t> stSmallPacket{.unDataId = unTestDataId, .vData = {UINT8_MAX}};
 
                 // Medium packet (10 elements)
-                rovecomm::RoveCommPacket<uint8_t> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::UINT8_T, .vData = {}};
+                rovecomm::RoveCommPacket<uint8_t> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (uint8_t ucI = 0; ucI < 10; ucI++)
                 {
                     stMediumPacket.vData.push_back(ucI * 25);    // Values 0, 25, 50, 75, 100, 125, 150, 175, 200, 225
                 }
 
                 // Large packet (100 elements)
-                rovecomm::RoveCommPacket<uint8_t> stLargePacket{.unDataId = unTestDataId, .unDataCount = 100, .eDataType = manifest::DataTypes::UINT8_T, .vData = {}};
+                rovecomm::RoveCommPacket<uint8_t> stLargePacket{.unDataId = unTestDataId, .vData = {}};
                 for (int nI = 0; nI < 100; nI++)
                 {
                     stLargePacket.vData.push_back(nI % 256);
@@ -143,20 +140,17 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             // ======================== UINT16_T TESTS ========================
             {
                 // Small packet (1 element)
-                rovecomm::RoveCommPacket<uint16_t> stSmallPacket{.unDataId    = unTestDataId,
-                                                                 .unDataCount = 1,
-                                                                 .eDataType   = manifest::DataTypes::UINT16_T,
-                                                                 .vData       = {UINT16_MAX}};
+                rovecomm::RoveCommPacket<uint16_t> stSmallPacket{.unDataId = unTestDataId, .vData = {UINT16_MAX}};
 
                 // Medium packet (10 elements)
-                rovecomm::RoveCommPacket<uint16_t> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::UINT16_T, .vData = {}};
+                rovecomm::RoveCommPacket<uint16_t> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (uint16_t usI = 0; usI < 10; usI++)
                 {
                     stMediumPacket.vData.push_back(usI * 6000);
                 }
 
                 // Large packet (50 elements)
-                rovecomm::RoveCommPacket<uint16_t> stLargePacket{.unDataId = unTestDataId, .unDataCount = 50, .eDataType = manifest::DataTypes::UINT16_T, .vData = {}};
+                rovecomm::RoveCommPacket<uint16_t> stLargePacket{.unDataId = unTestDataId, .vData = {}};
                 for (int nI = 0; nI < 50; nI++)
                 {
                     stLargePacket.vData.push_back(nI * 1000);
@@ -177,14 +171,12 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             {
                 // Small packet (1 element)
                 rovecomm::RoveCommPacket<uint32_t> stSmallPacket{
-                    .unDataId    = unTestDataId,
-                    .unDataCount = 1,
-                    .eDataType   = manifest::DataTypes::UINT32_T,
-                    .vData       = {UINT32_MAX},
+                    .unDataId = unTestDataId,
+                    .vData    = {UINT32_MAX},
                 };
 
                 // Medium packet (10 elements)
-                rovecomm::RoveCommPacket<uint32_t> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::UINT32_T, .vData = {}};
+                rovecomm::RoveCommPacket<uint32_t> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (uint32_t unI = 0; unI < 10; unI++)
                 {
                     stMediumPacket.vData.push_back(unI * 400000000);
@@ -202,14 +194,12 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             {
                 // Small packet (1 element)
                 rovecomm::RoveCommPacket<int8_t> stSmallPacket{
-                    .unDataId    = unTestDataId,
-                    .unDataCount = 1,
-                    .eDataType   = manifest::DataTypes::INT8_T,
-                    .vData       = {INT8_MIN},
+                    .unDataId = unTestDataId,
+                    .vData    = {INT8_MIN},
                 };
 
                 // Medium packet (10 elements) with positive and negative values
-                rovecomm::RoveCommPacket<int8_t> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::INT8_T, .vData = {}};
+                rovecomm::RoveCommPacket<int8_t> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (int nI = 0; nI < 10; nI++)
                 {
                     stMediumPacket.vData.push_back(nI < 5 ? -nI * 20 : nI * 10);
@@ -226,13 +216,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             // ======================== INT16_T TESTS ========================
             {
                 // Small packet (1 element)
-                rovecomm::RoveCommPacket<int16_t> stSmallPacket{.unDataId    = unTestDataId,
-                                                                .unDataCount = 1,
-                                                                .eDataType   = manifest::DataTypes::INT16_T,
-                                                                .vData       = {INT16_MIN}};
+                rovecomm::RoveCommPacket<int16_t> stSmallPacket{.unDataId = unTestDataId, .vData = {INT16_MIN}};
 
                 // Medium packet (10 elements)
-                rovecomm::RoveCommPacket<int16_t> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::INT16_T, .vData = {}};
+                rovecomm::RoveCommPacket<int16_t> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (int nI = 0; nI < 10; nI++)
                 {
                     stMediumPacket.vData.push_back(nI < 5 ? -nI * 5000 : nI * 3000);
@@ -249,13 +236,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             // ======================== INT32_T TESTS ========================
             {
                 // Small packet (1 element)
-                rovecomm::RoveCommPacket<int32_t> stSmallPacket{.unDataId    = unTestDataId,
-                                                                .unDataCount = 1,
-                                                                .eDataType   = manifest::DataTypes::INT32_T,
-                                                                .vData       = {INT32_MIN}};
+                rovecomm::RoveCommPacket<int32_t> stSmallPacket{.unDataId = unTestDataId, .vData = {INT32_MIN}};
 
                 // Medium packet (10 elements)
-                rovecomm::RoveCommPacket<int32_t> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::INT32_T, .vData = {}};
+                rovecomm::RoveCommPacket<int32_t> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (int nI = 0; nI < 10; nI++)
                 {
                     stMediumPacket.vData.push_back(nI < 5 ? -nI * 400000000 : nI * 300000000);
@@ -272,10 +256,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             // ======================== FLOAT TESTS ========================
             {
                 // Small packet (1 element)
-                rovecomm::RoveCommPacket<float> stSmallPacket{.unDataId = unTestDataId, .unDataCount = 1, .eDataType = manifest::DataTypes::FLOAT_T, .vData = {3.14159f}};
+                rovecomm::RoveCommPacket<float> stSmallPacket{.unDataId = unTestDataId, .vData = {3.14159f}};
 
                 // Medium packet (10 elements)
-                rovecomm::RoveCommPacket<float> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::FLOAT_T, .vData = {}};
+                rovecomm::RoveCommPacket<float> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (int nI = 0; nI < 10; nI++)
                 {
                     stMediumPacket.vData.push_back(nI * 0.5f);
@@ -292,13 +276,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             // ======================== DOUBLE TESTS ========================
             {
                 // Small packet (1 element)
-                rovecomm::RoveCommPacket<double> stSmallPacket{.unDataId    = unTestDataId,
-                                                               .unDataCount = 1,
-                                                               .eDataType   = manifest::DataTypes::DOUBLE_T,
-                                                               .vData       = {3.14159265358979323846}};
+                rovecomm::RoveCommPacket<double> stSmallPacket{.unDataId = unTestDataId, .vData = {3.14159265358979323846}};
 
                 // Medium packet (10 elements)
-                rovecomm::RoveCommPacket<double> stMediumPacket{.unDataId = unTestDataId, .unDataCount = 10, .eDataType = manifest::DataTypes::DOUBLE_T, .vData = {}};
+                rovecomm::RoveCommPacket<double> stMediumPacket{.unDataId = unTestDataId, .vData = {}};
                 for (int nI = 0; nI < 10; nI++)
                 {
                     stMediumPacket.vData.push_back(nI * 0.333333333333333);
@@ -316,28 +297,22 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
             {
                 // Small packet (1 element)
                 rovecomm::RoveCommPacket<char> stSmallPacket{
-                    .unDataId    = unTestDataId,
-                    .unDataCount = 1,
-                    .eDataType   = manifest::DataTypes::CHAR,
-                    .vData       = {'X'},
+                    .unDataId = unTestDataId,
+                    .vData    = {'X'},
                 };
 
                 // Medium packet - string "Hello World!"
                 std::string szMessage = "Hello World!";
                 rovecomm::RoveCommPacket<char> stMediumPacket{
-                    .unDataId    = unTestDataId,
-                    .unDataCount = static_cast<uint16_t>(szMessage.size()),
-                    .eDataType   = manifest::DataTypes::CHAR,
-                    .vData       = {szMessage.begin(), szMessage.end()},
+                    .unDataId = unTestDataId,
+                    .vData    = {szMessage.begin(), szMessage.end()},
                 };
 
                 // Large packet - Lorem ipsum
                 std::string szLoremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
                 rovecomm::RoveCommPacket<char> stLargePacket{
-                    .unDataId    = unTestDataId,
-                    .unDataCount = static_cast<uint16_t>(szLoremIpsum.size()),
-                    .eDataType   = manifest::DataTypes::CHAR,
-                    .vData       = {szLoremIpsum.begin(), szLoremIpsum.end()},
+                    .unDataId = unTestDataId,
+                    .vData    = {szLoremIpsum.begin(), szLoremIpsum.end()},
                 };
 
                 // Send and verify
@@ -425,7 +400,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                             {
                                                 bUint8CallbackInvoked = true;
                                                 EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                                                EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                                EXPECT_EQ(stPacket.GetDataCount(), vExpectedData.size());
                                                 EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::UINT8_T);
 
                                                 for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
@@ -435,10 +410,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                             });
 
                 // Create packet and test callback
-                rovecomm::RoveCommPacket<uint8_t> stPacket{.unDataId    = unTestDataId,
-                                                           .unDataCount = static_cast<uint16_t>(vExpectedData.size()),
-                                                           .eDataType   = manifest::DataTypes::UINT8_T,
-                                                           .vData       = vExpectedData};
+                rovecomm::RoveCommPacket<uint8_t> stPacket{.unDataId = unTestDataId, .vData = vExpectedData};
 
                 // Pack the packet
                 std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
@@ -458,7 +430,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                              {
                                                  bUint16CallbackInvoked = true;
                                                  EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                                                 EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                                 EXPECT_EQ(stPacket.GetDataCount(), vExpectedData.size());
                                                  EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::UINT16_T);
 
                                                  for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
@@ -468,10 +440,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                              });
 
                 // Create packet and test callback
-                rovecomm::RoveCommPacket<uint16_t> stPacket{.unDataId    = unTestDataId,
-                                                            .unDataCount = static_cast<uint16_t>(vExpectedData.size()),
-                                                            .eDataType   = manifest::DataTypes::UINT16_T,
-                                                            .vData       = vExpectedData};
+                rovecomm::RoveCommPacket<uint16_t> stPacket{.unDataId = unTestDataId, .vData = vExpectedData};
 
                 // Pack the packet
                 std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
@@ -491,7 +460,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                             {
                                                 bInt32CallbackInvoked = true;
                                                 EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                                                EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                                EXPECT_EQ(stPacket.GetDataCount(), vExpectedData.size());
                                                 EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::INT32_T);
 
                                                 for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
@@ -501,10 +470,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                             });
 
                 // Create packet and test callback
-                rovecomm::RoveCommPacket<int32_t> stPacket{.unDataId    = unTestDataId,
-                                                           .unDataCount = static_cast<uint16_t>(vExpectedData.size()),
-                                                           .eDataType   = manifest::DataTypes::INT32_T,
-                                                           .vData       = vExpectedData};
+                rovecomm::RoveCommPacket<int32_t> stPacket{.unDataId = unTestDataId, .vData = vExpectedData};
 
                 // Pack the packet
                 std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
@@ -524,7 +490,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                           {
                                               bFloatCallbackInvoked = true;
                                               EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                                              EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                              EXPECT_EQ(stPacket.GetDataCount(), vExpectedData.size());
                                               EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::FLOAT_T);
 
                                               for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
@@ -534,10 +500,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                           });
 
                 // Create packet and test callback
-                rovecomm::RoveCommPacket<float> stPacket{.unDataId    = unTestDataId,
-                                                         .unDataCount = static_cast<uint16_t>(vExpectedData.size()),
-                                                         .eDataType   = manifest::DataTypes::FLOAT_T,
-                                                         .vData       = vExpectedData};
+                rovecomm::RoveCommPacket<float> stPacket{.unDataId = unTestDataId, .vData = vExpectedData};
 
                 // Pack the packet
                 std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
@@ -557,7 +520,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                            {
                                                bDoubleCallbackInvoked = true;
                                                EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                                               EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                               EXPECT_EQ(stPacket.GetDataCount(), vExpectedData.size());
                                                EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::DOUBLE_T);
 
                                                for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
@@ -567,10 +530,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                            });
 
                 // Create packet and test callback
-                rovecomm::RoveCommPacket<double> stPacket{.unDataId    = unTestDataId,
-                                                          .unDataCount = static_cast<uint16_t>(vExpectedData.size()),
-                                                          .eDataType   = manifest::DataTypes::DOUBLE_T,
-                                                          .vData       = vExpectedData};
+                rovecomm::RoveCommPacket<double> stPacket{.unDataId = unTestDataId, .vData = vExpectedData};
 
                 // Pack the packet
                 std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
@@ -591,7 +551,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                          {
                                              bCharCallbackInvoked = true;
                                              EXPECT_EQ(stPacket.unDataId, unTestDataId);
-                                             EXPECT_EQ(stPacket.unDataCount, vExpectedData.size());
+                                             EXPECT_EQ(stPacket.GetDataCount(), vExpectedData.size());
                                              EXPECT_EQ(stPacket.eDataType, manifest::DataTypes::CHAR);
 
                                              for (size_t siI = 0; siI < stPacket.vData.size(); siI++)
@@ -601,10 +561,7 @@ TEST(RoveCommUDP, CallbackMultipleDataTypes)
                                          });
 
                 // Create packet and test callback
-                rovecomm::RoveCommPacket<char> stPacket{.unDataId    = unTestDataId,
-                                                        .unDataCount = static_cast<uint16_t>(vExpectedData.size()),
-                                                        .eDataType   = manifest::DataTypes::CHAR,
-                                                        .vData       = vExpectedData};
+                rovecomm::RoveCommPacket<char> stPacket{.unDataId = unTestDataId, .vData = vExpectedData};
 
                 // Pack the packet
                 std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);

@@ -39,13 +39,12 @@ TEST(RoveCommUtils, PacketUtils)
 
     stPacket = rovecomm::CreatePacket<stTestEntry>();
     EXPECT_EQ(stPacket.unDataId, stTestEntry.DATA_ID);
-    EXPECT_EQ(stPacket.unDataCount, stTestEntry.DATA_COUNT);
+    EXPECT_EQ(stPacket.GetDataCount(), stTestEntry.DATA_COUNT);
     EXPECT_EQ(stPacket.eDataType, stTestEntry.DATA_TYPE);
-    EXPECT_EQ(stPacket.vData.size(), stTestEntry.DATA_COUNT);
 
     stPacket = rovecomm::CreatePacket<stTestEntry>(1, 2, 3);
     EXPECT_EQ(stPacket.unDataId, stTestEntry.DATA_ID);
-    EXPECT_EQ(stPacket.unDataCount, stTestEntry.DATA_COUNT);
+    EXPECT_EQ(stPacket.GetDataCount(), stTestEntry.DATA_COUNT);
     EXPECT_EQ(stPacket.eDataType, stTestEntry.DATA_TYPE);
     EXPECT_EQ(stPacket.vData[0], 1);
     EXPECT_EQ(stPacket.vData[1], 2);
@@ -53,7 +52,7 @@ TEST(RoveCommUtils, PacketUtils)
 
     stPacket = rovecomm::CreatePacket<stTestEntry>({1, 2, 3});
     EXPECT_EQ(stPacket.unDataId, stTestEntry.DATA_ID);
-    EXPECT_EQ(stPacket.unDataCount, stTestEntry.DATA_COUNT);
+    EXPECT_EQ(stPacket.GetDataCount(), stTestEntry.DATA_COUNT);
     EXPECT_EQ(stPacket.eDataType, stTestEntry.DATA_TYPE);
     EXPECT_EQ(stPacket.vData[0], 1);
     EXPECT_EQ(stPacket.vData[1], 2);
@@ -62,7 +61,7 @@ TEST(RoveCommUtils, PacketUtils)
     std::array<int32_t, stTestEntry.DATA_COUNT> aData = {1, 2, 3};
     stPacket                                          = rovecomm::CreatePacket<stTestEntry>(aData);
     EXPECT_EQ(stPacket.unDataId, stTestEntry.DATA_ID);
-    EXPECT_EQ(stPacket.unDataCount, stTestEntry.DATA_COUNT);
+    EXPECT_EQ(stPacket.GetDataCount(), stTestEntry.DATA_COUNT);
     EXPECT_EQ(stPacket.eDataType, stTestEntry.DATA_TYPE);
     EXPECT_EQ(stPacket.vData[0], 1);
     EXPECT_EQ(stPacket.vData[1], 2);
@@ -77,10 +76,9 @@ TEST(RoveCommUtils, PacketUtils)
 
     rovecomm::RoveCommPacket<char> stCharPacket = rovecomm::CreatePacket<stCharTestEntry>(szData);
     EXPECT_EQ(stCharPacket.unDataId, stCharTestEntry.DATA_ID);
-    EXPECT_EQ(stCharPacket.unDataCount, stCharTestEntry.DATA_COUNT);
+    EXPECT_EQ(stCharPacket.GetDataCount(), stCharTestEntry.DATA_COUNT);
     EXPECT_EQ(stCharPacket.eDataType, stCharTestEntry.DATA_TYPE);
     // Data should be the string followed by null characters to fill the rest of the packet
-    EXPECT_EQ(stCharPacket.vData.size(), stCharTestEntry.DATA_COUNT);
     for (size_t siI = 0; siI < szData.size(); siI++)
     {
         EXPECT_EQ(stCharPacket.vData[siI], szData[siI]);
@@ -107,9 +105,8 @@ TEST(RoveCommUtils, PacketPacking)
 
     rovecomm::RoveCommPacket<uint32_t> stUnpackedPacket = rovecomm::UnpackData<uint32_t>(vPackedData);
     EXPECT_EQ(stUnpackedPacket.unDataId, stTestUInt32Entry.DATA_ID);
-    EXPECT_EQ(stUnpackedPacket.unDataCount, stTestUInt32Entry.DATA_COUNT);
+    EXPECT_EQ(stUnpackedPacket.GetDataCount(), stTestUInt32Entry.DATA_COUNT);
     EXPECT_EQ(stUnpackedPacket.eDataType, stTestUInt32Entry.DATA_TYPE);
-    EXPECT_EQ(stUnpackedPacket.vData.size(), stTestUInt32Entry.DATA_COUNT);
     EXPECT_EQ(stUnpackedPacket.vData[0], 0x01234567);
 
     constexpr manifest::ManifestEntry stTestFloatEntry{
@@ -124,9 +121,8 @@ TEST(RoveCommUtils, PacketPacking)
 
     rovecomm::RoveCommPacket<float> stUnpackedFloatPacket = rovecomm::UnpackData<float>(vPackedFloatData);
     EXPECT_EQ(stUnpackedFloatPacket.unDataId, stTestFloatEntry.DATA_ID);
-    EXPECT_EQ(stUnpackedFloatPacket.unDataCount, stTestFloatEntry.DATA_COUNT);
+    EXPECT_EQ(stUnpackedFloatPacket.GetDataCount(), stTestFloatEntry.DATA_COUNT);
     EXPECT_EQ(stUnpackedFloatPacket.eDataType, stTestFloatEntry.DATA_TYPE);
-    EXPECT_EQ(stUnpackedFloatPacket.vData.size(), stTestFloatEntry.DATA_COUNT);
     EXPECT_FLOAT_EQ(stUnpackedFloatPacket.vData[0], 3.14f);
 }
 

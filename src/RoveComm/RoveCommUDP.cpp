@@ -217,7 +217,7 @@ namespace rovecomm
         // Pack the RoveCommPacket into a RoveCommData structure
         std::vector<uint8_t> vData = PackPacket(stPacket);
         // Get size of data not including the data not filled. (the null/zero data in RoveCommData)
-        size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + (sizeof(T) * stPacket.unDataCount);
+        size_t siDataSize = ROVECOMM_PACKET_HEADER_SIZE + stPacket.GetDataSize();
 
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
         // Setup the base UDP client address

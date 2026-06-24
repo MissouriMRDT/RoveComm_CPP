@@ -75,9 +75,14 @@ namespace rovecomm
     {
         public:
             uint16_t unDataId{};
-            uint16_t unDataCount{};
-            manifest::DataTypes eDataType{};
             std::vector<T> vData;
+            static constexpr manifest::DataTypes eDataType = manifest::Helpers::CToRoveCommType<T>::TYPE;
+
+            uint16_t GetDataCount() const { return static_cast<uint16_t>(vData.size()); }
+
+            size_t GetDataSize() const { return static_cast<uint16_t>(vData.size() * manifest::Helpers::DataTypeSize(eDataType)); }
+
+            uint8_t GetDataType() const { return static_cast<uint8_t>(eDataType); }
     };
 
     // RoveCommPacket and RoveCommData packing and unpacking functions
@@ -95,8 +100,8 @@ namespace rovecomm
     template<manifest::ManifestEntry Entry>
     RoveCommPacket<EntryType<Entry>> CreatePacket()
     {
-        RoveCommPacket<EntryType<Entry>> stPacket{.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE, .vData = {}};
-        stPacket.vData.resize(stPacket.unDataCount);
+        RoveCommPacket<EntryType<Entry>> stPacket{.unDataId = Entry.DATA_ID, .vData = {}};
+        stPacket.vData.resize(Entry.DATA_COUNT);
         return stPacket;
     }
 
@@ -106,16 +111,13 @@ namespace rovecomm
         // Assume that the user expects the data count to be exactly correct since they are entering the arguments directly.
         // The runtime functions will extend or truncate the data as needed.
         static_assert(sizeof...(Args) == Entry.DATA_COUNT, "The number of arguments provided does not match the data count specified in the manifest entry.");
-        return {.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE, .vData = {args...}};
+        return {.unDataId = Entry.DATA_ID, .vData = {args...}};
     }
 
     template<manifest::ManifestEntry Entry>
     RoveCommPacket<EntryType<Entry>> CreatePacket(std::span<const EntryType<Entry>> spData)
     {
-        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId    = Entry.DATA_ID,
-                                                     .unDataCount = Entry.DATA_COUNT,
-                                                     .eDataType   = Entry.DATA_TYPE,
-                                                     .vData       = {spData.begin(), spData.end()}};
+        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId = Entry.DATA_ID, .vData = {spData.begin(), spData.end()}};
         stPacket.vData.resize(Entry.DATA_COUNT);
         return stPacket;
     }
@@ -123,7 +125,7 @@ namespace rovecomm
     template<manifest::ManifestEntry Entry>
     RoveCommPacket<EntryType<Entry>> CreatePacket(std::initializer_list<EntryType<Entry>> ilData)
     {
-        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId = Entry.DATA_ID, .unDataCount = Entry.DATA_COUNT, .eDataType = Entry.DATA_TYPE, .vData = ilData};
+        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId = Entry.DATA_ID, .vData = ilData};
         stPacket.vData.resize(Entry.DATA_COUNT);
         return stPacket;
     }

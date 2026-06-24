@@ -43,7 +43,7 @@ namespace rovecomm
     template<typename T>
     std::vector<uint8_t> PackPacket(const RoveCommPacket<T>& stPacket)
     {
-        size_t siPacketSize = ROVECOMM_PACKET_HEADER_SIZE + stPacket.unDataCount * manifest::Helpers::DataTypeSize(stPacket.eDataType);
+        size_t siPacketSize = ROVECOMM_PACKET_HEADER_SIZE + stPacket.GetDataSize();
         if (siPacketSize > ROVECOMM_PACKET_MAX_DATA_SIZE)
         {
             throw std::runtime_error("RoveComm Packet Exceeds Maximum Packet Size.");
@@ -59,15 +59,14 @@ namespace rovecomm
         vData.push_back(stPacket.unDataId);
 
         // The next two bytes are the data count
-        vData.push_back(stPacket.unDataCount >> 8);
-        vData.push_back(stPacket.unDataCount);
+        vData.push_back(stPacket.GetDataCount() >> 8);
+        vData.push_back(stPacket.GetDataCount());
 
         // The next byte is the data type
-        vData.push_back(static_cast<uint8_t>(stPacket.eDataType));
+        vData.push_back(stPacket.GetDataType());
 
         // The rest of the data is the data payload
         // Loop through data.
-        static_assert(std::is_arithmetic_v<T>);
         for (T tEl : stPacket.vData)
         {
             // INT8_T, UINT8_T, CHAR
@@ -152,27 +151,26 @@ namespace rovecomm
         RoveCommPacket<T> stPacket;
 
         // Extract data from spBytes and fill stPacket
-        stPacket.unDataId    = (spBytes[1] << 8) | spBytes[2];
-        stPacket.unDataCount = (spBytes[3] << 8) | spBytes[4];
-        stPacket.eDataType   = static_cast<manifest::DataTypes>(spBytes[5]);
+        stPacket.unDataId             = (spBytes[1] << 8) | spBytes[2];
+        uint16_t unDataCount          = (spBytes[3] << 8) | spBytes[4];
+        manifest::DataTypes eDataType = static_cast<manifest::DataTypes>(spBytes[5]);
 
-        size_t siPacketSize  = ROVECOMM_PACKET_HEADER_SIZE + stPacket.unDataCount * manifest::Helpers::DataTypeSize(stPacket.eDataType);
+        size_t siPacketSize           = ROVECOMM_PACKET_HEADER_SIZE + unDataCount * manifest::Helpers::DataTypeSize(eDataType);
         if (spBytes.size() < siPacketSize)
         {
             throw std::runtime_error("Packet header did not match packet size.");
         }
-        if (manifest::Helpers::CToRoveCommType<T>::TYPE != stPacket.eDataType)
+        if (manifest::Helpers::CToRoveCommType<T>::TYPE != eDataType)
         {
             throw std::runtime_error("Packet data type does not match.");
         }
 
         // Copy the data payload from spBytes to stPacket's vData vector
-        stPacket.vData.reserve(stPacket.unDataCount);
+        stPacket.vData.reserve(unDataCount);
 
         // Loop through data.
-        static_assert(std::is_arithmetic<T>::value);
         std::span<const uint8_t> spData = spBytes.subspan(ROVECOMM_PACKET_HEADER_SIZE);
-        for (uint16_t unIt = 0; unIt < stPacket.unDataCount * manifest::Helpers::DataTypeSize(stPacket.eDataType);)
+        for (uint16_t unIt = 0; unIt < unDataCount * manifest::Helpers::DataTypeSize(eDataType);)
         {
             // INT8_T, UINT8_T, CHAR
             if constexpr (manifest::Helpers::CToRoveCommType<T>::SIZE == 1)

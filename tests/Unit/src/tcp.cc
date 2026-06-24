@@ -90,17 +90,13 @@ TEST(RoveCommTCP, SendTCPPacket)
             }
 
             // Create RoveCommPacket
-            rovecomm::RoveCommPacket<uint8_t> stPacket;
-            stPacket.unDataId    = manifest::Autonomy::Commands::STARTAUTONOMY.DATA_ID;
-            stPacket.unDataCount = manifest::Autonomy::Commands::STARTAUTONOMY.DATA_COUNT;
-            stPacket.eDataType   = manifest::Autonomy::Commands::STARTAUTONOMY.DATA_TYPE;
-            stPacket.vData.push_back(1);
+            rovecomm::RoveCommPacket<uint8_t> stPacket{manifest::Autonomy::Commands::STARTAUTONOMY.DATA_ID, {1}};
 
             // Send the packet to the localhost
             ssize_t siBytesSent = RoveCommTCPNode.Send<uint8_t>(stPacket, "127.0.0.1", 12001);
 
             // Check if the packet successfully sent
-            EXPECT_EQ(siBytesSent, rovecomm::ROVECOMM_PACKET_HEADER_SIZE + (sizeof(uint8_t) * stPacket.unDataCount));
+            EXPECT_EQ(siBytesSent, 7);
 
             // Close the socket
             RoveCommTCPNode.Close();
@@ -152,7 +148,7 @@ TEST(RoveCommTCP, CallbackInvoked)
 
                                             // Assertions to verify the behavior of the callback function
                                             EXPECT_EQ(packet.unDataId, 1100);                             // Check the data ID
-                                            EXPECT_EQ(packet.unDataCount, 3);                             // Check the data count
+                                            EXPECT_EQ(packet.GetDataCount(), 3);                          // Check the data count
                                             EXPECT_EQ(packet.eDataType, manifest::DataTypes::INT32_T);    // Check the data type
 
                                             for (size_t i = 0; i < packet.vData.size(); i++)
@@ -163,10 +159,7 @@ TEST(RoveCommTCP, CallbackInvoked)
 
             // Simulate receiving a packet with data ID 1100
             // Create RoveCommPacket
-            rovecomm::RoveCommPacket<int32_t> stPacket;
-            stPacket.unDataId    = 1100;                            // Data ID for testing
-            stPacket.unDataCount = 3;                               // Sample data count
-            stPacket.eDataType   = manifest::DataTypes::INT32_T;    // Sample data type
+            rovecomm::RoveCommPacket<int32_t> stPacket{1100, {}};
 
             for (int32_t nData : vExpectedData)
             {

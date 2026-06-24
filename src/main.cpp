@@ -52,7 +52,7 @@ int main()
     {
         std::cout << "Received TCP packet with:" << std::endl;
         std::cout << "\tData ID: " << stPacket.unDataId << std::endl;
-        std::cout << "\tData Count: " << stPacket.unDataCount << std::endl;
+        std::cout << "\tData Count: " << stPacket.GetDataCount() << std::endl;
         std::cout << "\tData Type: " << stPacket.eDataType << std::endl;
         std::cout << "\tData: " << std::endl;
 
@@ -67,7 +67,7 @@ int main()
     {
         std::cout << "Received UDP packet with:" << std::endl;
         std::cout << "\tData ID: " << stPacket.unDataId << std::endl;
-        std::cout << "\tData Count: " << stPacket.unDataCount << std::endl;
+        std::cout << "\tData Count: " << stPacket.GetDataCount() << std::endl;
         std::cout << "\tData Type: " << stPacket.eDataType << std::endl;
         std::cout << "\tData: " << std::endl;
 
