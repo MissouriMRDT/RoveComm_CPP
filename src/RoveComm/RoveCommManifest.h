@@ -7,7 +7,7 @@
  *
  * @file RoveCommManifest.h
  * @author Missouri S&T - Mars Rover Design Team
- * @date 2026-06-24
+ * @date 2026-09-22
  *
  * @copyright Copyright Mars Rover Design Team 2026 - All Rights Reserved
  ******************************************************************************/
@@ -15,6 +15,7 @@
 #ifndef MANIFEST_H
 #define MANIFEST_H
 
+#include <algorithm>
 #include <charconv>
 #include <stdexcept>
 #include <stdint.h>
@@ -27,7 +28,7 @@ namespace manifest
      * @brief Enumeration of Data Types to be used in RoveComm
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     enum DataTypes
     {
@@ -46,7 +47,7 @@ namespace manifest
      * @brief Allows constraining templates to only RoveComm supported types
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     template<typename T>
     concept RoveCommType =
@@ -56,7 +57,7 @@ namespace manifest
      * @brief IP Address Object for RoveComm. Default is 0.0.0.0
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     struct AddressEntry
     {
@@ -97,7 +98,7 @@ namespace manifest
      * @brief Manifest Entry Object for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     struct ManifestEntry
     {
@@ -111,7 +112,7 @@ namespace manifest
      * @brief Board ID Enumeration for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     enum class BoardID
     {
@@ -126,14 +127,14 @@ namespace manifest
         CAMERA2 = 13,
         CAMERASERVER = 14,
         RAMAN = 16,
-        ROVESOSIMULATOR = 99,
+        ROVESOSIMULATOR = 17,
     };
 
     /******************************************************************************
      * @brief Board Entry Object for RoveComm.
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     struct BoardEntry
     {
@@ -147,7 +148,7 @@ namespace manifest
      * @brief Core Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Core
     {
@@ -267,7 +268,7 @@ namespace manifest
      * @brief PMS Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace PMS
     {
@@ -318,7 +319,7 @@ namespace manifest
      * @brief Nav Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Nav
     {
@@ -351,7 +352,7 @@ namespace manifest
      * @brief SignalStack Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace SignalStack
     {
@@ -387,7 +388,7 @@ namespace manifest
      * @brief Arm Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Arm
     {
@@ -455,7 +456,7 @@ namespace manifest
      * @brief Auger Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Auger
     {
@@ -509,7 +510,7 @@ namespace manifest
      * @brief Autonomy Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Autonomy
     {
@@ -624,7 +625,7 @@ namespace manifest
      * @brief Camera1 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Camera1
     {
@@ -670,7 +671,7 @@ namespace manifest
      * @brief Camera2 Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Camera2
     {
@@ -716,7 +717,7 @@ namespace manifest
      * @brief CameraServer Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace CameraServer
     {
@@ -769,7 +770,7 @@ namespace manifest
      * @brief Raman Board IP Address, Commands, Telemetry, and Error Packet 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Raman
     {
@@ -821,7 +822,7 @@ namespace manifest
      * @brief RoveSoSimulator Board IP Address, Commands, Telemetry, and Error 
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace RoveSoSimulator
     {
@@ -835,7 +836,7 @@ namespace manifest
         namespace Telemetry
         {
             // [Accel X, Accel Y, Accel Z, Gyro X, Gyro Y, Gyro Z, Quat X, Quat Y, Quat Z, Quat W]
-            constexpr ManifestEntry IMU{99100, 10, DataTypes::DOUBLE_T};
+            constexpr ManifestEntry IMU{17100, 10, DataTypes::DOUBLE_T};
         }
 
         // Error
@@ -847,7 +848,7 @@ namespace manifest
      * @brief RoveComm General Information
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace General
     {
@@ -862,7 +863,7 @@ namespace manifest
      * @brief RoveComm System Information
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace System
     {
@@ -878,7 +879,7 @@ namespace manifest
      * @brief BoardEntry Map for Runtime Lookups
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     const std::vector<BoardEntry> BOARDS{
         {
@@ -1148,7 +1149,7 @@ namespace manifest
      * @brief RoveComm Helper Functions
      *
      * @author Missouri S&T - Mars Rover Design Team
-     * @date 2026-06-24
+     * @date 2026-09-22
      ******************************************************************************/
     namespace Helpers
     {

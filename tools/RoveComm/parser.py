@@ -153,6 +153,7 @@ def insert_includes():
     out += "#ifndef MANIFEST_H\n"
     out += "#define MANIFEST_H\n"
     out += "\n"
+    out += "#include <algorithm>\n"
     out += "#include <charconv>\n"
     out += "#include <stdexcept>\n"
     out += "#include <stdint.h>\n"
