@@ -25,6 +25,8 @@
 #include <functional>
 #include <iostream>
 #include <shared_mutex>
+#include <tuple>
+#include <unordered_map>
 #include <vector>
 
 /// \endcond
@@ -49,11 +51,40 @@ namespace rovecomm
     class RoveCommTCP : AutonomyThread<void>
     {
         private:
+            // One callback registered with On(). The ID lets Off() remove exactly this callback.
             template<typename T>
-            struct RoveCommRegistry
+            struct CallbackEntry
             {
-                    static inline std::unordered_map<uint16_t, std::vector<std::function<void(const rovecomm::RoveCommPacket<T>&)>>> umCallbackMap{};
+                    uint64_t ullID;
+                    std::function<void(const RoveCommPacket<T>&)> fnCallback;
             };
+
+            // This node's callbacks for one payload type, by data ID.
+            template<typename T>
+            using CallbackMap = std::unordered_map<uint16_t, std::vector<CallbackEntry<T>>>;
+
+            // This node's callbacks, one map per payload type. They belong to this instance, so two nodes never
+            // share callbacks, and m_muCallbackMutex guards every map.
+            std::tuple<CallbackMap<int8_t>,
+                       CallbackMap<uint8_t>,
+                       CallbackMap<int16_t>,
+                       CallbackMap<uint16_t>,
+                       CallbackMap<int32_t>,
+                       CallbackMap<uint32_t>,
+                       CallbackMap<float>,
+                       CallbackMap<double>,
+                       CallbackMap<char>>
+                m_tpCallbackMaps;
+            uint64_t m_ullNextCallbackID = 1;    // Guarded by m_muCallbackMutex. 0 marks an empty CallbackHandle.
+
+            template<typename T>
+            CallbackMap<T>& GetCallbackMap()
+            {
+                return std::get<CallbackMap<T>>(m_tpCallbackMaps);
+            }
+
+            template<typename T>
+            void RemoveCallback(const CallbackHandle& stHandle);
 
             // Private member variables
             std::atomic_int m_nTCPSocket;
@@ -63,7 +94,7 @@ namespace rovecomm
             std::shared_mutex m_muCallbackMutex;
             std::mutex m_muSocketSendMutex;
 
-#ifdef BUILD_TESTS_MODE
+#if defined(__ROVECOMM_TESTS_MODE__) && __ROVECOMM_TESTS_MODE__ == 1
         public:
 #endif
 
@@ -108,13 +139,15 @@ namespace rovecomm
 
             // Callback management
             template<typename T>
-            void On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback);
+            CallbackHandle On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback);
 
             template<typename manifest::ManifestEntry Entry>
-            void On(std::function<void(const RoveCommPacket<EntryType<Entry>>&)> fnCallback)
+            CallbackHandle On(std::function<void(const RoveCommPacket<EntryType<Entry>>&)> fnCallback)
             {
-                On(Entry.DATA_ID, fnCallback);
+                return On(Entry.DATA_ID, fnCallback);
             }
+
+            void Off(const CallbackHandle& stHandle);
 
             template<typename T>
             void Clear(const uint16_t unDataId);

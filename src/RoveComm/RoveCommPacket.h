@@ -92,6 +92,22 @@ namespace rovecomm
     template<typename T>
     RoveCommPacket<T> UnpackData(std::span<const uint8_t> stData);
 
+    /******************************************************************************
+     * @brief Identifies one callback registered with a node's On(), so Off() can
+     *        remove that callback without touching any other callback for the same
+     *        data ID. A default-constructed handle is empty and Off() ignores it.
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2026-09-26
+     ******************************************************************************/
+    struct CallbackHandle
+    {
+        public:
+            uint16_t unDataId             = 0;
+            manifest::DataTypes eDataType = manifest::DataTypes::UINT8_T;
+            uint64_t ullID                = 0;
+    };
+
     // Packet creation utilities
 
     template<manifest::ManifestEntry Entry>

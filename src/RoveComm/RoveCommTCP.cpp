@@ -211,42 +211,40 @@ namespace rovecomm
     }
 
     /******************************************************************************
-     * @brief Adds a callback function to the vector of TCP callbacks for the
-     *        specified data type. The callback function will be invoked when a
-     *        packet with the specified data id is received.
+     * @brief Register a callback for TCP packets with the given data ID. The callback
+     *        belongs to this node: packets received by any other node never invoke it.
      *
-     * @tparam T - The data type of the RoveCommPacket. Must be one of the
-     *             following: uint8_t, int8_t, uint16_t, int16_t, uint32_t,
-     *             int32_t, float, double, or char.
-     * @param fnCallback - The callback function to add to the vector of TCP
-     *                     callbacks.
-     * @param unCondition - The data id of the packet that will invoke the
-     *                      callback function.
+     * @tparam T - The payload type of the packets. Must be one of the manifest's types.
+     * @param unDataId - The data ID that invokes the callback.
+     * @param fnCallback - The callback. It runs on this node's receive thread and must not
+     *                     call On(), Off() or Clear() on this node.
+     * @return CallbackHandle - Pass it to Off() to remove this callback, and only this one.
      *
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
      ******************************************************************************/
     template<typename T>
-    void RoveCommTCP::On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback)
+    CallbackHandle RoveCommTCP::On(const uint16_t unDataId, std::function<void(const RoveCommPacket<T>&)> fnCallback)
     {
-        // Acquire a write lock to protect the callback vectors.
+        // Acquire a write lock to protect the callback maps.
         std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
-        // Add the callback function to the vector of TCP callbacks for the specified data type
+        // Give the callback an ID so Off() can remove exactly this one later.
+        const uint64_t ullID = m_ullNextCallbackID++;
         // Note: C++ will default initialize a new vector if no entry is found.
-        RoveCommRegistry<T>::umCallbackMap[unDataId].push_back(fnCallback);
+        GetCallbackMap<T>()[unDataId].push_back({ullID, std::move(fnCallback)});
+
+        return {.unDataId = unDataId, .eDataType = RoveCommPacket<T>::eDataType, .ullID = ullID};
     }
 
     /******************************************************************************
-     * @brief Removes a callback function from the vector of TCP callbacks for the
-     *        specified data type. The callback function will no longer be invoked
-     *        when a packet with the specified data id is received.
+     * @brief Remove every callback this node has registered for a data ID. Callbacks on
+     *        other nodes are untouched. Waits for a callback that is already running,
+     *        so once this returns none of the removed callbacks can run. To remove a
+     *        single callback, use Off() with the handle On() returned.
      *
-     * @tparam T - The data type of the RoveCommPacket. Must be one of the
-     *             following: uint8_t, int8_t, uint16_t, int16_t, uint32_t,
-     *             int32_t, float, double, or char.
-     * @param fnCallback - The callback function to remove from the vector of TCP
-     *                     callbacks.
+     * @tparam T - The payload type of the packets. Must be one of the manifest's types.
+     * @param unDataId - The data ID whose TCP callbacks should be removed.
      *
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
@@ -254,11 +252,77 @@ namespace rovecomm
     template<typename T>
     void RoveCommTCP::Clear(const uint16_t unDataId)
     {
-        // Acquire a write lock to protect the callback vectors.
+        // Acquire a write lock. This waits for a callback that is already running.
         std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
-        // Remove the callback function from the vector of UDP callbacks for the specified data type
-        std::erase_if(RoveCommRegistry<T>::umCallbackMap, [unDataId](const auto& stdEntry) { return stdEntry.first == unDataId; });
+        // Remove every callback this node has for the data ID.
+        GetCallbackMap<T>().erase(unDataId);
+    }
+
+    /******************************************************************************
+     * @brief Remove the one callback identified by a handle from On(). Other callbacks
+     *        for the same data ID stay registered. Waits for a callback that is already
+     *        running, so once this returns the removed callback can no longer run. An
+     *        empty or already-removed handle is ignored.
+     *
+     * @param stHandle - The handle On() returned for the callback.
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2026-09-26
+     ******************************************************************************/
+    void RoveCommTCP::Off(const CallbackHandle& stHandle)
+    {
+        // An empty handle was never registered.
+        if (stHandle.ullID == 0)
+        {
+            return;
+        }
+
+        // Dispatch to the map for the handle's payload type.
+        switch (stHandle.eDataType)
+        {
+            case manifest::DataTypes::INT8_T: RemoveCallback<int8_t>(stHandle); break;
+            case manifest::DataTypes::UINT8_T: RemoveCallback<uint8_t>(stHandle); break;
+            case manifest::DataTypes::INT16_T: RemoveCallback<int16_t>(stHandle); break;
+            case manifest::DataTypes::UINT16_T: RemoveCallback<uint16_t>(stHandle); break;
+            case manifest::DataTypes::INT32_T: RemoveCallback<int32_t>(stHandle); break;
+            case manifest::DataTypes::UINT32_T: RemoveCallback<uint32_t>(stHandle); break;
+            case manifest::DataTypes::FLOAT_T: RemoveCallback<float>(stHandle); break;
+            case manifest::DataTypes::DOUBLE_T: RemoveCallback<double>(stHandle); break;
+            case manifest::DataTypes::CHAR: RemoveCallback<char>(stHandle); break;
+        }
+    }
+
+    /******************************************************************************
+     * @brief Remove the one callback identified by a handle from this node's map for
+     *        payload type T.
+     *
+     * @tparam T - The payload type the handle was registered with.
+     * @param stHandle - The handle On() returned for the callback.
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2026-09-26
+     ******************************************************************************/
+    template<typename T>
+    void RoveCommTCP::RemoveCallback(const CallbackHandle& stHandle)
+    {
+        // Acquire a write lock. This waits for a callback that is already running.
+        std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
+
+        // Find the callbacks for the handle's data ID and drop the one with the handle's ID.
+        CallbackMap<T>& umCallbacks = GetCallbackMap<T>();
+        auto itEntry                = umCallbacks.find(stHandle.unDataId);
+        if (itEntry == umCallbacks.end())
+        {
+            return;
+        }
+        std::erase_if(itEntry->second, [&stHandle](const CallbackEntry<T>& stEntry) { return stEntry.ullID == stHandle.ullID; });
+
+        // Drop the data ID entirely once its last callback is gone.
+        if (itEntry->second.empty())
+        {
+            umCallbacks.erase(itEntry);
+        }
     }
 
     /******************************************************************************
@@ -292,15 +356,14 @@ namespace rovecomm
         // Acquire a read lock to protect the callback vectors.
         std::shared_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
 
-        // Invoke registered callbacks
-        for (const auto& [unDataId, vCallbacks] : RoveCommRegistry<T>::umCallbackMap)
+        // Invoke the callbacks this node has for the packet's data ID.
+        const CallbackMap<T>& umCallbacks = GetCallbackMap<T>();
+        auto itEntry                      = umCallbacks.find(stPacket.unDataId);
+        if (itEntry != umCallbacks.end())
         {
-            if (unDataId == stPacket.unDataId)
+            for (const CallbackEntry<T>& stEntry : itEntry->second)
             {
-                for (const auto& fnCallback : vCallbacks)
-                {
-                    fnCallback(stPacket);
-                }
+                stEntry.fnCallback(stPacket);
             }
         }
     }
@@ -435,38 +498,38 @@ namespace rovecomm
 
     // Explicitly define template function types for TCP class
     template ssize_t RoveCommTCP::Send<uint8_t>(const RoveCommPacket<uint8_t>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<uint8_t>(const uint16_t, std::function<void(const RoveCommPacket<uint8_t>&)>);
+    template CallbackHandle RoveCommTCP::On<uint8_t>(const uint16_t, std::function<void(const RoveCommPacket<uint8_t>&)>);
     template void RoveCommTCP::Clear<uint8_t>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<int8_t>(const RoveCommPacket<int8_t>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<int8_t>(const uint16_t, std::function<void(const RoveCommPacket<int8_t>&)>);
+    template CallbackHandle RoveCommTCP::On<int8_t>(const uint16_t, std::function<void(const RoveCommPacket<int8_t>&)>);
     template void RoveCommTCP::Clear<int8_t>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<uint16_t>(const RoveCommPacket<uint16_t>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<uint16_t>(const uint16_t, std::function<void(const RoveCommPacket<uint16_t>&)>);
+    template CallbackHandle RoveCommTCP::On<uint16_t>(const uint16_t, std::function<void(const RoveCommPacket<uint16_t>&)>);
     template void RoveCommTCP::Clear<uint16_t>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<int16_t>(const RoveCommPacket<int16_t>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<int16_t>(const uint16_t, std::function<void(const RoveCommPacket<int16_t>&)>);
+    template CallbackHandle RoveCommTCP::On<int16_t>(const uint16_t, std::function<void(const RoveCommPacket<int16_t>&)>);
     template void RoveCommTCP::Clear<int16_t>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<uint32_t>(const RoveCommPacket<uint32_t>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<uint32_t>(const uint16_t, std::function<void(const RoveCommPacket<uint32_t>&)>);
+    template CallbackHandle RoveCommTCP::On<uint32_t>(const uint16_t, std::function<void(const RoveCommPacket<uint32_t>&)>);
     template void RoveCommTCP::Clear<uint32_t>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<int32_t>(const RoveCommPacket<int32_t>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<int32_t>(const uint16_t, std::function<void(const RoveCommPacket<int32_t>&)>);
+    template CallbackHandle RoveCommTCP::On<int32_t>(const uint16_t, std::function<void(const RoveCommPacket<int32_t>&)>);
     template void RoveCommTCP::Clear<int32_t>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<float>(const RoveCommPacket<float>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<float>(const uint16_t, std::function<void(const RoveCommPacket<float>&)>);
+    template CallbackHandle RoveCommTCP::On<float>(const uint16_t, std::function<void(const RoveCommPacket<float>&)>);
     template void RoveCommTCP::Clear<float>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<double>(const RoveCommPacket<double>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<double>(const uint16_t, std::function<void(const RoveCommPacket<double>&)>);
+    template CallbackHandle RoveCommTCP::On<double>(const uint16_t, std::function<void(const RoveCommPacket<double>&)>);
     template void RoveCommTCP::Clear<double>(const uint16_t);
 
     template ssize_t RoveCommTCP::Send<char>(const RoveCommPacket<char>&, const manifest::AddressEntry&, int);
-    template void RoveCommTCP::On<char>(const uint16_t, std::function<void(const RoveCommPacket<char>&)>);
+    template CallbackHandle RoveCommTCP::On<char>(const uint16_t, std::function<void(const RoveCommPacket<char>&)>);
     template void RoveCommTCP::Clear<char>(const uint16_t);
 }    // namespace rovecomm

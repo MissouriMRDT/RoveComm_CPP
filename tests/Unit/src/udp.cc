@@ -655,3 +655,101 @@ TEST(RoveCommUDP, ManifestIntegration)
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)
 }
+
+TEST(RoveCommUDP, CallbacksBelongToTheirNode)
+{
+    // Run the test via the RunTimedTest function to allow for retries and timeouts.
+    testutils::RunTimedTest(
+        []()
+        {
+            // Two nodes in one process. Neither needs a socket: packets are fed straight to ProcessPacket.
+            rovecomm::RoveCommUDP RoveCommUDPNodeA;
+            rovecomm::RoveCommUDP RoveCommUDPNodeB;
+
+            // Setup dummy address for callbacks
+            struct sockaddr_in saUDPClientAddr;
+            memset(&saUDPClientAddr, 0, sizeof(saUDPClientAddr));
+            saUDPClientAddr.sin_family = AF_INET;
+            saUDPClientAddr.sin_port   = htons(11005);
+            inet_pton(AF_INET, "127.0.0.1", &saUDPClientAddr.sin_addr);
+
+            const uint16_t unTestDataId = 1400;
+            int nCallsA                 = 0;
+            int nCallsB                 = 0;
+            std::vector<uint8_t> vData  = rovecomm::PackPacket(rovecomm::RoveCommPacket<uint8_t>{.unDataId = unTestDataId, .vData = {1, 2, 3}});
+
+            // Only node A registers a callback.
+            RoveCommUDPNodeA.On<uint8_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<uint8_t>&) { ++nCallsA; });
+
+            // A packet received by node B must not reach node A's callback.
+            RoveCommUDPNodeB.ProcessPacket<uint8_t>(vData, saUDPClientAddr);
+            EXPECT_EQ(nCallsA, 0) << "Node B invoked a callback registered on node A";
+
+            // Node A still receives its own packets.
+            RoveCommUDPNodeA.ProcessPacket<uint8_t>(vData, saUDPClientAddr);
+            EXPECT_EQ(nCallsA, 1);
+
+            // Clearing the data ID on node B must leave node A's callback registered.
+            RoveCommUDPNodeB.On<uint8_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<uint8_t>&) { ++nCallsB; });
+            RoveCommUDPNodeB.Clear<uint8_t>(unTestDataId);
+            RoveCommUDPNodeB.ProcessPacket<uint8_t>(vData, saUDPClientAddr);
+            RoveCommUDPNodeA.ProcessPacket<uint8_t>(vData, saUDPClientAddr);
+            EXPECT_EQ(nCallsB, 0) << "Clear() left a callback registered on node B";
+            EXPECT_EQ(nCallsA, 2) << "Clear() on node B removed node A's callback";
+        },
+        3,         // 3 total attempts
+        30000);    // 30 second timeout (30,000 ms)
+}
+
+TEST(RoveCommUDP, OffRemovesOnlyThatCallback)
+{
+    // Run the test via the RunTimedTest function to allow for retries and timeouts.
+    testutils::RunTimedTest(
+        []()
+        {
+            // Create RoveComm Node. It needs no socket: packets are fed straight to ProcessPacket.
+            rovecomm::RoveCommUDP RoveCommUDPNode;
+
+            // Setup dummy address for callbacks
+            struct sockaddr_in saUDPClientAddr;
+            memset(&saUDPClientAddr, 0, sizeof(saUDPClientAddr));
+            saUDPClientAddr.sin_family = AF_INET;
+            saUDPClientAddr.sin_port   = htons(11006);
+            inet_pton(AF_INET, "127.0.0.1", &saUDPClientAddr.sin_addr);
+
+            const uint16_t unTestDataId = 1401;
+            int nCallsFirst             = 0;
+            int nCallsSecond            = 0;
+            std::vector<uint8_t> vData  = rovecomm::PackPacket(rovecomm::RoveCommPacket<float>{.unDataId = unTestDataId, .vData = {1.5f, 2.5f}});
+
+            // Two callbacks for the same data ID.
+            rovecomm::CallbackHandle stFirst  = RoveCommUDPNode.On<float>(unTestDataId, [&](const rovecomm::RoveCommPacket<float>&) { ++nCallsFirst; });
+            rovecomm::CallbackHandle stSecond = RoveCommUDPNode.On<float>(unTestDataId, [&](const rovecomm::RoveCommPacket<float>&) { ++nCallsSecond; });
+            EXPECT_EQ(stFirst.unDataId, unTestDataId);
+            EXPECT_EQ(stFirst.eDataType, manifest::DataTypes::FLOAT_T);
+            EXPECT_NE(stFirst.ullID, stSecond.ullID);
+
+            RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
+            EXPECT_EQ(nCallsFirst, 1);
+            EXPECT_EQ(nCallsSecond, 1);
+
+            // Off() removes the first callback and keeps the second.
+            RoveCommUDPNode.Off(stFirst);
+            RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
+            EXPECT_EQ(nCallsFirst, 1) << "Off() left its callback registered";
+            EXPECT_EQ(nCallsSecond, 2) << "Off() removed a different callback";
+
+            // Removing it again, or passing an empty handle, does nothing.
+            RoveCommUDPNode.Off(stFirst);
+            RoveCommUDPNode.Off(rovecomm::CallbackHandle{});
+            RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
+            EXPECT_EQ(nCallsSecond, 3);
+
+            // Clear() removes whatever is left for the data ID.
+            RoveCommUDPNode.Clear<float>(unTestDataId);
+            RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
+            EXPECT_EQ(nCallsSecond, 3) << "Clear() left a callback registered";
+        },
+        3,         // 3 total attempts
+        30000);    // 30 second timeout (30,000 ms)
+}
