@@ -33,7 +33,8 @@ endif()
 ## Enable or Disable cross-compile for windows on linux.
 option(BUILD_WIN "Windows Cross-Compile Mode" OFF)
 
-## Enable or Disable Tests Mode
+## Enable or Disable Tests Mode. Only used when RoveComm_CPP is the top-level project: a project that adds it with
+## add_subdirectory() can have its own BUILD_TESTS_MODE, and that must not change how this library is compiled.
 option(BUILD_TESTS_MODE "Enable Tests Mode" OFF)
 
 ####################################################################################################################
@@ -60,8 +61,10 @@ if(NOT DEFINED __ROVECOMM_WINDOWS_MODE__)
 endif()
 
 ## Build Unit and Integration Tests
-if (BUILD_TESTS_MODE)
+if (BUILD_TESTS_MODE AND PROJECT_IS_TOP_LEVEL)
     enable_testing()
+    # Makes the nodes' packet-processing internals public so the unit tests can drive them directly.
+    add_definitions(-D__ROVECOMM_TESTS_MODE__=1)
 endif()
 
 message("-- RoveComm Build Mode: ${__ROVECOMM_LIBRARY_MODE__}")

@@ -39,7 +39,7 @@ TEST(RoveCommTCP, InitSocket)
             // Since the socket is bound to a specific port, it may take a few tries to find an available port
             for (int i = 0; i < 3; ++i)
             {
-                if (RoveCommTCPNode.InitTCPSocket("127.0.0.1", 12000))
+                if (RoveCommTCPNode.Init("127.0.0.1", 12000))
                 {
                     bInitSuccess = true;
                     break;
@@ -54,7 +54,7 @@ TEST(RoveCommTCP, InitSocket)
             EXPECT_TRUE(bInitSuccess);
 
             // Close the socket
-            RoveCommTCPNode.CloseTCPSocket();
+            RoveCommTCPNode.Close();
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)
@@ -79,7 +79,7 @@ TEST(RoveCommTCP, SendTCPPacket)
             // Since the socket is bound to a specific port, it may take a few tries to find an available port
             for (int i = 0; i < 3; ++i)
             {
-                if (RoveCommTCPNode.InitTCPSocket("127.0.0.1", 12001))
+                if (RoveCommTCPNode.Init("127.0.0.1", 12001))
                 {
                     break;
                 }
@@ -90,20 +90,16 @@ TEST(RoveCommTCP, SendTCPPacket)
             }
 
             // Create RoveCommPacket
-            rovecomm::RoveCommPacket<uint8_t> stPacket;
-            stPacket.unDataId    = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_ID;
-            stPacket.unDataCount = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_COUNT;
-            stPacket.eDataType   = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_TYPE;
-            stPacket.vData.push_back(1);
+            rovecomm::RoveCommPacket<uint8_t> stPacket{manifest::Autonomy::Commands::STARTAUTONOMY.DATA_ID, {1}};
 
             // Send the packet to the localhost
-            ssize_t siBytesSent = RoveCommTCPNode.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12001);
+            ssize_t siBytesSent = RoveCommTCPNode.Send<uint8_t>(stPacket, "127.0.0.1", 12001);
 
             // Check if the packet successfully sent
-            EXPECT_EQ(siBytesSent, ROVECOMM_PACKET_HEADER_SIZE + (sizeof(uint8_t) * stPacket.unDataCount));
+            EXPECT_EQ(siBytesSent, 7);
 
             // Close the socket
-            RoveCommTCPNode.CloseTCPSocket();
+            RoveCommTCPNode.Close();
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)
@@ -128,7 +124,7 @@ TEST(RoveCommTCP, CallbackInvoked)
             // Since the socket is bound to a specific port, it may take a few tries to find an available port
             for (int i = 0; i < 3; ++i)
             {
-                if (RoveCommTCPNode.InitTCPSocket("127.0.0.1", 12002))
+                if (RoveCommTCPNode.Init("127.0.0.1", 12002))
                 {
                     break;
                 }
@@ -144,30 +140,26 @@ TEST(RoveCommTCP, CallbackInvoked)
             std::vector<int32_t> vExpectedData = {-100, -1, 5555};
 
             // Add a callback function for data ID 1100
-            RoveCommTCPNode.AddTCPCallback<int32_t>(
-                [&](const rovecomm::RoveCommPacket<int32_t>& packet)
-                {
-                    // Set the flag to true to indicate that the callback was invoked
-                    bCallbackInvoked = true;
+            RoveCommTCPNode.On<int32_t>(1100,
+                                        [&](const rovecomm::RoveCommPacket<int32_t>& packet)
+                                        {
+                                            // Set the flag to true to indicate that the callback was invoked
+                                            bCallbackInvoked = true;
 
-                    // Assertions to verify the behavior of the callback function
-                    EXPECT_EQ(packet.unDataId, 1100);                             // Check the data ID
-                    EXPECT_EQ(packet.unDataCount, 3);                             // Check the data count
-                    EXPECT_EQ(packet.eDataType, manifest::DataTypes::INT32_T);    // Check the data type
+                                            // Assertions to verify the behavior of the callback function
+                                            EXPECT_EQ(packet.unDataId, 1100);                             // Check the data ID
+                                            EXPECT_EQ(packet.GetDataCount(), 3);                          // Check the data count
+                                            EXPECT_EQ(packet.eDataType, manifest::DataTypes::INT32_T);    // Check the data type
 
-                    for (size_t i = 0; i < packet.vData.size(); i++)
-                    {
-                        EXPECT_EQ(packet.vData[i], vExpectedData[i]);    // Check the data
-                    }
-                },
-                1100);
+                                            for (size_t i = 0; i < packet.vData.size(); i++)
+                                            {
+                                                EXPECT_EQ(packet.vData[i], vExpectedData[i]);    // Check the data
+                                            }
+                                        });
 
             // Simulate receiving a packet with data ID 1100
             // Create RoveCommPacket
-            rovecomm::RoveCommPacket<int32_t> stPacket;
-            stPacket.unDataId    = 1100;                            // Data ID for testing
-            stPacket.unDataCount = 3;                               // Sample data count
-            stPacket.eDataType   = manifest::DataTypes::INT32_T;    // Sample data type
+            rovecomm::RoveCommPacket<int32_t> stPacket{1100, {}};
 
             for (int32_t nData : vExpectedData)
             {
@@ -175,16 +167,55 @@ TEST(RoveCommTCP, CallbackInvoked)
             }
 
             // Pack the packet
-            rovecomm::RoveCommData stData = rovecomm::PackPacket(stPacket);
+            std::vector<uint8_t> vData = rovecomm::PackPacket(stPacket);
 
             // Process the received packet (simulate callback invocation)
-            RoveCommTCPNode.CallProcessPacket(stData, rovecomm::tcp::vInt32Callbacks);
+            RoveCommTCPNode.ProcessPacket<int32_t>(vData);
 
             // Check if the callback was invoked
             EXPECT_TRUE(bCallbackInvoked);
 
             // Close the socket
-            RoveCommTCPNode.CloseTCPSocket();
+            RoveCommTCPNode.Close();
+        },
+        3,         // 3 total attempts
+        30000);    // 30 second timeout (30,000 ms)
+}
+
+TEST(RoveCommTCP, CallbacksBelongToTheirNodeAndOffRemovesOne)
+{
+    // Run the test via the RunTimedTest function to allow for retries and timeouts.
+    testutils::RunTimedTest(
+        []()
+        {
+            // Two nodes in one process. Neither needs a socket: packets are fed straight to ProcessPacket.
+            rovecomm::RoveCommTCP RoveCommTCPNodeA;
+            rovecomm::RoveCommTCP RoveCommTCPNodeB;
+
+            const uint16_t unTestDataId = 1402;
+            int nCallsFirst             = 0;
+            int nCallsSecond            = 0;
+            std::vector<uint8_t> vData  = rovecomm::PackPacket(rovecomm::RoveCommPacket<int16_t>{.unDataId = unTestDataId, .vData = {-7, 7}});
+
+            // Two callbacks for the same data ID, both on node A.
+            rovecomm::CallbackHandle stFirst = RoveCommTCPNodeA.On<int16_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<int16_t>&) { ++nCallsFirst; });
+            RoveCommTCPNodeA.On<int16_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<int16_t>&) { ++nCallsSecond; });
+
+            // A packet received by node B must not reach node A's callbacks.
+            RoveCommTCPNodeB.ProcessPacket<int16_t>(vData);
+            EXPECT_EQ(nCallsFirst + nCallsSecond, 0) << "Node B invoked callbacks registered on node A";
+
+            // Node A invokes both, then only the second once Off() removes the first.
+            RoveCommTCPNodeA.ProcessPacket<int16_t>(vData);
+            RoveCommTCPNodeA.Off(stFirst);
+            RoveCommTCPNodeA.ProcessPacket<int16_t>(vData);
+            EXPECT_EQ(nCallsFirst, 1) << "Off() left its callback registered";
+            EXPECT_EQ(nCallsSecond, 2) << "Off() removed a different callback";
+
+            // Clear() removes the rest.
+            RoveCommTCPNodeA.Clear<int16_t>(unTestDataId);
+            RoveCommTCPNodeA.ProcessPacket<int16_t>(vData);
+            EXPECT_EQ(nCallsSecond, 2) << "Clear() left a callback registered";
         },
         3,         // 3 total attempts
         30000);    // 30 second timeout (30,000 ms)

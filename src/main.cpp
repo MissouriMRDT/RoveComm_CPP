@@ -33,6 +33,7 @@ using namespace rovecomm;
  ******************************************************************************/
 int main()
 {
+    using namespace std::literals::chrono_literals;
     // Print Software Header
     std::ifstream fHeaderText("../data/ASCII/v3.txt");
     std::string szHeaderText;
@@ -47,32 +48,30 @@ int main()
     std::cout << "Copyright \u00A9 2024 - Mars Rover Design Team\n" << std::endl;
 
     // Define a callback function for handling received TCP packets
-    auto TCPCallback = [](const rovecomm::RoveCommPacket<uint8_t>& packet)
+    auto fnTCPCallback = [](const rovecomm::RoveCommPacket<uint8_t>& stPacket)
     {
         std::cout << "Received TCP packet with:" << std::endl;
-        std::cout << "\tData ID: " << packet.unDataId << std::endl;
-        std::cout << "\tData Count: " << packet.unDataCount << std::endl;
-        std::cout << "\tData Type: " << packet.eDataType << std::endl;
+        std::cout << "\tData ID: " << stPacket.unDataId << std::endl;
+        std::cout << "\tData Count: " << stPacket.GetDataCount() << std::endl;
+        std::cout << "\tData Type: " << stPacket.eDataType << std::endl;
         std::cout << "\tData: " << std::endl;
 
-        for (auto data : packet.vData)
+        for (auto data : stPacket.vData)
         {
             std::cout << "\t\t>>" << (int) data << std::endl;
         }
     };
 
     // Define a callback function for handling received packets
-    auto UDPCallback = [](const RoveCommPacket<uint8_t>& packet, const sockaddr_in& addr)
+    auto fnUDPCallback = [](const RoveCommPacket<uint8_t>& stPacket)
     {
-        (void) addr;
-
         std::cout << "Received UDP packet with:" << std::endl;
-        std::cout << "\tData ID: " << packet.unDataId << std::endl;
-        std::cout << "\tData Count: " << packet.unDataCount << std::endl;
-        std::cout << "\tData Type: " << packet.eDataType << std::endl;
+        std::cout << "\tData ID: " << stPacket.unDataId << std::endl;
+        std::cout << "\tData Count: " << stPacket.GetDataCount() << std::endl;
+        std::cout << "\tData Type: " << stPacket.eDataType << std::endl;
         std::cout << "\tData: " << std::endl;
 
-        for (auto data : packet.vData)
+        for (auto data : stPacket.vData)
         {
             std::cout << "\t\t>>" << (int) data << std::endl;
         }
@@ -83,7 +82,7 @@ int main()
     RoveCommTCP pRoveCommTCP_Node;
 
     // Initialize the UDP and TCP nodes
-    if (pRoveCommUDP_Node.InitUDPSocket(11000))
+    if (pRoveCommUDP_Node.Init(11000))
     {
         std::cout << "UDP Node Initialized." << std::endl;
     }
@@ -92,7 +91,7 @@ int main()
         std::cout << "UDP Node Failed to Initialize." << std::endl;
     }
 
-    if (pRoveCommTCP_Node.InitTCPSocket("127.0.0.1", 12000))
+    if (pRoveCommTCP_Node.Init("127.0.0.1", 12000))
     {
         std::cout << "TCP Node Initialized." << std::endl;
     }
@@ -101,40 +100,76 @@ int main()
         std::cout << "TCP Node Failed to Initialize." << std::endl;
     }
 
-    // Add the callback functions for UINT8_T data type to the UDP and TCP nodes
-    pRoveCommUDP_Node.AddUDPCallback<uint8_t>(UDPCallback, 11000);
-    pRoveCommUDP_Node.AddUDPCallback<uint8_t>(UDPCallback, 11000);
-    pRoveCommTCP_Node.AddTCPCallback<uint8_t>(TCPCallback, 11000);
-    pRoveCommTCP_Node.AddTCPCallback<uint8_t>(TCPCallback, 11000);
+    using manifest::Autonomy::Commands::STARTAUTONOMY;
 
-    // Create RoveCommPacket
-    RoveCommPacket<uint8_t> stPacket;
-    stPacket.unDataId    = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_ID;
-    stPacket.unDataCount = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_COUNT;
-    stPacket.eDataType   = manifest::Autonomy::COMMANDS.find("STARTAUTONOMY")->second.DATA_TYPE;
-    stPacket.vData.push_back(200);
+    // Add the callback functions for UINT8_T data type to the UDP and TCP nodes
+    pRoveCommUDP_Node.On<STARTAUTONOMY>(fnUDPCallback);
+    // pRoveCommUDP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "UDP Callback 2\n"; });
+    pRoveCommTCP_Node.On<STARTAUTONOMY>(fnTCPCallback);
+    // pRoveCommTCP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "TCP Callback 2\n"; });
+
+    // pRoveCommUDP_Node.Send<STARTAUTONOMY>({200}); // This would send to 192.168.3.100 by default
 
     // Send the packet to the localhost
-    pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11000);
-    pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12000);
+    pRoveCommUDP_Node.Send<STARTAUTONOMY>({200}, "127.0.0.1", 11000);
+    pRoveCommTCP_Node.Send<STARTAUTONOMY>({200}, "127.0.0.1", 12000);
 
     // Wait for packets to be processed.
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(500ms);
 
     // Remove the callback functions for UINT8_T data type from the UDP and TCP nodes
-    pRoveCommUDP_Node.RemoveUDPCallback<uint8_t>(UDPCallback);
-    pRoveCommUDP_Node.AddUDPCallback<uint8_t>(UDPCallback, 11000);
+    pRoveCommUDP_Node.Clear<STARTAUTONOMY>();
+    pRoveCommTCP_Node.Clear<STARTAUTONOMY>();
 
-    // Send the packet to the localhost
-    pRoveCommUDP_Node.SendUDPPacket<uint8_t>(stPacket, "127.0.0.1", 11000);
-    pRoveCommTCP_Node.SendTCPPacket<uint8_t>(stPacket, "127.0.0.1", 12000);
+    // Another way to create packets
+    auto stPacket = rovecomm::CreatePacket<STARTAUTONOMY>(uint8_t{255});
+
+    // Send the packet to the localhost again; shouldn't see any output since we cleared the callbacks
+    pRoveCommUDP_Node.Send(stPacket, "127.0.0.1", 11000);
+    pRoveCommTCP_Node.Send(stPacket, "127.0.0.1", 12000);
 
     // Wait for packets to be processed.
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(500ms);
+
+    // Open remote UDP node to subscribe to the local UDP node.
+    RoveCommUDP pRemoteRoveCommUDP_Node;
+    if (pRemoteRoveCommUDP_Node.Init(11003))
+    {
+        std::cout << "Remote UDP Node Initialized." << std::endl;
+    }
+
+    pRemoteRoveCommUDP_Node.Subscribe("127.0.0.1", 11000);
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
+
+    pRemoteRoveCommUDP_Node.On<STARTAUTONOMY>(
+        [](const auto& stPacket)
+        {
+            (void) stPacket;
+            std::cout << "Remote UDP Callback" << std::endl;
+        });
+
+    // Will send to subscribers, including the remote node
+    pRoveCommUDP_Node.Send<STARTAUTONOMY>({200});
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
+
+    pRemoteRoveCommUDP_Node.Unsubscribe("127.0.0.1", 11000);
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
+
+    // Callback should not be invoked since we unsubscribed the remote node.
+    pRoveCommUDP_Node.Send<STARTAUTONOMY>({200});
+
+    // Wait for packets to be processed.
+    std::this_thread::sleep_for(500ms);
 
     // Close the UDP and TCP sockets
-    pRoveCommUDP_Node.CloseUDPSocket();
-    pRoveCommTCP_Node.CloseTCPSocket();
+    pRoveCommUDP_Node.Close();
+    pRoveCommTCP_Node.Close();
 
     exit(0);
 }

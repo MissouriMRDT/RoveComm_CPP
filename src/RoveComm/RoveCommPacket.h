@@ -17,6 +17,7 @@
 /// \cond
 #include <cstdint>
 #include <cstring>
+#include <span>
 #include <vector>
 
 #if defined(__ROVECOMM_WINDOWS_MODE__) && __ROVECOMM_WINDOWS_MODE__ == 1
@@ -73,33 +74,78 @@ namespace rovecomm
     struct RoveCommPacket
     {
         public:
-            uint16_t unDataId;
-            uint16_t unDataCount;
-            manifest::DataTypes eDataType;
+            uint16_t unDataId{};
             std::vector<T> vData;
-    };
+            static constexpr manifest::DataTypes eDataType = manifest::Helpers::CToRoveCommType<T>::TYPE;
 
-    /******************************************************************************
-     * @brief The RoveCommData struct is used to store data in a packet format
-     *        for transmission over a network. This struct is used to store the
-     *        data in a byte array for transmission. The data is stored in a byte
-     *        array with the packet header and data.
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-07
-     ******************************************************************************/
-    struct RoveCommData
-    {
-        public:
-            uint8_t unBytes[ROVECOMM_PACKET_HEADER_SIZE + sizeof(uint8_t) * ROVECOMM_PACKET_MAX_DATA_COUNT / 2];
+            uint16_t GetDataCount() const { return static_cast<uint16_t>(vData.size()); }
+
+            size_t GetDataSize() const { return static_cast<uint16_t>(vData.size() * manifest::Helpers::DataTypeSize(eDataType)); }
+
+            uint8_t GetDataType() const { return static_cast<uint8_t>(eDataType); }
     };
 
     // RoveCommPacket and RoveCommData packing and unpacking functions
     template<typename T>
-    RoveCommData PackPacket(const RoveCommPacket<T>& stPacket);
+    std::vector<uint8_t> PackPacket(const RoveCommPacket<T>& stPacket);
 
     template<typename T>
-    RoveCommPacket<T> UnpackData(const RoveCommData& stData);
+    RoveCommPacket<T> UnpackData(std::span<const uint8_t> stData);
+
+    /******************************************************************************
+     * @brief Identifies one callback registered with a node's On(), so Off() can
+     *        remove that callback without touching any other callback for the same
+     *        data ID. A default-constructed handle is empty and Off() ignores it.
+     *
+     * @author clayjay3 (claytonraycowen@gmail.com)
+     * @date 2026-09-26
+     ******************************************************************************/
+    struct CallbackHandle
+    {
+        public:
+            uint16_t unDataId             = 0;
+            manifest::DataTypes eDataType = manifest::DataTypes::UINT8_T;
+            uint64_t ullID                = 0;
+    };
+
+    // Packet creation utilities
+
+    template<manifest::ManifestEntry Entry>
+    using EntryType = typename manifest::Helpers::RoveCommToCType<Entry.DATA_TYPE>::c_type;
+
+    template<manifest::ManifestEntry Entry>
+    RoveCommPacket<EntryType<Entry>> CreatePacket()
+    {
+        RoveCommPacket<EntryType<Entry>> stPacket{.unDataId = Entry.DATA_ID, .vData = {}};
+        stPacket.vData.resize(Entry.DATA_COUNT);
+        return stPacket;
+    }
+
+    template<manifest::ManifestEntry Entry, manifest::RoveCommType... Args>
+    RoveCommPacket<EntryType<Entry>> CreatePacket(Args... args)
+    {
+        // Assume that the user expects the data count to be exactly correct since they are entering the arguments directly.
+        // The runtime functions will extend or truncate the data as needed.
+        static_assert(sizeof...(Args) == Entry.DATA_COUNT, "The number of arguments provided does not match the data count specified in the manifest entry.");
+        return {.unDataId = Entry.DATA_ID, .vData = {args...}};
+    }
+
+    template<manifest::ManifestEntry Entry>
+    RoveCommPacket<EntryType<Entry>> CreatePacket(std::span<const EntryType<Entry>> spData)
+    {
+        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId = Entry.DATA_ID, .vData = {spData.begin(), spData.end()}};
+        stPacket.vData.resize(Entry.DATA_COUNT);
+        return stPacket;
+    }
+
+    template<manifest::ManifestEntry Entry>
+    RoveCommPacket<EntryType<Entry>> CreatePacket(std::initializer_list<EntryType<Entry>> ilData)
+    {
+        RoveCommPacket<EntryType<Entry>> stPacket = {.unDataId = Entry.DATA_ID, .vData = ilData};
+        stPacket.vData.resize(Entry.DATA_COUNT);
+        return stPacket;
+    }
+
 }    // namespace rovecomm
 
 #endif    // ROVECOMM_PACKET_H
