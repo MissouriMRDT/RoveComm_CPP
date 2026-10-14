@@ -243,6 +243,34 @@ namespace rovecomm
      *        so once this returns none of the removed callbacks can run. To remove a
      *        single callback, use Off() with the handle On() returned.
      *
+     * @param unDataId - The data ID whose TCP callbacks should be removed.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
+    void RoveCommTCP::Clear(const uint16_t unDataId)
+    {
+        // Acquire a write lock. This waits for a callback that is already running.
+        std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
+
+        // Remove every callback this node has for the data ID.
+        GetCallbackMap<int8_t>().erase(unDataId);
+        GetCallbackMap<uint8_t>().erase(unDataId);
+        GetCallbackMap<int16_t>().erase(unDataId);
+        GetCallbackMap<uint16_t>().erase(unDataId);
+        GetCallbackMap<int32_t>().erase(unDataId);
+        GetCallbackMap<uint32_t>().erase(unDataId);
+        GetCallbackMap<float>().erase(unDataId);
+        GetCallbackMap<double>().erase(unDataId);
+        GetCallbackMap<char>().erase(unDataId);
+    }
+
+    /******************************************************************************
+     * @brief Remove every callback this node has registered for a data ID. Callbacks on
+     *        other nodes are untouched. Waits for a callback that is already running,
+     *        so once this returns none of the removed callbacks can run. To remove a
+     *        single callback, use Off() with the handle On() returned.
+     *
      * @tparam T - The payload type of the packets. Must be one of the manifest's types.
      * @param unDataId - The data ID whose TCP callbacks should be removed.
      *

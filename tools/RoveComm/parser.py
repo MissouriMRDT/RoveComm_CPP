@@ -218,6 +218,7 @@ def insert_address_struct():
     out += generate_indent(3) + "int SECOND_OCTET{};\n"
     out += generate_indent(3) + "int THIRD_OCTET{};\n"
     out += generate_indent(3) + "int FOURTH_OCTET{};\n\n"
+    out += generate_indent(3) + "constexpr AddressEntry() noexcept = default;\n\n"
     out += generate_indent(3) + "constexpr AddressEntry(int first, int second, int third, int fourth) noexcept :\n"
     out += generate_indent(4) + "FIRST_OCTET(first), SECOND_OCTET(second), THIRD_OCTET(third), FOURTH_OCTET(fourth)\n"
     out += generate_indent(3) + "{}\n\n"
@@ -368,14 +369,14 @@ def insert_boards_list():
         if "Telemetry" in this.manifest[board_name]:
             for telem in this.manifest[board_name]["Telemetry"]:
                 this.header_file.write(f"{generate_indent(4)}{board_name}::Telemetry::{telem.upper()},\n")
-        this.header_file.write(f"{generate_indent(2)}}},\n")
-        this.header_file.write(f"{generate_indent(2)}{{\n")
+        this.header_file.write(f"{generate_indent(3)}}},\n")
+        this.header_file.write(f"{generate_indent(3)}{{\n")
         if "Error" in this.manifest[board_name]:
             for error in this.manifest[board_name]["Error"]:
                 this.header_file.write(f"{generate_indent(4)}{board_name}::Errors::{error.upper()},\n")
+        this.header_file.write(f"{generate_indent(3)}}},\n")
         this.header_file.write(f"{generate_indent(2)}}},\n")
-        this.header_file.write(f"{generate_indent(1)}}},\n")
-    this.header_file.write(f"{generate_indent(0)}}};\n")
+    this.header_file.write(f"{generate_indent(1)}}};\n")
 
 def insert_helpers():
     """

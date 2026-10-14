@@ -103,7 +103,7 @@ int main()
     using manifest::Autonomy::Commands::STARTAUTONOMY;
 
     // Add the callback functions for UINT8_T data type to the UDP and TCP nodes
-    pRoveCommUDP_Node.On<STARTAUTONOMY>(fnUDPCallback);
+    const rovecomm::CallbackHandle stHandle = pRoveCommUDP_Node.On<STARTAUTONOMY>(fnUDPCallback);
     // pRoveCommUDP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "UDP Callback 2\n"; });
     pRoveCommTCP_Node.On<STARTAUTONOMY>(fnTCPCallback);
     // pRoveCommTCP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "TCP Callback 2\n"; });
@@ -118,8 +118,8 @@ int main()
     std::this_thread::sleep_for(500ms);
 
     // Remove the callback functions for UINT8_T data type from the UDP and TCP nodes
-    pRoveCommUDP_Node.Clear<STARTAUTONOMY>();
-    pRoveCommTCP_Node.Clear<STARTAUTONOMY>();
+    pRoveCommUDP_Node.Off(stHandle);             // Remove just this callback
+    pRoveCommTCP_Node.Clear<STARTAUTONOMY>();    // Remove all callbacks for this data ID and type
 
     // Another way to create packets
     auto stPacket = rovecomm::CreatePacket<STARTAUTONOMY>(uint8_t{255});

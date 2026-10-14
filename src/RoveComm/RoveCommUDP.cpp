@@ -226,7 +226,7 @@ namespace rovecomm
         saUDPClientAddr.sin_family = AF_INET;
 
         // Send the packet to all subscribers
-        for (const auto& [stSubscriberIPAddress, nSubscriberPort] : vSubscribers)
+        for (const auto& [stSubscriberIPAddress, nSubscriberPort] : m_seSubscribers)
         {
             // Assemble client address.
             saUDPClientAddr.sin_port        = htons(nSubscriberPort);
@@ -261,7 +261,7 @@ namespace rovecomm
         // Use sendmmsg to send the same packet to multiple destinations in one call.
         std::vector<sockaddr_in> vDestinations;
         // Add all subscribers.
-        for (const auto& [stSubscriberIPAddress, nSubscriberPort] : seSubscribers)
+        for (const auto& [stSubscriberIPAddress, nSubscriberPort] : m_seSubscribers)
         {
             // Assemble client address.
             sockaddr_in stdAddr{};
@@ -359,11 +359,33 @@ namespace rovecomm
         return {.unDataId = unDataId, .eDataType = RoveCommPacket<T>::eDataType, .ullID = ullID};
     }
 
-    // template<typename T>
-    // void On(const std::string& szBoardName, const std::string& szPacketName, std::function<void(const RoveCommPacket<T>&)> fnCallback)
-    // {
-    //     On(unDataId, fnCallback);
-    // }
+    /******************************************************************************
+     * @brief Remove every callback this node has registered for a data ID. Callbacks on
+     *        other nodes are untouched. Waits for a callback that is already running,
+     *        so once this returns none of the removed callbacks can run. To remove a
+     *        single callback, use Off() with the handle On() returned.
+     *
+     * @param unDataId - The data ID whose UDP callbacks should be removed.
+     *
+     * @author Eli Byrd (edbgkk@mst.edu)
+     * @date 2024-02-07
+     ******************************************************************************/
+    void RoveCommUDP::Clear(const uint16_t unDataId)
+    {
+        // Acquire a write lock. This waits for a callback that is already running.
+        std::unique_lock<std::shared_mutex> lkCallbackLock(m_muCallbackMutex);
+
+        // Remove every callback this node has for the data ID.
+        GetCallbackMap<int8_t>().erase(unDataId);
+        GetCallbackMap<uint8_t>().erase(unDataId);
+        GetCallbackMap<int16_t>().erase(unDataId);
+        GetCallbackMap<uint16_t>().erase(unDataId);
+        GetCallbackMap<int32_t>().erase(unDataId);
+        GetCallbackMap<uint32_t>().erase(unDataId);
+        GetCallbackMap<float>().erase(unDataId);
+        GetCallbackMap<double>().erase(unDataId);
+        GetCallbackMap<char>().erase(unDataId);
+    }
 
     /******************************************************************************
      * @brief Remove every callback this node has registered for a data ID. Callbacks on
@@ -479,18 +501,19 @@ namespace rovecomm
         // Unpack the received data into a RoveCommPacket
         RoveCommPacket<T> stPacket = UnpackData<T>(spData);
 
-        // Create a SubscriberInfo struct to store the client address
-        std::string t = inet_ntoa(saClientAddr.sin_addr);
-        int nPort     = ntohs(saClientAddr.sin_port);
-
         // Check if the received packet is a subscribe or unsubscribe packet
         if (stPacket.unDataId == manifest::System::SUBSCRIBE_DATA_ID)
         {
-            AddSubscriber(t, nPort);
+            if (m_seSubscribers.size() < ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS)
+            {
+                // Add new subscriber
+                m_seSubscribers.insert({inet_ntoa(saClientAddr.sin_addr), ntohs(saClientAddr.sin_port)});
+            }
         }
         else if (stPacket.unDataId == manifest::System::UNSUBSCRIBE_DATA_ID)
         {
-            RemoveSubscriber(t, nPort);
+            // Remove subscriber
+            m_seSubscribers.erase({inet_ntoa(saClientAddr.sin_addr), ntohs(saClientAddr.sin_port)});
         }
 
         // Acquire a read lock to protect the callback vectors.
@@ -692,42 +715,6 @@ namespace rovecomm
             }
         }
 #endif
-    }
-
-    /******************************************************************************
-     * @brief Add a subscriber to the list of subscribers. The subscriber will
-     *        receive all packets that are sent to the specified IP address and port.
-     *
-     * @param t - The IP address of the subscriber.
-     * @param nPort - The port that the subscriber is listening on.
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-08
-     ******************************************************************************/
-    void RoveCommUDP::AddSubscriber(const std::string& t, const int nPort)
-    {
-        if (seSubscribers.size() < ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS)
-        {
-            // Add new subscriber
-            seSubscribers.insert({t, nPort});
-        }
-    }
-
-    /******************************************************************************
-     * @brief Remove a subscriber from the list of subscribers. The subscriber will
-     *        no longer receive packets that are sent to the specified IP address and
-     *        port.
-     *
-     * @param t - The IP address of the subscriber.
-     * @param nPort - The port that the subscriber is listening on.
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-08
-     ******************************************************************************/
-    void RoveCommUDP::RemoveSubscriber(const std::string& t, const int nPort)
-    {
-        // Find and remove the subscriber
-        seSubscribers.erase({t, nPort});
     }
 
     /******************************************************************************

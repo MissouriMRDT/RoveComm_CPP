@@ -83,7 +83,7 @@ namespace rovecomm
             uint64_t m_ullNextCallbackID = 1;    // Guarded by m_muCallbackMutex. 0 marks an empty CallbackHandle.
 
             template<typename T>
-            CallbackMap<T>& GetCallbackMap()
+            constexpr CallbackMap<T>& GetCallbackMap()
             {
                 return std::get<CallbackMap<T>>(m_tpCallbackMaps);
             }
@@ -95,7 +95,7 @@ namespace rovecomm
             std::atomic_int m_nUDPSocket;
             struct sockaddr_in m_saUDPServerAddr;
             using SubscriberInfo = std::pair<manifest::AddressEntry, int>;
-            std::set<SubscriberInfo> seSubscribers;
+            std::set<SubscriberInfo> m_seSubscribers;
             std::shared_mutex m_muCallbackMutex;
             std::mutex m_muSocketSendMutex;
             std::mutex m_muSocketReceiveMutex;
@@ -108,10 +108,6 @@ namespace rovecomm
             template<typename T>
             void ProcessPacket(std::span<const uint8_t> stData, const sockaddr_in& saClientAddr);
             void ReceiveAndCallback();
-
-            // Subscriber management functions
-            void AddSubscriber(const std::string& stIPAddress, const int nPort);
-            void RemoveSubscriber(const std::string& stIPAddress, const int nPort);
 
         private:
             // AutonomyThread member functions
@@ -169,6 +165,8 @@ namespace rovecomm
             {
                 return Send(RoveCommPacket<uint8_t>{.unDataId = manifest::System::UNSUBSCRIBE_DATA_ID, .vData = {}}, stIPAddress, nPort);
             }
+
+            void Clear(const uint16_t unDataId);
 
             template<typename T>
             void Clear(const uint16_t unDataId);

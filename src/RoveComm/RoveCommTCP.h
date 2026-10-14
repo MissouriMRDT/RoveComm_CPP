@@ -78,7 +78,7 @@ namespace rovecomm
             uint64_t m_ullNextCallbackID = 1;    // Guarded by m_muCallbackMutex. 0 marks an empty CallbackHandle.
 
             template<typename T>
-            CallbackMap<T>& GetCallbackMap()
+            constexpr CallbackMap<T>& GetCallbackMap()
             {
                 return std::get<CallbackMap<T>>(m_tpCallbackMaps);
             }
@@ -148,6 +148,8 @@ namespace rovecomm
             }
 
             void Off(const CallbackHandle& stHandle);
+
+            void Clear(const uint16_t unDataId);
 
             template<typename T>
             void Clear(const uint16_t unDataId);
