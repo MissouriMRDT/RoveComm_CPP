@@ -119,22 +119,22 @@ namespace rovecomm
 
             // Data transmission
             template<typename T>
-            ssize_t Send(const RoveCommPacket<T>& stData, const manifest::AddressEntry& stClientIPAddress, int nClientPort);
+            ssize_t WriteTo(const RoveCommPacket<T>& stPacket, const manifest::AddressEntry& stIPAddress, int nPort = manifest::General::ETHERNET_UDP_PORT);
 
             template<typename manifest::ManifestEntry Entry>
-            ssize_t Send(std::span<const EntryType<Entry>> spData,
-                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).ADDRESS,
-                         int nPort                                 = manifest::General::ETHERNET_TCP_PORT)
+            ssize_t WriteTo(std::span<const EntryType<Entry>> spData,
+                            const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).ADDRESS,
+                            int nPort                                 = manifest::General::ETHERNET_UDP_PORT)
             {
-                return Send(rovecomm::CreatePacket<Entry>(spData), stIPAddress, nPort);
+                return WriteTo(rovecomm::CreatePacket<Entry>(spData), stIPAddress, nPort);
             }
 
             template<typename manifest::ManifestEntry Entry>
-            ssize_t Send(std::initializer_list<EntryType<Entry>> ilData,
-                         const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).ADDRESS,
-                         int nPort                                 = manifest::General::ETHERNET_TCP_PORT)
+            ssize_t WriteTo(std::initializer_list<EntryType<Entry>> ilData,
+                            const manifest::AddressEntry& stIPAddress = manifest::Helpers::FindBoardById(Entry.DATA_ID).ADDRESS,
+                            int nPort                                 = manifest::General::ETHERNET_UDP_PORT)
             {
-                return Send(rovecomm::CreatePacket<Entry>(ilData), stIPAddress, nPort);
+                return WriteTo(rovecomm::CreatePacket<Entry>(ilData), stIPAddress, nPort);
             }
 
             // Callback management

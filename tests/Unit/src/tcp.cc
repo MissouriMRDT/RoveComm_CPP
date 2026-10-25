@@ -93,7 +93,7 @@ TEST(RoveCommTCP, SendTCPPacket)
             rovecomm::RoveCommPacket<uint8_t> stPacket{manifest::Autonomy::Commands::STARTAUTONOMY.DATA_ID, {1}};
 
             // Send the packet to the localhost
-            ssize_t siBytesSent = RoveCommTCPNode.Send<uint8_t>(stPacket, "127.0.0.1", 12001);
+            ssize_t siBytesSent = RoveCommTCPNode.WriteTo(stPacket, "127.0.0.1", 12001);
 
             // Check if the packet successfully sent
             EXPECT_EQ(siBytesSent, 7);

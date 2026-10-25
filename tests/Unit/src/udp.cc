@@ -127,13 +127,13 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<uint8_t>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 7) << "Failed to send small uint8_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<uint8_t>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 16) << "Failed to send medium uint8_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<uint8_t>(stLargePacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stLargePacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 106) << "Failed to send large uint8_t packet";
             }
 
@@ -157,13 +157,13 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<uint16_t>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 8) << "Failed to send small uint16_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<uint16_t>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 26) << "Failed to send medium uint16_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<uint16_t>(stLargePacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stLargePacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 106) << "Failed to send large uint16_t packet";
             }
 
@@ -183,10 +183,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<uint32_t>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 10) << "Failed to send small uint32_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<uint32_t>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 46) << "Failed to send medium uint32_t packet";
             }
 
@@ -206,10 +206,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<int8_t>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 7) << "Failed to send small int8_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<int8_t>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 16) << "Failed to send medium int8_t packet";
             }
 
@@ -226,10 +226,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<int16_t>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 8) << "Failed to send small int16_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<int16_t>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 26) << "Failed to send medium int16_t packet";
             }
 
@@ -246,10 +246,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<int32_t>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 10) << "Failed to send small int32_t packet";
 
-                siBytesSent = RoveCommUDPNode.Send<int32_t>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 46) << "Failed to send medium int32_t packet";
             }
 
@@ -266,10 +266,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<float>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 10) << "Failed to send small float packet";
 
-                siBytesSent = RoveCommUDPNode.Send<float>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 46) << "Failed to send medium float packet";
             }
 
@@ -286,10 +286,10 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 }
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<double>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 14) << "Failed to send small double packet";
 
-                siBytesSent = RoveCommUDPNode.Send<double>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 86) << "Failed to send medium double packet";
             }
 
@@ -316,13 +316,13 @@ TEST(RoveCommUDP, SendMultipleDataTypes)
                 };
 
                 // Send and verify
-                ssize_t siBytesSent = RoveCommUDPNode.Send<char>(stSmallPacket, szIpAddr, nPort);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo(stSmallPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, 7) << "Failed to send small char packet";
 
-                siBytesSent = RoveCommUDPNode.Send<char>(stMediumPacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stMediumPacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, szMessage.size() + 6) << "Failed to send medium char packet";
 
-                siBytesSent = RoveCommUDPNode.Send<char>(stLargePacket, szIpAddr, nPort);
+                siBytesSent = RoveCommUDPNode.WriteTo(stLargePacket, szIpAddr, nPort);
                 EXPECT_EQ(siBytesSent, szLoremIpsum.size() + 6) << "Failed to send large char packet";
             }
 
@@ -633,7 +633,7 @@ TEST(RoveCommUDP, ManifestIntegration)
                     .DATA_TYPE  = manifest::DataTypes::INT32_T,
                 };
 
-                ssize_t siBytesSent = RoveCommUDPNode.Send<stTestEntry>({-100, 0, 100}, "127.0.0.1", 11004);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo<stTestEntry>({-100, 0, 100}, "127.0.0.1", 11004);
                 EXPECT_EQ(siBytesSent, stTestEntry.DATA_COUNT * sizeof(int32_t) + rovecomm::ROVECOMM_PACKET_HEADER_SIZE)
                     << "Failed to send int32_t packet using manifest entry";
             }
@@ -645,7 +645,7 @@ TEST(RoveCommUDP, ManifestIntegration)
                     .DATA_TYPE  = manifest::DataTypes::CHAR,
                 };
 
-                ssize_t siBytesSent = RoveCommUDPNode.Send<stTestEntry>("TEST MESSAGE", "127.0.0.1", 11004);
+                ssize_t siBytesSent = RoveCommUDPNode.WriteTo<stTestEntry>("TEST MESSAGE", "127.0.0.1", 11004);
                 EXPECT_EQ(siBytesSent, 256 + rovecomm::ROVECOMM_PACKET_HEADER_SIZE) << "Failed to send small char packet using manifest entry";
             }
 
