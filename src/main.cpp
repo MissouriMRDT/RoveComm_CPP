@@ -104,9 +104,9 @@ int main()
     using manifest::Autonomy::Telemetry::CURRENTSTATE;
 
     // Add the callback functions for UINT8_T data type to the UDP and TCP nodes
-    CallbackHandle stHandle = pRoveCommUDP_Node.On<STARTAUTONOMY>(fnUDPCallback);
+    CallbackHandle stUDPHandle = pRoveCommUDP_Node.On<STARTAUTONOMY>(fnUDPCallback);
     // pRoveCommUDP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "UDP Callback 2\n"; });
-    pRoveCommTCP_Node.On<STARTAUTONOMY>(fnTCPCallback);
+    CallbackHandle stTCPHandle = pRoveCommTCP_Node.On<STARTAUTONOMY>(fnTCPCallback);
     // pRoveCommTCP_Node.On<STARTAUTONOMY>([](const auto& stPacket) { std::cout << "TCP Callback 2\n"; });
 
     // pRoveCommUDP_Node.WriteTo<STARTAUTONOMY>({200}); // This would send to 192.168.3.100 by default
@@ -119,9 +119,8 @@ int main()
     std::this_thread::sleep_for(500ms);
 
     // Remove the callback functions for UINT8_T data type from the UDP and TCP nodes
-    pRoveCommUDP_Node.Off(stHandle);             // Remove just this callback
-    pRoveCommTCP_Node.Clear<STARTAUTONOMY>();    // Remove all callbacks for this data ID and type
-
+    pRoveCommUDP_Node.Clear(stUDPHandle);
+    pRoveCommTCP_Node.Clear(stTCPHandle);
     // Another way to create packets
     auto stPacket = CreatePacket<STARTAUTONOMY>(uint8_t{255});
 

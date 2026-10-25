@@ -51,7 +51,7 @@ namespace rovecomm
     class RoveCommTCP : AutonomyThread<void>
     {
         private:
-            // One callback registered with On(). The ID lets Off() remove exactly this callback.
+            // One callback registered with On(). The ID lets Clear() remove exactly this callback.
             template<typename T>
             struct CallbackEntry
             {
@@ -147,18 +147,7 @@ namespace rovecomm
                 return On(Entry.DATA_ID, fnCallback);
             }
 
-            void Off(const CallbackHandle& stHandle);
-
-            void Clear(const uint16_t unDataId);
-
-            template<typename T>
-            void Clear(const uint16_t unDataId);
-
-            template<typename manifest::ManifestEntry Entry>
-            void Clear()
-            {
-                Clear<typename manifest::Helpers::RoveCommToCType<Entry.DATA_TYPE>::c_type>(Entry.DATA_ID);
-            }
+            void Clear(const CallbackHandle& stHandle);
 
             // Deinitialization
             void Close();

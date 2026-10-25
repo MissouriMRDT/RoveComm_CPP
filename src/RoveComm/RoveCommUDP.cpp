@@ -323,8 +323,8 @@ namespace rovecomm
      * @tparam T - The payload type of the packets. Must be one of the manifest's types.
      * @param unDataId - The data ID that invokes the callback.
      * @param fnCallback - The callback. It runs on this node's receive thread and must not
-     *                     call On(), Off() or Clear() on this node.
-     * @return CallbackHandle - Pass it to Off() to remove this callback, and only this one.
+     *                     call On() or Clear() on this node.
+     * @return CallbackHandle - Pass it to Clear() to remove this callback, and only this one.
      *
      * @author Eli Byrd (edbgkk@mst.edu)
      * @date 2024-02-07
@@ -335,62 +335,12 @@ namespace rovecomm
         // Acquire a write lock to protect the callback maps.
         std::unique_lock lkCallbackLock(m_muCallbackMutex);
 
-        // Give the callback an ID so Off() can remove exactly this one later.
+        // Give the callback an ID so Clear() can remove exactly this one later.
         const uint64_t ullID = m_ullNextCallbackID++;
         // Note: C++ will default initialize a new vector if no entry is found.
         GetCallbackMap<T>()[unDataId].push_back({ullID, std::move(fnCallback)});
 
         return {.unDataId = unDataId, .eDataType = RoveCommPacket<T>::eDataType, .ullID = ullID};
-    }
-
-    /******************************************************************************
-     * @brief Remove every callback this node has registered for a data ID. Callbacks on
-     *        other nodes are untouched. Waits for a callback that is already running,
-     *        so once this returns none of the removed callbacks can run. To remove a
-     *        single callback, use Off() with the handle On() returned.
-     *
-     * @param unDataId - The data ID whose UDP callbacks should be removed.
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-07
-     ******************************************************************************/
-    void RoveCommUDP::Clear(const uint16_t unDataId)
-    {
-        // Acquire a write lock. This waits for a callback that is already running.
-        std::unique_lock lkCallbackLock(m_muCallbackMutex);
-
-        // Remove every callback this node has for the data ID.
-        GetCallbackMap<int8_t>().erase(unDataId);
-        GetCallbackMap<uint8_t>().erase(unDataId);
-        GetCallbackMap<int16_t>().erase(unDataId);
-        GetCallbackMap<uint16_t>().erase(unDataId);
-        GetCallbackMap<int32_t>().erase(unDataId);
-        GetCallbackMap<uint32_t>().erase(unDataId);
-        GetCallbackMap<float>().erase(unDataId);
-        GetCallbackMap<double>().erase(unDataId);
-        GetCallbackMap<char>().erase(unDataId);
-    }
-
-    /******************************************************************************
-     * @brief Remove every callback this node has registered for a data ID. Callbacks on
-     *        other nodes are untouched. Waits for a callback that is already running,
-     *        so once this returns none of the removed callbacks can run. To remove a
-     *        single callback, use Off() with the handle On() returned.
-     *
-     * @tparam T - The payload type of the packets. Must be one of the manifest's types.
-     * @param unDataId - The data ID whose UDP callbacks should be removed.
-     *
-     * @author Eli Byrd (edbgkk@mst.edu)
-     * @date 2024-02-07
-     ******************************************************************************/
-    template<typename T>
-    void RoveCommUDP::Clear(const uint16_t unDataId)
-    {
-        // Acquire a write lock. This waits for a callback that is already running.
-        std::unique_lock lkCallbackLock(m_muCallbackMutex);
-
-        // Remove every callback this node has for the data ID.
-        GetCallbackMap<T>().erase(unDataId);
     }
 
     /******************************************************************************
@@ -404,7 +354,7 @@ namespace rovecomm
      * @author clayjay3 (claytonraycowen@gmail.com)
      * @date 2026-09-26
      ******************************************************************************/
-    void RoveCommUDP::Off(const CallbackHandle& stHandle)
+    void RoveCommUDP::Clear(const CallbackHandle& stHandle)
     {
         // An empty handle was never registered.
         if (stHandle.ullID == 0)
@@ -764,38 +714,29 @@ namespace rovecomm
     // Explicitly define template function types
     template ssize_t RoveCommUDP::WriteAll<uint8_t>(const RoveCommPacket<uint8_t>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<uint8_t>(const uint16_t, std::function<void(const RoveCommPacket<uint8_t>&)>);
-    template void RoveCommUDP::Clear<uint8_t>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<int8_t>(const RoveCommPacket<int8_t>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<int8_t>(const uint16_t, std::function<void(const RoveCommPacket<int8_t>&)>);
-    template void RoveCommUDP::Clear<int8_t>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<uint16_t>(const RoveCommPacket<uint16_t>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<uint16_t>(const uint16_t, std::function<void(const RoveCommPacket<uint16_t>&)>);
-    template void RoveCommUDP::Clear<uint16_t>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<int16_t>(const RoveCommPacket<int16_t>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<int16_t>(const uint16_t, std::function<void(const RoveCommPacket<int16_t>&)>);
-    template void RoveCommUDP::Clear<int16_t>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<uint32_t>(const RoveCommPacket<uint32_t>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<uint32_t>(const uint16_t, std::function<void(const RoveCommPacket<uint32_t>&)>);
-    template void RoveCommUDP::Clear<uint32_t>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<int32_t>(const RoveCommPacket<int32_t>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<int32_t>(const uint16_t, std::function<void(const RoveCommPacket<int32_t>&)>);
-    template void RoveCommUDP::Clear<int32_t>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<float>(const RoveCommPacket<float>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<float>(const uint16_t, std::function<void(const RoveCommPacket<float>&)>);
-    template void RoveCommUDP::Clear<float>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<double>(const RoveCommPacket<double>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<double>(const uint16_t, std::function<void(const RoveCommPacket<double>&)>);
-    template void RoveCommUDP::Clear<double>(const uint16_t);
 
     template ssize_t RoveCommUDP::WriteAll<char>(const RoveCommPacket<char>&, std::span<const std::pair<manifest::AddressEntry, int>>);
     template CallbackHandle RoveCommUDP::On<char>(const uint16_t, std::function<void(const RoveCommPacket<char>&)>);
-    template void RoveCommUDP::Clear<char>(const uint16_t);
 
 }    // namespace rovecomm

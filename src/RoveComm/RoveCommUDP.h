@@ -56,7 +56,7 @@ namespace rovecomm
             HANDLE m_stdIOCP;
 #endif
 
-            // One callback registered with On(). The ID lets Off() remove exactly this callback.
+            // One callback registered with On(). The ID lets Clear() remove exactly this callback.
             template<typename T>
             struct CallbackEntry
             {
@@ -215,7 +215,7 @@ namespace rovecomm
                 return On(Entry.DATA_ID, fnCallback);
             }
 
-            void Off(const CallbackHandle& stHandle);
+            void Clear(const CallbackHandle& stHandle);
 
             ssize_t Subscribe(const manifest::AddressEntry& stIPAddress, int nPort = manifest::General::ETHERNET_UDP_PORT)
             {
@@ -225,17 +225,6 @@ namespace rovecomm
             ssize_t Unsubscribe(const manifest::AddressEntry& stIPAddress, int nPort = manifest::General::ETHERNET_UDP_PORT)
             {
                 return WriteTo(RoveCommPacket<uint8_t>{.unDataId = manifest::System::UNSUBSCRIBE_DATA_ID, .vData = {}}, stIPAddress, nPort);
-            }
-
-            void Clear(const uint16_t unDataId);
-
-            template<typename T>
-            void Clear(const uint16_t unDataId);
-
-            template<typename manifest::ManifestEntry Entry>
-            void Clear()
-            {
-                Clear<EntryType<Entry>>(Entry.DATA_ID);
             }
 
             // Deinitialization

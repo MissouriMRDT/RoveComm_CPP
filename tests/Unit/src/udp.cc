@@ -690,8 +690,8 @@ TEST(RoveCommUDP, CallbacksBelongToTheirNode)
             EXPECT_EQ(nCallsA, 1);
 
             // Clearing the data ID on node B must leave node A's callback registered.
-            RoveCommUDPNodeB.On<uint8_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<uint8_t>&) { ++nCallsB; });
-            RoveCommUDPNodeB.Clear<uint8_t>(unTestDataId);
+            rovecomm::CallbackHandle stCallbackB = RoveCommUDPNodeB.On<uint8_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<uint8_t>&) { ++nCallsB; });
+            RoveCommUDPNodeB.Clear(stCallbackB);
             RoveCommUDPNodeB.ProcessPacket<uint8_t>(vData, saUDPClientAddr);
             RoveCommUDPNodeA.ProcessPacket<uint8_t>(vData, saUDPClientAddr);
             EXPECT_EQ(nCallsB, 0) << "Clear() left a callback registered on node B";
@@ -701,7 +701,7 @@ TEST(RoveCommUDP, CallbacksBelongToTheirNode)
         30000);    // 30 second timeout (30,000 ms)
 }
 
-TEST(RoveCommUDP, OffRemovesOnlyThatCallback)
+TEST(RoveCommUDP, ClearRemovesOnlyThatCallback)
 {
     // Run the test via the RunTimedTest function to allow for retries and timeouts.
     testutils::RunTimedTest(
@@ -733,20 +733,20 @@ TEST(RoveCommUDP, OffRemovesOnlyThatCallback)
             EXPECT_EQ(nCallsFirst, 1);
             EXPECT_EQ(nCallsSecond, 1);
 
-            // Off() removes the first callback and keeps the second.
-            RoveCommUDPNode.Off(stFirst);
+            // Clear() removes the first callback and keeps the second.
+            RoveCommUDPNode.Clear(stFirst);
             RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
-            EXPECT_EQ(nCallsFirst, 1) << "Off() left its callback registered";
-            EXPECT_EQ(nCallsSecond, 2) << "Off() removed a different callback";
+            EXPECT_EQ(nCallsFirst, 1) << "Clear() left its callback registered";
+            EXPECT_EQ(nCallsSecond, 2) << "Clear() removed a different callback";
 
             // Removing it again, or passing an empty handle, does nothing.
-            RoveCommUDPNode.Off(stFirst);
-            RoveCommUDPNode.Off(rovecomm::CallbackHandle{});
+            RoveCommUDPNode.Clear(stFirst);
+            RoveCommUDPNode.Clear(rovecomm::CallbackHandle{});
             RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
             EXPECT_EQ(nCallsSecond, 3);
 
-            // Clear() removes whatever is left for the data ID.
-            RoveCommUDPNode.Clear<float>(unTestDataId);
+            // Clear() removes the second callback.
+            RoveCommUDPNode.Clear(stSecond);
             RoveCommUDPNode.ProcessPacket<float>(vData, saUDPClientAddr);
             EXPECT_EQ(nCallsSecond, 3) << "Clear() left a callback registered";
         },

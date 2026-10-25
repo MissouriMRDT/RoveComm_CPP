@@ -93,9 +93,9 @@ namespace rovecomm
     RoveCommPacket<T> UnpackData(std::span<const uint8_t> stData);
 
     /******************************************************************************
-     * @brief Identifies one callback registered with a node's On(), so Off() can
+     * @brief Identifies one callback registered with a node's On(), so Clear() can
      *        remove that callback without touching any other callback for the same
-     *        data ID. A default-constructed handle is empty and Off() ignores it.
+     *        data ID. A default-constructed handle is empty and Clear() ignores it.
      *
      * @author clayjay3 (claytonraycowen@gmail.com)
      * @date 2026-09-26

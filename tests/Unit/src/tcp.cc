@@ -182,7 +182,7 @@ TEST(RoveCommTCP, CallbackInvoked)
         30000);    // 30 second timeout (30,000 ms)
 }
 
-TEST(RoveCommTCP, CallbacksBelongToTheirNodeAndOffRemovesOne)
+TEST(RoveCommTCP, CallbacksBelongToTheirNodeAndClearRemovesOne)
 {
     // Run the test via the RunTimedTest function to allow for retries and timeouts.
     testutils::RunTimedTest(
@@ -198,22 +198,22 @@ TEST(RoveCommTCP, CallbacksBelongToTheirNodeAndOffRemovesOne)
             std::vector<uint8_t> vData  = rovecomm::PackPacket(rovecomm::RoveCommPacket<int16_t>{.unDataId = unTestDataId, .vData = {-7, 7}});
 
             // Two callbacks for the same data ID, both on node A.
-            rovecomm::CallbackHandle stFirst = RoveCommTCPNodeA.On<int16_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<int16_t>&) { ++nCallsFirst; });
-            RoveCommTCPNodeA.On<int16_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<int16_t>&) { ++nCallsSecond; });
+            rovecomm::CallbackHandle stFirst  = RoveCommTCPNodeA.On<int16_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<int16_t>&) { ++nCallsFirst; });
+            rovecomm::CallbackHandle stSecond = RoveCommTCPNodeA.On<int16_t>(unTestDataId, [&](const rovecomm::RoveCommPacket<int16_t>&) { ++nCallsSecond; });
 
             // A packet received by node B must not reach node A's callbacks.
             RoveCommTCPNodeB.ProcessPacket<int16_t>(vData);
             EXPECT_EQ(nCallsFirst + nCallsSecond, 0) << "Node B invoked callbacks registered on node A";
 
-            // Node A invokes both, then only the second once Off() removes the first.
+            // Node A invokes both, then only the second once Clear() removes the first.
             RoveCommTCPNodeA.ProcessPacket<int16_t>(vData);
-            RoveCommTCPNodeA.Off(stFirst);
+            RoveCommTCPNodeA.Clear(stFirst);
             RoveCommTCPNodeA.ProcessPacket<int16_t>(vData);
-            EXPECT_EQ(nCallsFirst, 1) << "Off() left its callback registered";
-            EXPECT_EQ(nCallsSecond, 2) << "Off() removed a different callback";
+            EXPECT_EQ(nCallsFirst, 1) << "Clear() left its callback registered";
+            EXPECT_EQ(nCallsSecond, 2) << "Clear() removed a different callback";
 
-            // Clear() removes the rest.
-            RoveCommTCPNodeA.Clear<int16_t>(unTestDataId);
+            // Clear() removes the second callback.
+            RoveCommTCPNodeA.Clear(stSecond);
             RoveCommTCPNodeA.ProcessPacket<int16_t>(vData);
             EXPECT_EQ(nCallsSecond, 2) << "Clear() left a callback registered";
         },
