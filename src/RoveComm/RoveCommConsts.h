@@ -21,10 +21,10 @@
  ******************************************************************************/
 namespace rovecomm
 {
-#define ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS 10
-#define ROVECOMM_PACKET_MAX_DATA_COUNT        65535
-#define ROVECOMM_PACKET_HEADER_SIZE           6
-#define ROVECOMM_VERSION                      3
+    const int ROVECOMM_ETHERNET_UDP_MAX_SUBSCRIBERS = 10;
+    const int ROVECOMM_PACKET_MAX_DATA_SIZE         = 65535 / 3;
+    const int ROVECOMM_PACKET_HEADER_SIZE           = 6;
+    const int ROVECOMM_VERSION                      = 3;
 
     // Server constants.
     const int ROVECOMM_THREAD_MAX_IPS = 120;
